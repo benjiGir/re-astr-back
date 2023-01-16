@@ -1,16 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
+import { LoginUserDto } from './dto/login-user.dto';
+import { User } from 'src/users/schemas/user.schema';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(private readonly userService: UsersService) {}
 
-  public async validateUser(username: string, pass: string): Promise<any> {
+  public async validateUser(LoginUserDto: LoginUserDto): Promise<User> {
+    const { username, password } = LoginUserDto;
+
     const user = await this.userService.findOne(username);
-    if (user && user.password === pass) {
-      const { password, ...result } = user;
-      return result;
+
+    if (!(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
     }
-    return null;
+
+    return user;
   }
 }
