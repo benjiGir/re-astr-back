@@ -24,10 +24,18 @@ export class UsersService {
     return createdUser.save();
   }
 
+  public async findAll(): Promise<User[]> {
+    return this.userModel.find();
+  }
+
   public async findByEmail(email: string): Promise<User> {
     return this.userModel.findOne({
       email,
     });
+  }
+
+  public async findById(id: string): Promise<User> {
+    return this.userModel.findById(id);
   }
 
   public async findOne(username: string): Promise<User> {

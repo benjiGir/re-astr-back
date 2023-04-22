@@ -5,6 +5,8 @@ export type UserDocument = User & Document;
 
 @Schema()
 export class User {
+  _id: string;
+
   @Prop({
     type: String,
     required: true,

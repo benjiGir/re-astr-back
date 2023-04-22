@@ -1,4 +1,7 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
+import { ArchivesService } from './archives.service';
 
 @Controller('archives')
-export class ArchivesController {}
+export class ArchivesController {
+  constructor(private readonly archivesService: ArchivesService) {}
+}
