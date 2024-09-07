@@ -5,18 +5,15 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'
-import { GlobalExceptionFilter } from './common/filters/global-exceptions.filter'
+import { Swagger } from './utils/swagger/swagger'
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: true }),
+    new FastifyAdapter(),
   )
 
-  const httpAdapterHost = app.get('httpAdapterHost')
-  app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost))
-
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
+  Swagger.setup(app)
 
   await app.listen(3000)
 }
