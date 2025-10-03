@@ -6,28 +6,22 @@ export class AppConfigService {
   constructor(private readonly configService: ConfigService) {}
 
   get env(): string {
-    return this.configService.get<string>('app.env')
-  }
-
-  get host(): string {
-    return this.configService.get<string>('app.host')
-  }
-
-  get dbUser(): string {
-    return this.configService.get<string>('app.dbUser')
-  }
-
-  get dbPassword(): string {
-    const pass = this.configService.get<string>('app.dbPassword')
-    console.log(pass)
-    return pass
-  }
-
-  get dbName(): string {
-    return this.configService.get<string>('app.dbName')
+    return <string>this.configService.get('app.env')
   }
 
   get port(): number {
-    return this.configService.get('app.port')
+    return <number>this.configService.get('app.port')
+  }
+
+  get betterAuthSecret(): string {
+    return <string>this.configService.get('app.betterAuthSecret')
+  }
+
+  get cookieSecret(): string {
+    return <string>this.configService.get('app.cookieSecret')
+  }
+
+  get baseUrl(): string {
+    return <string>this.configService.get('app.baseUrl')
   }
 }

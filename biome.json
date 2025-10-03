@@ -50,5 +50,8 @@
     "parser": {
       "unsafeParameterDecoratorsEnabled": true
     }
+  },
+  "files": {
+    "include": ["**/*.prisma"]
   }
 }

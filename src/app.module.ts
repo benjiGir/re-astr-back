@@ -1,12 +1,20 @@
-import { Module, ValidationPipe } from '@nestjs/common'
-import { APP_FILTER, APP_PIPE } from '@nestjs/core'
+import {ClassSerializerInterceptor, Module, ValidationPipe} from '@nestjs/common'
+import {APP_FILTER, APP_INTERCEPTOR, APP_PIPE} from '@nestjs/core'
+import { ConfigModule } from '@nestjs/config'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
-import { GlobalExceptionFilter } from './common/filters/global-exceptions.filter'
-import { UserModule } from './modules/Users/user.module'
+import { DatabaseModule } from './database'
+import { AuthModule } from './auth/auth.module'
 
 @Module({
-  imports: [UserModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    DatabaseModule,
+    AuthModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
@@ -15,12 +23,13 @@ import { UserModule } from './modules/Users/user.module'
       useValue: new ValidationPipe({
         transform: true,
         whitelist: true,
+
       }),
     },
     {
-      provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
-    },
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor
+    }
   ],
 })
 export class AppModule {}

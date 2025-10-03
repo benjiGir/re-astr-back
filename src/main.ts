@@ -13,6 +13,17 @@ async function bootstrap() {
     new FastifyAdapter(),
   )
 
+  // Register Fastify plugins for Better Auth support
+  await app.register(require('@fastify/cookie'), {
+    secret: process.env.COOKIE_SECRET || 'your-secret-key'
+  })
+
+  // Enable CORS for authentication
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  })
+
   Swagger.setup(app)
 
   await app.listen(3000)
