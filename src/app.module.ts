@@ -1,10 +1,12 @@
 import {ClassSerializerInterceptor, Module, ValidationPipe} from '@nestjs/common'
 import {APP_FILTER, APP_INTERCEPTOR, APP_PIPE} from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
-import { DatabaseModule } from './database'
-import { AuthModule } from './auth/auth.module'
+import { AppController } from '@/app.controller'
+import { AppService } from '@/app.service'
+import { DatabaseModule } from '@database/database.module'
+import { AuthModule } from '@/auth/auth.module'
+import { CategoriesModule } from '@modules/categories/categories.module'
+import { TestsModule } from '@modules/tests/tests.module'
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { AuthModule } from './auth/auth.module'
     }),
     DatabaseModule,
     AuthModule,
+    CategoriesModule,
+    TestsModule,
   ],
   controllers: [AppController],
   providers: [

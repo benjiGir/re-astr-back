@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common'
-import { AuthService } from './auth.service'
-import { AuthController } from './auth.controller'
-import { TestController } from './test.controller'
-import { AuthGuard } from './guards/auth.guard'
-import { RequestConverterService } from './services/request-converter.service'
-import { ResponseHandlerService } from './services/response-handler.service'
-import {AppConfigModule} from "../config/app/config.module";
-import {DatabaseConfigModule} from "../config/database/config.module";
+import { AuthService } from '@/auth/auth.service'
+import { AuthController } from '@/auth/auth.controller'
+import { TestController } from '@/auth/test.controller'
+import { AuthGuard } from '@/auth/guards/auth.guard'
+import { RequestConverterService } from '@/auth/services/request-converter.service'
+import { ResponseHandlerService } from '@/auth/services/response-handler.service'
+import {AppConfigModule} from "@config/app/config.module";
+import {DatabaseConfigModule} from "@config/database/config.module";
 
 @Module({
   imports: [AppConfigModule, DatabaseConfigModule],

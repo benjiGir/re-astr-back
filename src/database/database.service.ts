@@ -3,13 +3,13 @@ import { ConfigService } from '@nestjs/config'
 import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import type { Sql } from 'postgres'
-import * as schema from './schema'
-import {DatabaseConfigService} from "../config/database/config.service";
+import * as schema from '@database/schema'
+import {DatabaseConfigService} from "@config/database/config.service";
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private client!: Sql
-  public db!: PostgresJsDatabase<typeof schema>
+  public drizzle!: PostgresJsDatabase<typeof schema>
 
   constructor(private databaseConfigService: DatabaseConfigService) {}
 
@@ -22,7 +22,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       connect_timeout: 10,
     })
 
-    this.db = drizzle(this.client, { schema })
+    this.drizzle = drizzle(this.client, { schema })
   }
 
   async onModuleDestroy() {
@@ -32,6 +32,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   getDatabase(): PostgresJsDatabase<typeof schema> {
-    return this.db
+    return this.drizzle
   }
 }

@@ -1,11 +1,11 @@
 import {Injectable, OnModuleInit} from '@nestjs/common'
-import {AppConfigService} from "../config/app/config.service";
+import {AppConfigService} from "@config/app/config.service";
 import postgres from "postgres";
 import {drizzle} from "drizzle-orm/postgres-js";
-import {accounts, DatabaseService, sessions, users, verifications} from "../database";
+import {accounts, DatabaseService, sessions, users, verifications} from "@database/index";
 import {betterAuth} from "better-auth";
 import {drizzleAdapter} from "better-auth/adapters/drizzle";
-import {DatabaseConfigService} from "../config/database/config.service";
+import {DatabaseConfigService} from "@config/database/config.service";
 
 @Injectable()
 export class AuthService implements OnModuleInit {
