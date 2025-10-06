@@ -7,6 +7,7 @@ import { DatabaseModule } from '@database/database.module'
 import { AuthModule } from '@/auth/auth.module'
 import { CategoriesModule } from '@modules/categories/categories.module'
 import { TestsModule } from '@modules/tests/tests.module'
+import { UsersModule } from '@modules/users/users.module'
 import { MinioModule } from '@/storage/minio/minio.module'
 
 @Module({
@@ -18,6 +19,7 @@ import { MinioModule } from '@/storage/minio/minio.module'
     DatabaseModule,
     MinioModule,
     AuthModule,
+    UsersModule,
     CategoriesModule,
     TestsModule,
   ],
