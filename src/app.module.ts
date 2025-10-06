@@ -9,6 +9,7 @@ import { CategoriesModule } from '@modules/categories/categories.module'
 import { TestsModule } from '@modules/tests/tests.module'
 import { UsersModule } from '@modules/users/users.module'
 import { MinioModule } from '@/storage/minio/minio.module'
+import { ValidationModule } from '@common/validation/validation.module'
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MinioModule } from '@/storage/minio/minio.module'
       envFilePath: '.env',
     }),
     DatabaseModule,
+    ValidationModule,
     MinioModule,
     AuthModule,
     UsersModule,
