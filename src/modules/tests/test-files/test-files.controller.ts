@@ -10,11 +10,15 @@ import {
   HttpStatus,
   Query,
   Request,
+  Res,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes } from '@nestjs/swagger';
 import { TestFilesService } from './test-files.service';
 import { CreateTestFileDto } from './dto/create-test-file.dto';
 import { UpdateTestFileDto } from './dto/update-test-file.dto';
+import { UploadTestFileDto } from './dto/upload-test-file.dto';
+import {FastifyReply} from "fastify";
 
 @ApiTags('Test files')
 @Controller('test-files')
@@ -57,6 +61,65 @@ export class TestFilesController {
   @ApiResponse({ status: 404, description: 'Test file not found' })
   update(@Param('id') id: string, @Body() updateTestFileDto: UpdateTestFileDto) {
     return this.testFilesService.update(id, updateTestFileDto);
+  }
+
+  @Post('upload')
+  @ApiOperation({ summary: 'Upload a file to MinIO and create metadata' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: 'File uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid file or input' })
+  @ApiResponse({ status: 404, description: 'Test not found' })
+  async upload(@Request() req: any) {
+    const data = await req.file();
+
+    if (!data) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Parse form fields
+    const fields = data.fields as any;
+    const uploadDto: UploadTestFileDto = {
+      testId: fields.testId?.value,
+      fileType: fields.fileType?.value,
+      metadata: fields.metadata?.value ? JSON.parse(fields.metadata.value) : undefined,
+      expiresAt: fields.expiresAt?.value,
+    };
+
+    // TODO: Extract userId from authenticated request (Better Auth)
+    const userId = req.user?.id || 'system';
+
+    return this.testFilesService.uploadFile(data, uploadDto, userId);
+  }
+
+  @Get(':id/download')
+  @ApiOperation({ summary: 'Download a file from MinIO' })
+  @ApiResponse({ status: 200, description: 'File downloaded successfully' })
+  @ApiResponse({ status: 404, description: 'File not found' })
+  async download(@Param('id') id: string, @Res() reply: FastifyReply) {
+    const { stream, metadata } = await this.testFilesService.downloadFile(id);
+
+    reply.header('Content-Type', metadata.mimeType);
+    reply.header('Content-Disposition', `attachment; filename="${metadata.filename}"`);
+    reply.header('Content-Length', metadata.size);
+
+    return reply.send(stream);
+  }
+
+  @Get(':id/presigned-url')
+  @ApiOperation({ summary: 'Get a presigned URL for temporary file access' })
+  @ApiQuery({ name: 'expirySeconds', required: false, description: 'URL expiry time in seconds (default: 3600)' })
+  @ApiResponse({ status: 200, description: 'Presigned URL generated successfully' })
+  @ApiResponse({ status: 404, description: 'File not found' })
+  async getPresignedUrl(
+    @Param('id') id: string,
+    @Query('expirySeconds') expirySeconds?: number,
+  ) {
+    const url = await this.testFilesService.getPresignedUrl(
+      id,
+      expirySeconds ? Number(expirySeconds) : 3600,
+    );
+
+    return { url };
   }
 
   @Delete(':id')
