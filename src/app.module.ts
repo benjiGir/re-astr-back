@@ -7,6 +7,7 @@ import { DatabaseModule } from '@database/database.module'
 import { AuthModule } from '@/auth/auth.module'
 import { CategoriesModule } from '@modules/categories/categories.module'
 import { TestsModule } from '@modules/tests/tests.module'
+import { MinioModule } from '@/storage/minio/minio.module'
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TestsModule } from '@modules/tests/tests.module'
       envFilePath: '.env',
     }),
     DatabaseModule,
+    MinioModule,
     AuthModule,
     CategoriesModule,
     TestsModule,

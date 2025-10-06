@@ -18,6 +18,14 @@ async function bootstrap() {
     secret: process.env.COOKIE_SECRET || 'your-secret-key'
   })
 
+  // Register multipart plugin for file uploads
+  await app.register(require('@fastify/multipart'), {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50 MB max file size
+      files: 10, // Max 10 files per request
+    },
+  })
+
   // Enable CORS for authentication
   app.enableCors({
     origin: true,
