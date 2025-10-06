@@ -226,7 +226,7 @@ export class SchemaValidationService {
    * Format Zod errors into our ValidationError format
    */
   private formatZodErrors(error: ZodError): ValidationError[] {
-    return error.errors.map((err) => ({
+    return error.issues.map((err) => ({
       field: err.path.join('.'),
       message: err.message,
       value: err.path.length > 0 ? undefined : err,
