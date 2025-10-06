@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { DatabaseService } from '../../../database/database.service';
-import { tests, type Test, type NewTest } from '../../../database/schema/tests.schema';
+import { DatabaseService } from '@/database';
+import { tests, type Test, type NewTest } from '@/database';
 import type { ITestsRepository } from '../interfaces/tests-repository.interface';
 
 @Injectable()
