@@ -15,6 +15,13 @@
       "when": 1759003777141,
       "tag": "0001_graceful_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759735045505,
+      "tag": "0002_ambiguous_dreaming_celestial",
+      "breakpoints": true
     }
   ]
 }

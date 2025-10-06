@@ -18,7 +18,7 @@ import { TestFilesService } from './test-files.service';
 import { CreateTestFileDto } from './dto/create-test-file.dto';
 import { UpdateTestFileDto } from './dto/update-test-file.dto';
 import { UploadTestFileDto } from './dto/upload-test-file.dto';
-import {FastifyReply} from "fastify";
+import { FastifyReply } from "fastify";
 
 @ApiTags('Test files')
 @Controller('test-files')
