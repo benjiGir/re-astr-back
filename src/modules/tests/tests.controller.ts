@@ -15,6 +15,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { TestsService } from '@modules/tests/tests.service';
 import { CreateTestDto } from '@modules/tests/dto/create-test.dto';
 import { UpdateTestDto } from '@modules/tests/dto/update-test.dto';
+import {User} from "@common/decorators/user.decorator";
+import {UserDto} from "@/auth/dto/auth-response.dto";
 
 @ApiTags('Tests')
 @Controller('tests')
@@ -26,10 +28,8 @@ export class TestsController {
   @ApiResponse({ status: 201, description: 'Test created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  create(@Body() createTestDto: CreateTestDto, @Request() req: any) {
-    // TODO: Extract userId from authenticated request (Better Auth)
-    const userId = req.user?.id || 'system';
-    return this.testsService.create(createTestDto, userId);
+  create(@User() user: UserDto, @Body() createTestDto: CreateTestDto, @Request() req: any) {
+    return this.testsService.create(createTestDto, user.id);
   }
 
   @Get()
@@ -55,10 +55,8 @@ export class TestsController {
   @ApiOperation({ summary: 'Update a test' })
   @ApiResponse({ status: 200, description: 'Test updated successfully' })
   @ApiResponse({ status: 404, description: 'Test not found' })
-  update(@Param('id') id: string, @Body() updateTestDto: UpdateTestDto, @Request() req: any) {
-    // TODO: Extract userId from authenticated request (Better Auth)
-    const userId = req.user?.id || 'system';
-    return this.testsService.update(id, updateTestDto, userId);
+  update(@User() user: UserDto, @Param('id') id: string, @Body() updateTestDto: UpdateTestDto, @Request() req: any) {
+    return this.testsService.update(id, updateTestDto, user.id);
   }
 
   @Delete(':id')

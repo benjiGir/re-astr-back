@@ -19,6 +19,8 @@ import { CreateTestFileDto } from './dto/create-test-file.dto';
 import { UpdateTestFileDto } from './dto/update-test-file.dto';
 import { UploadTestFileDto } from './dto/upload-test-file.dto';
 import { FastifyReply } from "fastify";
+import {User} from "@common/decorators/user.decorator";
+import {UserDto} from "@/auth/dto/auth-response.dto";
 
 @ApiTags('Test files')
 @Controller('test-files')
@@ -30,10 +32,8 @@ export class TestFilesController {
   @ApiResponse({ status: 201, description: 'Test file metadata created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 404, description: 'Test not found' })
-  create(@Body() createTestFileDto: CreateTestFileDto, @Request() req: any) {
-    // TODO: Extract userId from authenticated request (Better Auth)
-    const userId = req.user?.id || 'system';
-    return this.testFilesService.create(createTestFileDto, userId);
+  create(@User() user: UserDto, @Body() createTestFileDto: CreateTestFileDto, @Request() req: any) {
+    return this.testFilesService.create(createTestFileDto, user.id);
   }
 
   @Get()
@@ -69,7 +69,7 @@ export class TestFilesController {
   @ApiResponse({ status: 201, description: 'File uploaded successfully' })
   @ApiResponse({ status: 400, description: 'Invalid file or input' })
   @ApiResponse({ status: 404, description: 'Test not found' })
-  async upload(@Request() req: any) {
+  async upload(@User() user: UserDto, @Request() req: any) {
     const data = await req.file();
 
     if (!data) {
@@ -85,10 +85,7 @@ export class TestFilesController {
       expiresAt: fields.expiresAt?.value,
     };
 
-    // TODO: Extract userId from authenticated request (Better Auth)
-    const userId = req.user?.id || 'system';
-
-    return this.testFilesService.uploadFile(data, uploadDto, userId);
+    return this.testFilesService.uploadFile(data, uploadDto, user.id);
   }
 
   @Get(':id/download')
