@@ -5,10 +5,16 @@ import {
   UnauthorizedException
 } from '@nestjs/common'
 import { AuthService } from '../auth.service'
+import { DatabaseService } from '@database/database.service'
+import { users } from '@database/schema/users.schema'
+import { eq } from 'drizzle-orm'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly db: DatabaseService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest()
@@ -25,9 +31,21 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid session')
       }
 
+      // Fetch user from database to get role
+      const [user] = await this.db.drizzle
+        .select()
+        .from(users)
+        .where(eq(users.id, sessionData.session.userId))
+        .limit(1)
+
+      if (!user) {
+        throw new UnauthorizedException('User not found')
+      }
+
       // Use headers to pass user data as recommended for Fastify compatibility
       request.headers['x-user-id'] = sessionData.session.userId
       request.headers['x-session-id'] = sessionData.session.id
+      request.headers['x-user-role'] = user.role
 
       return true
     } catch (error) {

@@ -12,8 +12,9 @@ import {
   Request,
   Res,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import { TestFilesService } from './test-files.service';
 import { CreateTestFileDto } from './dto/create-test-file.dto';
 import { UpdateTestFileDto } from './dto/update-test-file.dto';
@@ -21,16 +22,23 @@ import { UploadTestFileDto } from './dto/upload-test-file.dto';
 import { FastifyReply } from "fastify";
 import {User} from "@common/decorators/user.decorator";
 import {UserDto} from "@/auth/dto/auth-response.dto";
+import { AuthGuard } from '@/auth/guards/auth.guard';
+import { RolesGuard } from '@/auth/guards/roles.guard';
+import { Roles } from '@/auth/decorators/roles.decorator';
 
 @ApiTags('Test files')
 @Controller('test-files')
+@UseGuards(AuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class TestFilesController {
   constructor(private readonly testFilesService: TestFilesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new test file metadata' })
+  @Roles('contributor')
+  @ApiOperation({ summary: 'Create a new test file metadata (contributor+)' })
   @ApiResponse({ status: 201, description: 'Test file metadata created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test not found' })
   create(@User() user: UserDto, @Body() createTestFileDto: CreateTestFileDto, @Request() req: any) {
     return this.testFilesService.create(createTestFileDto, user.id);
@@ -56,18 +64,22 @@ export class TestFilesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update test file metadata' })
+  @Roles('contributor')
+  @ApiOperation({ summary: 'Update test file metadata (contributor+)' })
   @ApiResponse({ status: 200, description: 'Test file metadata updated successfully' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test file not found' })
   update(@Param('id') id: string, @Body() updateTestFileDto: UpdateTestFileDto) {
     return this.testFilesService.update(id, updateTestFileDto);
   }
 
   @Post('upload')
-  @ApiOperation({ summary: 'Upload a file to MinIO and create metadata' })
+  @Roles('contributor')
+  @ApiOperation({ summary: 'Upload a file to MinIO and create metadata (contributor+)' })
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'File uploaded successfully' })
   @ApiResponse({ status: 400, description: 'Invalid file or input' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test not found' })
   async upload(@User() user: UserDto, @Request() req: any) {
     const data = await req.file();
@@ -120,9 +132,11 @@ export class TestFilesController {
   }
 
   @Delete(':id')
+  @Roles('archivist')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete test file metadata' })
+  @ApiOperation({ summary: 'Delete test file metadata (archivist+)' })
   @ApiResponse({ status: 204, description: 'Test file metadata deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test file not found' })
   remove(@Param('id') id: string) {
     return this.testFilesService.remove(id);
