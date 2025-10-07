@@ -6,10 +6,12 @@ import { TESTS_REPOSITORY } from '@modules/tests/interfaces/tests-repository.int
 import { DatabaseModule } from '@database/database.module';
 import { CategoriesModule } from '@modules/categories/categories.module';
 import { TestFilesModule } from '@modules/tests/test-files/test-files.module';
+import {AuthModule} from "@/auth/auth.module";
 
 @Module({
   imports: [
     DatabaseModule,
+    AuthModule,
     CategoriesModule,
     forwardRef(() => TestFilesModule),
   ],

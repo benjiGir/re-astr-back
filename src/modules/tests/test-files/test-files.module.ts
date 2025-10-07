@@ -5,9 +5,10 @@ import { TestFilesDrizzleRepository } from './repositories/test-files-drizzle.re
 import { TEST_FILES_REPOSITORY } from './interfaces/test-files-repository.interface';
 import { DatabaseModule } from '../../../database/database.module';
 import { TestsModule } from '../tests.module';
+import {AuthModule} from "@/auth/auth.module";
 
 @Module({
-  imports: [DatabaseModule, forwardRef(() => TestsModule)],
+  imports: [DatabaseModule, AuthModule, forwardRef(() => TestsModule)],
   controllers: [TestFilesController],
   providers: [
     TestFilesService,

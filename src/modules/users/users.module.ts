@@ -4,9 +4,10 @@ import { UsersController } from './users.controller';
 import { UsersDrizzleRepository } from './repositories/users-drizzle.repository';
 import { USERS_REPOSITORY } from './interfaces/users-repository.interface';
 import { DatabaseModule } from '@database/database.module';
+import {AuthModule} from "@/auth/auth.module";
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, AuthModule],
   controllers: [UsersController],
   providers: [
     UsersService,
