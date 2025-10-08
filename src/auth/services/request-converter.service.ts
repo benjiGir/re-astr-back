@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common'
+import {FastifyRequest} from "fastify";
 
 @Injectable()
 export class RequestConverterService {
   /**
    * Convertit une requête Fastify en objet Request compatible avec Better Auth
    */
-  convertFastifyToBetterAuth(fastifyRequest: any): Request {
-    const url = new URL(fastifyRequest.url, `http://${fastifyRequest.headers.host}`)
+  convertFastifyToBetterAuth(fastifyRequest: FastifyRequest): Request {
+    // Construire l'URL complète pour Better Auth
+    // Better Auth attend le path complet incluant le basePath (/auth)
+    const host = fastifyRequest.headers.host || 'localhost:3000'
+    const protocol = fastifyRequest.headers['x-forwarded-proto'] || 'http'
+    const fullPath = `/auth${fastifyRequest.url}`
+    const url = new URL(fullPath, `${protocol}://${host}`)
 
     const headers = this.convertHeaders(fastifyRequest.headers)
 

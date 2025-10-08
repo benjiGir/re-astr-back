@@ -12,7 +12,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiCookieAuth } from '@nestjs/swagger';
 import { TestsService } from '@modules/tests/tests.service';
 import { CreateTestDto } from '@modules/tests/dto/create-test.dto';
 import { UpdateTestDto } from '@modules/tests/dto/update-test.dto';
@@ -25,7 +25,7 @@ import { Roles } from '@/auth/decorators/roles.decorator';
 @ApiTags('Tests')
 @Controller('tests')
 @UseGuards(AuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
 export class TestsController {
   constructor(private readonly testsService: TestsService) {}
 

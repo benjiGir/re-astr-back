@@ -55,6 +55,15 @@ export class AuthGuard implements CanActivate {
 
   private extractSessionToken(request: any): string | null {
     const cookies = request.cookies
-    return cookies?.['better-auth.session_token'] || null
+    const cookieValue = cookies?.['better-auth.session_token']
+
+    if (!cookieValue) {
+      return null
+    }
+
+    // Better Auth signe les cookies au format: token.signature
+    // On ne garde que le token (la partie avant le point)
+    const [token] = cookieValue.split('.')
+    return token || null
   }
 }

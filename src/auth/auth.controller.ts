@@ -37,7 +37,7 @@ export class AuthController {
     @Req() request: any,
     @Res({ passthrough: false }) reply: any,
   ): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/auth/sign-up', body)
+    await this.handleAuthRequest(request, reply, '/sign-up/email', body)
   }
 
   @Post('sign-in')
@@ -50,7 +50,7 @@ export class AuthController {
     @Req() request: any,
     @Res({ passthrough: false }) reply: any,
   ): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/auth/sign-in', body)
+    await this.handleAuthRequest(request, reply, '/sign-in/email', body)
   }
 
   @Post('sign-out')
@@ -63,7 +63,7 @@ export class AuthController {
     @Req() request: any,
     @Res({ passthrough: false }) reply: any,
   ): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/auth/sign-out')
+    await this.handleAuthRequest(request, reply, '/sign-out')
   }
 
   @Get('session')
@@ -76,7 +76,7 @@ export class AuthController {
     @Req() request: any,
     @Res({ passthrough: false }) reply: any,
   ): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/auth/get-session')
+    await this.handleAuthRequest(request, reply, '/get-session')
   }
 
   @Post('forgot-password')
@@ -89,7 +89,7 @@ export class AuthController {
     @Req() request: any,
     @Res({ passthrough: false }) reply: any,
   ): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/auth/forgot-password', body)
+    await this.handleAuthRequest(request, reply, '/forget-password', body)
   }
 
   @Post('reset-password')
@@ -102,7 +102,7 @@ export class AuthController {
     @Req() request: any,
     @Res({ passthrough: false }) reply: any,
   ): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/auth/reset-password', body)
+    await this.handleAuthRequest(request, reply, '/reset-password', body)
   }
 
   /**
@@ -120,15 +120,20 @@ export class AuthController {
     }
 
     try {
-      // Créer une copie de la requête avec le path et body modifiés
+      // Créer un objet proxy qui simule une requête Fastify
+      // avec l'URL et le body modifiés pour Better Auth
       const modifiedRequest = {
-        ...request,
         url: authPath,
+        method: request.method,
+        headers: request.headers,
         body: body || request.body,
+        hostname: request.hostname,
+        ip: request.ip,
+        protocol: request.protocol,
       }
 
-      // Convertir la requête Fastify en format Better Auth
-      const betterAuthRequest = this.requestConverter.convertFastifyToBetterAuth(modifiedRequest)
+      // Convertir la requête en format Better Auth
+      const betterAuthRequest = this.requestConverter.convertFastifyToBetterAuth(modifiedRequest as any)
 
       // Appeler Better Auth
       const response = await this.authService.auth.handler(betterAuthRequest)

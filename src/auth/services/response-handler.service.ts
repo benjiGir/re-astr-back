@@ -41,7 +41,39 @@ export class ResponseHandlerService {
    */
   private copyResponseHeaders(response: Response, fastifyReply: any): void {
     response.headers.forEach((value, key) => {
-      fastifyReply.header(key, value)
+      // Gérer les cookies Set-Cookie de manière spéciale pour Fastify
+      if (key.toLowerCase() === 'set-cookie') {
+        // Better Auth peut envoyer plusieurs cookies
+        // Le header Set-Cookie peut être une seule valeur ou un tableau
+        const cookies = Array.isArray(value) ? value : [value]
+
+        cookies.forEach((cookieString) => {
+          // Parser le cookie string pour extraire name, value et options
+          const [nameValue, ...optionsParts] = cookieString.split(';').map(s => s.trim())
+          const [name, val] = nameValue.split('=')
+
+          // Parser les options du cookie
+          const options: any = {}
+          optionsParts.forEach(part => {
+            const [optKey, optValue] = part.split('=').map(s => s?.trim())
+            const lowerKey = optKey.toLowerCase()
+
+            if (lowerKey === 'path') options.path = optValue
+            else if (lowerKey === 'domain') options.domain = optValue
+            else if (lowerKey === 'max-age') options.maxAge = parseInt(optValue)
+            else if (lowerKey === 'expires') options.expires = new Date(optValue)
+            else if (lowerKey === 'httponly') options.httpOnly = true
+            else if (lowerKey === 'secure') options.secure = true
+            else if (lowerKey === 'samesite') options.sameSite = optValue.toLowerCase()
+          })
+
+          // Définir le cookie avec Fastify
+          fastifyReply.setCookie(name, val, options)
+        })
+      } else {
+        // Pour les autres headers, utiliser la méthode normale
+        fastifyReply.header(key, value)
+      }
     })
   }
 

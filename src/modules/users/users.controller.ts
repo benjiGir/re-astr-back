@@ -14,7 +14,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiBearerAuth,
+  ApiCookieAuth,
 } from '@nestjs/swagger';
 import { UsersService } from './services/users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -26,7 +26,7 @@ import { Roles } from '@/auth/decorators/roles.decorator';
 @ApiTags('Users')
 @Controller('users')
 @UseGuards(AuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

@@ -14,7 +14,7 @@ import {
   BadRequestException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiConsumes, ApiCookieAuth } from '@nestjs/swagger';
 import { TestFilesService } from './test-files.service';
 import { CreateTestFileDto } from './dto/create-test-file.dto';
 import { UpdateTestFileDto } from './dto/update-test-file.dto';
@@ -29,7 +29,7 @@ import { Roles } from '@/auth/decorators/roles.decorator';
 @ApiTags('Test files')
 @Controller('test-files')
 @UseGuards(AuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
 export class TestFilesController {
   constructor(private readonly testFilesService: TestFilesService) {}
 

@@ -10,7 +10,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
 import { CategoriesService } from '@modules/categories/services/categories.service';
 import { CreateCategoryDto } from '@modules/categories/dto/create-category.dto';
 import { UpdateCategoryDto } from '@modules/categories/dto/update-category.dto';
@@ -21,7 +21,7 @@ import { Roles } from '@/auth/decorators/roles.decorator';
 @ApiTags('Categories')
 @Controller('categories')
 @UseGuards(AuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiCookieAuth()
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 

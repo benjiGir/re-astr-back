@@ -2,20 +2,25 @@ import {Injectable, OnModuleInit} from '@nestjs/common'
 import {AppConfigService} from "@config/app/config.service";
 import postgres from "postgres";
 import {drizzle} from "drizzle-orm/postgres-js";
-import {accounts, DatabaseService, sessions, users, verifications} from "@database/index";
+import {accounts, sessions, users, verifications} from "@database/index";
 import {betterAuth} from "better-auth";
 import {drizzleAdapter} from "better-auth/adapters/drizzle";
 import {DatabaseConfigService} from "@config/database/config.service";
+import {eq} from "drizzle-orm";
 
 @Injectable()
 export class AuthService implements OnModuleInit {
   public auth!: ReturnType<typeof betterAuth>
+  private db!: ReturnType<typeof drizzle>
 
-  constructor(private readonly appConfigServie: AppConfigService, private readonly databaseConfigService: DatabaseConfigService) {}
+  constructor(
+    private readonly appConfigServie: AppConfigService,
+    private readonly databaseConfigService: DatabaseConfigService
+  ) {}
 
   onModuleInit() {
     const connection = postgres(this.databaseConfigService.url);
-    const db = drizzle(connection, { schema: { users, sessions } })
+    this.db = drizzle(connection, { schema: { users, sessions } })
 
     this.auth = betterAuth({
       advanced: {
@@ -23,7 +28,7 @@ export class AuthService implements OnModuleInit {
           generateId: false
         }
       },
-      database: drizzleAdapter(db, {
+      database: drizzleAdapter(this.db, {
         usePlural: true,
         provider: 'pg',
         schema: {
@@ -34,12 +39,12 @@ export class AuthService implements OnModuleInit {
         }
       }),
       emailAndPassword: {
-        enabled: true,
-        requireEmailVerification: false,
+        enabled: this.appConfigServie.emailPasswordEnabled,
+        requireEmailVerification: this.appConfigServie.emailPasswordRequireEmailVerification,
       },
       session: {
-        expiresIn: 60 * 60 * 24 * 7, // 7 days
-        updateAge: 60 * 60 * 24, // 1 day
+        expiresIn: this.appConfigServie.sessionExpiresIn,
+        updateAge: this.appConfigServie.sessionUpdateAge,
       },
       secret: this.appConfigServie.betterAuthSecret,
       baseURL: this.appConfigServie.baseUrl,
@@ -49,17 +54,43 @@ export class AuthService implements OnModuleInit {
   }
 
   async verifySession(sessionToken: string) {
-    try {
-      // Create a mock request object for Better Auth
-      const mockRequest = {
-        headers: {
-          'cookie': `better-auth.session_token=${sessionToken}`
-        },
-        url: '/api/auth/get-session',
-        method: 'GET'
-      } as any
+    if (!sessionToken) {
+      return null
+    }
 
-      return this.auth.api.getSession(mockRequest)
+    try {
+      // Query the database directly to verify the session
+      const [session] = await this.db
+        .select()
+        .from(sessions)
+        .where(eq(sessions.token, sessionToken))
+        .limit(1)
+
+      if (!session) {
+        return null
+      }
+
+      // Check if session is expired
+      const now = new Date()
+      if (session.expiresAt && session.expiresAt < now) {
+        return null
+      }
+
+      // Fetch the associated user
+      const [user] = await this.db
+        .select()
+        .from(users)
+        .where(eq(users.id, session.userId))
+        .limit(1)
+
+      if (!user) {
+        return null
+      }
+
+      return {
+        session,
+        user,
+      }
     } catch (error) {
       console.error('Session verification error:', error)
       return null
