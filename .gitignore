@@ -57,5 +57,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Claude AI assistant
 .claude/
-CLAUDE.md
+.claude/CLAUDE.md
 TESTING_AUTH.md
