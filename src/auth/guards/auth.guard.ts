@@ -31,7 +31,6 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid session')
       }
 
-      // Fetch user from database to get role
       const [user] = await this.db.drizzle
         .select()
         .from(users)
@@ -42,7 +41,6 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('User not found')
       }
 
-      // Use headers to pass user data as recommended for Fastify compatibility
       request.headers['x-user-id'] = sessionData.session.userId
       request.headers['x-session-id'] = sessionData.session.id
       request.headers['x-user-role'] = user.role
@@ -61,8 +59,6 @@ export class AuthGuard implements CanActivate {
       return null
     }
 
-    // Better Auth signe les cookies au format: token.signature
-    // On ne garde que le token (la partie avant le point)
     const [token] = cookieValue.split('.')
     return token || null
   }

@@ -59,7 +59,6 @@ export class AuthService implements OnModuleInit {
     }
 
     try {
-      // Query the database directly to verify the session
       const [session] = await this.db
         .select()
         .from(sessions)
@@ -70,13 +69,11 @@ export class AuthService implements OnModuleInit {
         return null
       }
 
-      // Check if session is expired
       const now = new Date()
       if (session.expiresAt && session.expiresAt < now) {
         return null
       }
 
-      // Fetch the associated user
       const [user] = await this.db
         .select()
         .from(users)

@@ -19,7 +19,6 @@ export class TestFilesService {
   ) {}
 
   async create(createTestFileDto: CreateTestFileDto, userId: string) {
-    // Verify test exists
     await this.testsService.findOne(createTestFileDto.testId);
 
     return this.testFilesRepository.create({
@@ -53,17 +52,14 @@ export class TestFilesService {
   }
 
   async findByTest(testId: string) {
-    // Verify test exists
     await this.testsService.findOne(testId);
 
     return this.testFilesRepository.findByTest(testId);
   }
 
   async update(id: string, updateTestFileDto: UpdateTestFileDto) {
-    // Verify file exists
     await this.findOne(id);
 
-    // If testId is being changed, verify new test exists
     if (updateTestFileDto.testId) {
       await this.testsService.findOne(updateTestFileDto.testId);
     }
@@ -77,11 +73,7 @@ export class TestFilesService {
     return this.testFilesRepository.update(id, updateData);
   }
 
-  /**
-   * Upload a file to MinIO and create metadata in database
-   */
   async uploadFile(file: MultipartFile, uploadDto: UploadTestFileDto, userId: string) {
-    // Verify test exists
     await this.testsService.findOne(uploadDto.testId);
 
     if (!file) {
@@ -89,16 +81,13 @@ export class TestFilesService {
     }
 
     try {
-      // Read file buffer and calculate checksum
       const fileBuffer = await file.toBuffer();
       const checksum = createHash('sha256').update(fileBuffer).digest('hex');
 
-      // Generate unique filename with timestamp
       const timestamp = Date.now();
       const fileExtension = file.filename.split('.').pop();
       const storedFilename = `${timestamp}-${checksum.substring(0, 8)}.${fileExtension}`;
 
-      // Generate object key with date-based path
       const date = new Date();
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -106,7 +95,6 @@ export class TestFilesService {
 
       const bucketName = 'test-archives';
 
-      // Upload to MinIO
       const uploadResult = await this.minioService.uploadFile(
         fileBuffer,
         objectKey,
@@ -117,7 +105,6 @@ export class TestFilesService {
         },
       );
 
-      // Create metadata in database
       const testFile = await this.testFilesRepository.create({
         testId: uploadDto.testId,
         fileType: uploadDto.fileType,
@@ -139,9 +126,6 @@ export class TestFilesService {
     }
   }
 
-  /**
-   * Download a file from MinIO
-   */
   async downloadFile(id: string): Promise<{ stream: Readable; metadata: any }> {
     const testFile = await this.findOne(id);
 
@@ -164,9 +148,6 @@ export class TestFilesService {
     }
   }
 
-  /**
-   * Get a presigned URL for temporary file access
-   */
   async getPresignedUrl(id: string, expirySeconds: number = 3600): Promise<string> {
     const testFile = await this.findOne(id);
 
@@ -178,18 +159,14 @@ export class TestFilesService {
   }
 
   async remove(id: string) {
-    // Verify file exists
     const testFile = await this.findOne(id);
 
     try {
-      // Delete from MinIO first
       await this.minioService.deleteFile(testFile.objectKey, testFile.bucketName);
     } catch (error) {
-      // Log error but continue with database deletion
       console.error(`Failed to delete file from MinIO: ${error}`);
     }
 
-    // Delete from database
     await this.testFilesRepository.delete(id);
 
     return { message: `Test file with ID ${id} has been deleted` };

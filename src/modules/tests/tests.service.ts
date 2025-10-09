@@ -16,17 +16,14 @@ export class TestsService {
   ) {}
 
   async create(createTestDto: CreateTestDto, userId: string) {
-    // Verify category exists and get schema
     const category = await this.categoriesService.findOne(createTestDto.categoryId);
 
-    // Validate commonData against baseSchema
     const commonDataValidation = this.schemaValidationService.validateCommonData(
       createTestDto.commonData,
       category.baseSchema as BaseSchema,
     );
     this.schemaValidationService.validateOrThrow(commonDataValidation, 'commonData');
 
-    // Validate customData against customFieldsSchema
     const customData = createTestDto.customData || {};
     const customDataValidation = this.schemaValidationService.validateCustomData(
       customData,
@@ -62,21 +59,17 @@ export class TestsService {
   }
 
   async findByCategory(categoryId: string) {
-    // Verify category exists
     await this.categoriesService.findOne(categoryId);
 
     return this.testsRepository.findByCategory(categoryId);
   }
 
   async update(id: string, updateTestDto: UpdateTestDto, userId: string) {
-    // Verify test exists
     const test = await this.findOne(id);
 
-    // Determine which category schema to use
     const categoryId = updateTestDto.categoryId || test.categoryId;
     const category = await this.categoriesService.findOne(categoryId);
 
-    // Validate commonData if provided
     if (updateTestDto.commonData) {
       const commonDataValidation = this.schemaValidationService.validateCommonData(
         updateTestDto.commonData,
@@ -85,7 +78,6 @@ export class TestsService {
       this.schemaValidationService.validateOrThrow(commonDataValidation, 'commonData');
     }
 
-    // Validate customData if provided
     if (updateTestDto.customData !== undefined) {
       const customDataValidation = this.schemaValidationService.validateCustomData(
         updateTestDto.customData,
@@ -99,7 +91,6 @@ export class TestsService {
       updatedBy: userId,
     };
 
-    // Set completedAt if status is being changed to 'completed'
     if (updateTestDto.status === 'completed') {
       updateData.completedAt = new Date();
     }
@@ -108,7 +99,6 @@ export class TestsService {
   }
 
   async remove(id: string) {
-    // Verify test exists
     await this.findOne(id);
 
     await this.testsRepository.delete(id);

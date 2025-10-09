@@ -11,7 +11,6 @@ export const CurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): CurrentUserData => {
     const request = ctx.switchToHttp().getRequest()
 
-    // Extract user data from headers as set by the AuthGuard
     const userId = request.headers['x-user-id'] as string
     const sessionId = request.headers['x-session-id'] as string
     const role = request.headers['x-user-role'] as UserRole

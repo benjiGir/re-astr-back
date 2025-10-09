@@ -43,10 +43,8 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    // Verify user exists
     await this.findOne(id);
 
-    // If email is being changed, check if it's already taken
     if (updateUserDto.email) {
       const existingUser = await this.usersRepository.findByEmail(
         updateUserDto.email,
@@ -69,7 +67,6 @@ export class UsersService {
   }
 
   async assignRole(id: string, assignRoleDto: AssignRoleDto) {
-    // Verify user exists
     await this.findOne(id);
 
     const updatedUser = await this.usersRepository.assignRole(
@@ -85,7 +82,6 @@ export class UsersService {
   }
 
   async remove(id: string) {
-    // Verify user exists
     await this.findOne(id);
 
     await this.usersRepository.delete(id);

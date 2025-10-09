@@ -5,10 +5,10 @@ import type { UserRole } from '@database/schema/users.schema';
  * master > archivist > contributor > user
  */
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
-  master: 4, // Super admin - all permissions
-  archivist: 3, // Archive manager - manage all archives
-  contributor: 2, // Can create and edit content
-  user: 1, // Read-only access
+  master: 4,
+  archivist: 3,
+  contributor: 2,
+  user: 1,
 };
 
 /**

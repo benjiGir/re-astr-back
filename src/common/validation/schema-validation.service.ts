@@ -11,9 +11,6 @@ import type {
 
 @Injectable()
 export class SchemaValidationService {
-  /**
-   * Validate commonData against the category's baseSchema
-   */
   validateCommonData(data: Record<string, any>, baseSchema: BaseSchema): ValidationResult {
     try {
       const zodSchema = this.buildZodSchemaFromFields(baseSchema.fields);
@@ -31,14 +28,10 @@ export class SchemaValidationService {
     }
   }
 
-  /**
-   * Validate customData against the category's customFieldsSchema
-   */
   validateCustomData(
     data: Record<string, any>,
     customFieldsSchema: CustomFieldsSchema,
   ): ValidationResult {
-    // If custom fields are not allowed, data must be empty
     if (!customFieldsSchema.allowCustomFields) {
       if (Object.keys(data).length > 0) {
         return {
@@ -54,7 +47,6 @@ export class SchemaValidationService {
       return { valid: true, errors: [] };
     }
 
-    // Check max custom fields limit
     if (
       customFieldsSchema.maxCustomFields &&
       Object.keys(data).length > customFieldsSchema.maxCustomFields
@@ -70,7 +62,6 @@ export class SchemaValidationService {
       };
     }
 
-    // Validate predefined custom fields
     if (customFieldsSchema.fields.length > 0) {
       try {
         const zodSchema = this.buildZodSchemaFromFields(customFieldsSchema.fields);
@@ -87,7 +78,6 @@ export class SchemaValidationService {
       }
     }
 
-    // Validate allowed types for ad-hoc custom fields
     if (customFieldsSchema.allowedTypes && customFieldsSchema.allowedTypes.length > 0) {
       const errors: ValidationError[] = [];
 
@@ -110,21 +100,16 @@ export class SchemaValidationService {
     return { valid: true, errors: [] };
   }
 
-  /**
-   * Build a Zod schema from an array of field definitions
-   */
   private buildZodSchemaFromFields(fields: FieldDefinition[]): ZodSchema {
     const shape: Record<string, ZodSchema> = {};
 
     for (const field of fields) {
       let fieldSchema = this.getZodSchemaForType(field.type);
 
-      // Apply validation rules
       if (field.validation) {
         fieldSchema = this.applyValidationRules(fieldSchema, field.validation, field.type);
       }
 
-      // Handle required vs optional
       if (field.required) {
         shape[field.key] = fieldSchema;
       } else {
@@ -135,9 +120,6 @@ export class SchemaValidationService {
     return z.object(shape);
   }
 
-  /**
-   * Get base Zod schema for a field type
-   */
   private getZodSchemaForType(type: FieldType): ZodSchema {
     switch (type) {
       case 'text':
@@ -157,9 +139,6 @@ export class SchemaValidationService {
     }
   }
 
-  /**
-   * Apply validation rules to a Zod schema
-   */
   private applyValidationRules(
     schema: ZodSchema,
     validation: any,
@@ -194,20 +173,14 @@ export class SchemaValidationService {
     return result;
   }
 
-  /**
-   * Detect the type of a value
-   */
   private detectValueType(value: any): FieldType {
     if (typeof value === 'string') {
-      // Check if it's a date
       if (!isNaN(Date.parse(value))) {
         return 'date';
       }
-      // Check if it's an email
       if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
         return 'email';
       }
-      // Check if it's a URL
       try {
         new URL(value);
         return 'url';
@@ -222,9 +195,6 @@ export class SchemaValidationService {
     return 'text';
   }
 
-  /**
-   * Format Zod errors into our ValidationError format
-   */
   private formatZodErrors(error: ZodError): ValidationError[] {
     return error.issues.map((err) => ({
       field: err.path.join('.'),
@@ -233,9 +203,6 @@ export class SchemaValidationService {
     }));
   }
 
-  /**
-   * Throw BadRequestException if validation fails
-   */
   validateOrThrow(result: ValidationResult, context: string): void {
     if (!result.valid) {
       const errorMessages = result.errors

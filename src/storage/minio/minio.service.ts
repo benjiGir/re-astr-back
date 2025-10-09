@@ -37,9 +37,6 @@ export class MinioService implements OnModuleInit {
     this.logger.log('MinIO client initialized successfully');
   }
 
-  /**
-   * Ensure a bucket exists, create it if it doesn't
-   */
   async ensureBucketExists(bucketName: string): Promise<void> {
     try {
       const exists = await this.minioClient.bucketExists(bucketName);
@@ -53,9 +50,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Upload a file to MinIO
-   */
   async uploadFile(
     file: Buffer | Readable,
     fileName: string,
@@ -70,7 +64,6 @@ export class MinioService implements OnModuleInit {
       let etag: string;
 
       if (Buffer.isBuffer(file)) {
-        // For Buffer: putObject(bucket, name, buffer, size, metadata)
         const result = await this.minioClient.putObject(
           bucketName,
           fileName,
@@ -80,8 +73,6 @@ export class MinioService implements OnModuleInit {
         );
         etag = result.etag;
       } else {
-        // For Stream: putObject(bucket, name, stream, size, metadata)
-        // Size can be omitted for streams (auto-detected)
         const result = await this.minioClient.putObject(
           bucketName,
           fileName,
@@ -106,9 +97,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Download a file from MinIO
-   */
   async downloadFile(
     fileName: string,
     bucketName: string = this.minioConfig.defaultBucket,
@@ -122,9 +110,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Get file as buffer
-   */
   async getFileBuffer(
     fileName: string,
     bucketName: string = this.minioConfig.defaultBucket,
@@ -139,9 +124,6 @@ export class MinioService implements OnModuleInit {
     });
   }
 
-  /**
-   * Delete a file from MinIO
-   */
   async deleteFile(
     fileName: string,
     bucketName: string = this.minioConfig.defaultBucket,
@@ -155,9 +137,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * List files in a bucket
-   */
   async listFiles(
     bucketName: string = this.minioConfig.defaultBucket,
     prefix?: string,
@@ -181,9 +160,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Get file metadata
-   */
   async getFileMetadata(
     fileName: string,
     bucketName: string = this.minioConfig.defaultBucket,
@@ -203,9 +179,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Generate a presigned URL for temporary file access
-   */
   async getPresignedUrl(
     fileName: string,
     expirySeconds: number = 3600,
@@ -223,9 +196,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Check if a file exists
-   */
   async fileExists(
     fileName: string,
     bucketName: string = this.minioConfig.defaultBucket,
@@ -238,9 +208,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Copy a file within MinIO
-   */
   async copyFile(
     sourceFileName: string,
     destFileName: string,
@@ -265,9 +232,6 @@ export class MinioService implements OnModuleInit {
     }
   }
 
-  /**
-   * Get the MinIO client instance for advanced operations
-   */
   getClient(): Minio.Client {
     return this.minioClient;
   }

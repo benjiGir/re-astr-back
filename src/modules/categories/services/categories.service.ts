@@ -39,7 +39,6 @@ export class CategoriesService {
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {
-    // Verify category exists
     await this.findOne(id);
 
     return this.categoriesRepository.update(id, {
@@ -51,7 +50,6 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    // Verify category exists
     await this.findOne(id);
 
     await this.categoriesRepository.delete(id);

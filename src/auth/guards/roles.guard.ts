@@ -22,7 +22,6 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    // If no roles are required, allow access
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
@@ -34,7 +33,6 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User role not found');
     }
 
-    // Check if user has any of the required roles (hierarchically)
     const hasPermission = hasAnyRole(userRole, requiredRoles);
 
     if (!hasPermission) {

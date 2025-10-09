@@ -105,23 +105,17 @@ export class AuthController {
     await this.handleAuthRequest(request, reply, '/reset-password', body)
   }
 
-  /**
-   * Méthode générique pour gérer les requêtes d'authentification
-   */
   private async handleAuthRequest(
     request: any,
     reply: any,
     authPath: string,
     body?: any,
   ): Promise<void> {
-    // Vérifier si le service d'authentification est prêt
     if (!this.authService.auth) {
       return this.responseHandler.handleServiceNotReady(reply)
     }
 
     try {
-      // Créer un objet proxy qui simule une requête Fastify
-      // avec l'URL et le body modifiés pour Better Auth
       const modifiedRequest = {
         url: authPath,
         method: request.method,
@@ -132,16 +126,11 @@ export class AuthController {
         protocol: request.protocol,
       }
 
-      // Convertir la requête en format Better Auth
       const betterAuthRequest = this.requestConverter.convertFastifyToBetterAuth(modifiedRequest as any)
-
-      // Appeler Better Auth
       const response = await this.authService.auth.handler(betterAuthRequest)
 
-      // Gérer la réponse
       await this.responseHandler.handleBetterAuthResponse(response, reply)
     } catch (error) {
-      // Gérer les erreurs
       this.responseHandler.handleAuthError(error, reply, {
         url: authPath,
         method: request.method,
