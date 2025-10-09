@@ -2,49 +2,51 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../auth.service';
 import { AppConfigService } from '@config/app/config.service';
 import { DatabaseConfigService } from '@config/database/config.service';
-import { mockSessionData, mockInvalidSessionData } from './auth.service.mock';
+import { mockSessionData } from './auth.service.mock';
 
-// Mock better-auth module
 jest.mock('better-auth', () => ({
   betterAuth: jest.fn(() => ({
-    api: {
-      getSession: jest.fn(),
-    },
+    handler: jest.fn(),
   })),
 }));
 
-// Mock better-auth adapters
 jest.mock('better-auth/adapters/drizzle', () => ({
   drizzleAdapter: jest.fn(() => ({})),
 }));
 
-// Mock drizzle-orm
 jest.mock('drizzle-orm/postgres-js', () => ({
   drizzle: jest.fn(() => ({})),
 }));
 
-// Mock postgres
 jest.mock('postgres', () => jest.fn(() => ({})));
 
 describe('AuthService', () => {
   let service: AuthService;
   let appConfigService: AppConfigService;
   let databaseConfigService: DatabaseConfigService;
+  let mockDb: any;
 
   const mockAppConfigService = {
     betterAuthSecret: 'test-secret-key',
     baseUrl: 'http://localhost:3000',
+    emailPasswordEnabled: true,
+    emailPasswordRequireEmailVerification: false,
+    sessionExpiresIn: 604800,
+    sessionUpdateAge: 86400,
   };
 
   const mockDatabaseConfigService = {
     url: 'postgresql://test:test@localhost:5432/testdb',
   };
 
-  const mockAuthApi = {
-    getSession: jest.fn(),
-  };
-
   beforeEach(async () => {
+    mockDb = {
+      select: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -63,12 +65,8 @@ describe('AuthService', () => {
     appConfigService = module.get<AppConfigService>(AppConfigService);
     databaseConfigService = module.get<DatabaseConfigService>(DatabaseConfigService);
 
-    // Mock the auth.api after initialization
-    service.auth = {
-      api: mockAuthApi,
-    } as any;
+    service['db'] = mockDb;
 
-    // Reset all mocks before each test
     jest.clearAllMocks();
   });
 
@@ -78,100 +76,128 @@ describe('AuthService', () => {
 
   describe('onModuleInit', () => {
     it('should initialize better-auth with correct configuration', () => {
-      // Arrange
       const onModuleInitSpy = jest.spyOn(service, 'onModuleInit');
 
-      // Act
       service.onModuleInit();
 
-      // Assert
       expect(onModuleInitSpy).toHaveBeenCalled();
       expect(service.auth).toBeDefined();
     });
 
     it('should use configuration from AppConfigService', () => {
-      // Act
       service.onModuleInit();
 
-      // Assert
       expect(service.auth).toBeDefined();
       expect(appConfigService.betterAuthSecret).toBe('test-secret-key');
       expect(appConfigService.baseUrl).toBe('http://localhost:3000');
     });
 
     it('should use database URL from DatabaseConfigService', () => {
-      // Act
       service.onModuleInit();
 
-      // Assert
       expect(service.auth).toBeDefined();
       expect(databaseConfigService.url).toBe('postgresql://test:test@localhost:5432/testdb');
     });
   });
 
   describe('verifySession', () => {
-    it('should verify a valid session successfully', async () => {
-      // Arrange
-      const sessionToken = 'valid-session-token';
-      jest.spyOn(mockAuthApi, 'getSession').mockResolvedValue(mockSessionData);
+    it('should return null when sessionToken is empty', async () => {
+      const result = await service.verifySession('');
 
-      // Act
-      const result = await service.verifySession(sessionToken);
-
-      // Assert
-      expect(mockAuthApi.getSession).toHaveBeenCalled();
-      expect(mockAuthApi.getSession).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: {
-            cookie: `better-auth.session_token=${sessionToken}`,
-          },
-          url: '/api/auth/get-session',
-          method: 'GET',
-        }),
-      );
-      expect(result).toEqual(mockSessionData);
+      expect(result).toBeNull();
+      expect(mockDb.select).not.toHaveBeenCalled();
     });
 
-    it('should return session data when token is valid', async () => {
-      // Arrange
-      const sessionToken = 'valid-token';
-      jest.spyOn(mockAuthApi, 'getSession').mockResolvedValue(mockSessionData);
+    it('should return null when sessionToken is null', async () => {
+      const result = await service.verifySession(null as any);
 
-      // Act
+      expect(result).toBeNull();
+      expect(mockDb.select).not.toHaveBeenCalled();
+    });
+
+    it('should verify a valid session successfully', async () => {
+      const sessionToken = 'valid-session-token';
+
+      mockDb.limit
+        .mockResolvedValueOnce([mockSessionData.session])
+        .mockResolvedValueOnce([mockSessionData.user]);
+
       const result = await service.verifySession(sessionToken);
 
-      // Assert
-      expect(result).toEqual(mockSessionData);
+      expect(mockDb.select).toHaveBeenCalledTimes(2);
+      expect(mockDb.from).toHaveBeenCalledTimes(2);
+      expect(mockDb.where).toHaveBeenCalledTimes(2);
+      expect(mockDb.limit).toHaveBeenCalledTimes(2);
+
+      expect(result).toEqual({
+        session: mockSessionData.session,
+        user: mockSessionData.user,
+      });
+    });
+
+    it('should return session data with correct structure', async () => {
+      const sessionToken = 'valid-token';
+
+      mockDb.limit
+        .mockResolvedValueOnce([mockSessionData.session])
+        .mockResolvedValueOnce([mockSessionData.user]);
+
+      const result = await service.verifySession(sessionToken);
+
+      expect(result).toBeDefined();
+      expect(result?.session).toEqual(mockSessionData.session);
+      expect(result?.user).toEqual(mockSessionData.user);
       expect(result?.session.userId).toBe('user-123');
       expect(result?.user.email).toBe('test@example.com');
     });
 
-    it('should return null when session is invalid', async () => {
-      // Arrange
+    it('should return null when session is not found', async () => {
       const sessionToken = 'invalid-session-token';
-      jest.spyOn(mockAuthApi, 'getSession').mockResolvedValue(mockInvalidSessionData);
 
-      // Act
+      mockDb.limit.mockResolvedValueOnce([]);
+
       const result = await service.verifySession(sessionToken);
 
-      // Assert
-      expect(mockAuthApi.getSession).toHaveBeenCalled();
+      expect(mockDb.select).toHaveBeenCalledTimes(1);
       expect(result).toBeNull();
     });
 
-    it('should return null when session verification throws an error', async () => {
-      // Arrange
-      const sessionToken = 'error-token';
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockAuthApi.getSession.mockImplementation(() => {
-        throw new Error('Session error');
-      });
+    it('should return null when session is expired', async () => {
+      const sessionToken = 'expired-token';
+      const expiredSession = {
+        ...mockSessionData.session,
+        expiresAt: new Date('2020-01-01'),
+      };
 
-      // Act
+      mockDb.limit.mockResolvedValueOnce([expiredSession]);
+
       const result = await service.verifySession(sessionToken);
 
-      // Assert
-      expect(mockAuthApi.getSession).toHaveBeenCalled();
+      expect(mockDb.select).toHaveBeenCalledTimes(1);
+      expect(result).toBeNull();
+    });
+
+    it('should return null when user is not found', async () => {
+      const sessionToken = 'valid-token-no-user';
+
+      mockDb.limit
+        .mockResolvedValueOnce([mockSessionData.session])
+        .mockResolvedValueOnce([]);
+
+      const result = await service.verifySession(sessionToken);
+
+      expect(mockDb.select).toHaveBeenCalledTimes(2);
+      expect(result).toBeNull();
+    });
+
+    it('should return null and log error when database query fails', async () => {
+      const sessionToken = 'error-token';
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      mockDb.limit.mockRejectedValueOnce(new Error('Database error'));
+
+      const result = await service.verifySession(sessionToken);
+
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Session verification error:',
         expect.any(Error),
@@ -181,22 +207,18 @@ describe('AuthService', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should format cookie header correctly', async () => {
-      // Arrange
-      const sessionToken = 'my-session-token';
-      jest.spyOn(mockAuthApi, 'getSession').mockResolvedValue(mockSessionData);
+    it('should accept valid session token format', async () => {
+      const sessionToken = 'my-session-token-abc123';
 
-      // Act
-      await service.verifySession(sessionToken);
+      mockDb.limit
+        .mockResolvedValueOnce([mockSessionData.session])
+        .mockResolvedValueOnce([mockSessionData.user]);
 
-      // Assert
-      expect(mockAuthApi.getSession).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: {
-            cookie: 'better-auth.session_token=my-session-token',
-          },
-        }),
-      );
+      const result = await service.verifySession(sessionToken);
+
+      expect(result).toBeDefined();
+      expect(result?.session).toBeDefined();
+      expect(result?.user).toBeDefined();
     });
   });
 });
