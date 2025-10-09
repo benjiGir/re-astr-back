@@ -1,54 +1,54 @@
 # RE-ASTR Server
 
-Serveur backend pour l'application RE-ASTR (Automotive Software Testing Results), un système de gestion de tests et de résultats pour composants électroniques.
+Backend server for the RE-ASTR application (Automotive Software Testing Results), a test management and results system for electronic components.
 
-## 📋 Table des matières
+## 📋 Table of Contents
 
-- [Stack Technique](#-stack-technique)
-- [Prérequis](#-prérequis)
+- [Tech Stack](#-tech-stack)
+- [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Configuration](#-configuration)
-- [Base de données](#️-base-de-données)
-- [Démarrage](#-démarrage)
-- [Structure du projet](#-structure-du-projet)
-- [Scripts disponibles](#-scripts-disponibles)
-- [Tests](#-tests)
-- [Documentation API](#-documentation-api)
+- [Database](#️-database)
+- [Getting Started](#-getting-started)
+- [Project Structure](#-project-structure)
+- [Available Scripts](#-available-scripts)
+- [Testing](#-testing)
+- [API Documentation](#-api-documentation)
 - [Modules](#-modules)
 
-## 🚀 Stack Technique
+## 🚀 Tech Stack
 
 - **Framework**: [NestJS](https://nestjs.com/) v11
-- **HTTP Adapter**: [Fastify](https://fastify.dev/) v5 (au lieu d'Express pour de meilleures performances)
-- **Base de données**: PostgreSQL
+- **HTTP Adapter**: [Fastify](https://fastify.dev/) v5 (instead of Express for better performance)
+- **Database**: PostgreSQL
 - **ORM**: [Drizzle ORM](https://orm.drizzle.team/) v0.44
-- **Authentification**: [Better Auth](https://www.better-auth.com/) v1.3
+- **Authentication**: [Better Auth](https://www.better-auth.com/) v1.3
 - **Validation**: class-validator + class-transformer + Zod
-- **Documentation API**: Swagger/OpenAPI
-- **Stockage de fichiers**: MinIO (S3-compatible)
+- **API Documentation**: Swagger/OpenAPI
+- **File Storage**: MinIO (S3-compatible)
 - **Language**: TypeScript 5.9
 - **Package Manager**: pnpm
-- **Tests**: Jest
+- **Testing**: Jest
 - **Code Quality**: ESLint, Prettier, Biome
 
-## 📦 Prérequis
+## 📦 Prerequisites
 
-Avant de commencer, assurez-vous d'avoir installé :
+Before you begin, ensure you have installed:
 
 - **Node.js** >= 22.0.0
-- **pnpm** >= 8.0.0 (gestionnaire de packages)
-- **PostgreSQL** >= 14 (ou Docker pour l'utiliser via docker-compose)
-- **Docker** (optionnel, pour MinIO)
+- **pnpm** >= 8.0.0 (package manager)
+- **PostgreSQL** >= 14 (or Docker to use it via docker-compose)
+- **Docker** (optional, for MinIO)
 
-### Installation de pnpm
+### Installing pnpm
 
-Si vous n'avez pas pnpm installé :
+If you don't have pnpm installed:
 
 ```bash
 npm install -g pnpm
 ```
 
-Ou via Homebrew (macOS) :
+Or via Homebrew (macOS):
 
 ```bash
 brew install pnpm
@@ -56,14 +56,14 @@ brew install pnpm
 
 ## 🔧 Installation
 
-### 1. Cloner le dépôt
+### 1. Clone the repository
 
 ```bash
 git clone <repository-url>
 cd re-astr
 ```
 
-### 2. Installer les dépendances
+### 2. Install dependencies
 
 ```bash
 pnpm install
@@ -71,35 +71,35 @@ pnpm install
 
 ## ⚙️ Configuration
 
-### 1. Créer le fichier d'environnement
+### 1. Create environment file
 
-Copiez le fichier `.env.example` et renommez-le en `.env` :
+Copy the `.env.example` file and rename it to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-### 2. Configurer les variables d'environnement
+### 2. Configure environment variables
 
-Éditez le fichier `.env` avec vos valeurs :
+Edit the `.env` file with your values:
 
 ```env
-# Base de données PostgreSQL
+# PostgreSQL Database
 DATABASE_URL="postgresql://username:password@localhost:5432/re-astr"
 
-# Better Auth - Secrets pour l'authentification
+# Better Auth - Secrets for authentication
 BETTER_AUTH_SECRET="your-secret-key-here-replace-in-production"
 COOKIE_SECRET="your-cookie-secret-key-here"
 
-# Session Configuration (optionnel - valeurs par défaut disponibles)
-AUTH_SESSION_EXPIRES="604800"    # 7 jours en secondes
-AUTH_SESSION_UPDATE_AGE="86400"  # 1 jour en secondes
+# Session Configuration (optional - default values available)
+AUTH_SESSION_EXPIRES="604800"    # 7 days in seconds
+AUTH_SESSION_UPDATE_AGE="86400"  # 1 day in seconds
 
-# Email/Password Auth (optionnel - activé par défaut)
+# Email/Password Auth (optional - enabled by default)
 AUTH_EMAIL_PASSWORD_ENABLED="true"
 AUTH_REQUIRE_EMAIL_VERIFICATION="false"
 
-# CORS (optionnel)
+# CORS (optional)
 AUTH_CORS_ORIGIN="true"
 AUTH_CORS_CREDENTIALS="true"
 
@@ -116,270 +116,270 @@ MINIO_SECRET_KEY="minioadmin"
 MINIO_DEFAULT_BUCKET="uploads"
 ```
 
-### 3. Créer la base de données PostgreSQL
+### 3. Create PostgreSQL database
 
-Si vous utilisez PostgreSQL local :
+If you're using local PostgreSQL:
 
 ```bash
-# Se connecter à PostgreSQL
+# Connect to PostgreSQL
 psql -U postgres
 
-# Créer la base de données
+# Create the database
 CREATE DATABASE "re-astr";
 
-# Créer un utilisateur (optionnel)
+# Create a user (optional)
 CREATE USER your_username WITH PASSWORD 'your_password';
 GRANT ALL PRIVILEGES ON DATABASE "re-astr" TO your_username;
 ```
 
-### 4. Démarrer MinIO (stockage de fichiers)
+### 4. Start MinIO (file storage)
 
-Le projet utilise MinIO pour le stockage de fichiers. Démarrez-le avec Docker Compose :
+The project uses MinIO for file storage. Start it with Docker Compose:
 
 ```bash
 docker-compose up -d
 ```
 
-MinIO sera accessible à :
+MinIO will be accessible at:
 - **API**: http://localhost:9000
-- **Console Web**: http://localhost:9001
+- **Web Console**: http://localhost:9001
 - **Credentials**: minioadmin / minioadmin
 
-## 🗄️ Base de données
+## 🗄️ Database
 
-Le projet utilise **Drizzle ORM** avec des migrations automatiques.
+The project uses **Drizzle ORM** with automatic migrations.
 
-### Générer les migrations
+### Generate migrations
 
-Après avoir modifié les schémas dans `/src/database/schema/` :
+After modifying schemas in `/src/database/schema/`:
 
 ```bash
 pnpm run db:generate
 ```
 
-### Appliquer les migrations
+### Apply migrations
 
-Pour appliquer les migrations sur votre base de données :
+To apply migrations to your database:
 
 ```bash
 pnpm run db:migrate
 ```
 
-### Push direct (développement uniquement)
+### Direct push (development only)
 
-Pour synchroniser directement le schéma sans créer de fichier de migration :
+To directly synchronize the schema without creating a migration file:
 
 ```bash
 pnpm run db:push
 ```
 
-### Drizzle Studio (interface graphique)
+### Drizzle Studio (graphical interface)
 
-Pour explorer votre base de données via une interface web :
+To explore your database via a web interface:
 
 ```bash
 pnpm run db:studio
 ```
 
-Drizzle Studio sera accessible à : http://localhost:4983
+Drizzle Studio will be accessible at: http://localhost:4983
 
-## 🚀 Démarrage
+## 🚀 Getting Started
 
-### Mode développement (recommandé)
+### Development mode (recommended)
 
-Lance le serveur avec rechargement automatique (watch mode) :
+Start the server with automatic reload (watch mode):
 
 ```bash
 pnpm run start:dev
 ```
 
-Le serveur démarrera sur **http://localhost:3000**
+The server will start on **http://localhost:3000**
 
-### Mode production
+### Production mode
 
 ```bash
-# 1. Builder l'application
+# 1. Build the application
 pnpm run build
 
-# 2. Démarrer en mode production
+# 2. Start in production mode
 pnpm run start:prod
 ```
 
-### Mode debug
+### Debug mode
 
-Pour déboguer avec le debugger Node.js :
+To debug with the Node.js debugger:
 
 ```bash
 pnpm run start:debug
 ```
 
-## 📁 Structure du projet
+## 📁 Project Structure
 
 ```
 re-astr/
 ├── src/
-│   ├── modules/           # Modules fonctionnels (feature modules)
-│   │   ├── categories/    # Gestion des catégories de tests
-│   │   ├── tests/         # Gestion des tests
-│   │   └── users/         # Gestion des utilisateurs
-│   ├── auth/              # Module d'authentification (Better Auth)
-│   ├── database/          # Configuration Drizzle ORM
-│   │   └── schema/        # Schémas de base de données
-│   ├── common/            # Utilitaires partagés
-│   ├── config/            # Configuration de l'application
-│   ├── utils/             # Fonctions utilitaires
-│   ├── app.module.ts      # Module racine
-│   └── main.ts            # Point d'entrée (Fastify setup)
-├── test/                  # Tests E2E
-├── drizzle/               # Migrations générées
-├── dist/                  # Build de production
-├── .env                   # Variables d'environnement (non versionné)
-├── .env.example           # Template de configuration
-├── docker-compose.yml     # Configuration Docker (MinIO)
-├── drizzle.config.ts      # Configuration Drizzle
-├── jest.config.ts         # Configuration Jest
-├── tsconfig.json          # Configuration TypeScript
-└── package.json           # Dépendances et scripts
+│   ├── modules/           # Feature modules
+│   │   ├── categories/    # Test categories management
+│   │   ├── tests/         # Tests management
+│   │   └── users/         # Users management
+│   ├── auth/              # Authentication module (Better Auth)
+│   ├── database/          # Drizzle ORM configuration
+│   │   └── schema/        # Database schemas
+│   ├── common/            # Shared utilities
+│   ├── config/            # Application configuration
+│   ├── utils/             # Utility functions
+│   ├── app.module.ts      # Root module
+│   └── main.ts            # Entry point (Fastify setup)
+├── test/                  # E2E tests
+├── drizzle/               # Generated migrations
+├── dist/                  # Production build
+├── .env                   # Environment variables (not versioned)
+├── .env.example           # Configuration template
+├── docker-compose.yml     # Docker configuration (MinIO)
+├── drizzle.config.ts      # Drizzle configuration
+├── jest.config.ts         # Jest configuration
+├── tsconfig.json          # TypeScript configuration
+└── package.json           # Dependencies and scripts
 ```
 
-## 📜 Scripts disponibles
+## 📜 Available Scripts
 
-### Développement
+### Development
 
 ```bash
-pnpm run start:dev     # Démarrer en mode watch (rechargement automatique)
-pnpm run start         # Démarrer normalement
-pnpm run start:debug   # Démarrer avec debugger
-pnpm run start:prod    # Démarrer en production
+pnpm run start:dev     # Start in watch mode (automatic reload)
+pnpm run start         # Start normally
+pnpm run start:debug   # Start with debugger
+pnpm run start:prod    # Start in production
 ```
 
 ### Build
 
 ```bash
-pnpm run build         # Compiler le projet TypeScript
+pnpm run build         # Compile TypeScript project
 ```
 
-### Base de données
+### Database
 
 ```bash
-pnpm run db:generate   # Générer les migrations Drizzle
-pnpm run db:migrate    # Appliquer les migrations
-pnpm run db:push       # Push direct du schéma (dev only)
-pnpm run db:studio     # Ouvrir Drizzle Studio (GUI)
+pnpm run db:generate   # Generate Drizzle migrations
+pnpm run db:migrate    # Apply migrations
+pnpm run db:push       # Direct schema push (dev only)
+pnpm run db:studio     # Open Drizzle Studio (GUI)
 ```
 
-### Tests
+### Testing
 
 ```bash
-pnpm run test          # Exécuter les tests unitaires
-pnpm run test:watch    # Tests en mode watch
-pnpm run test:cov      # Tests avec couverture de code
-pnpm run test:debug    # Tests avec debugger
-pnpm run test:e2e      # Tests end-to-end
+pnpm run test          # Run unit tests
+pnpm run test:watch    # Tests in watch mode
+pnpm run test:cov      # Tests with code coverage
+pnpm run test:debug    # Tests with debugger
+pnpm run test:e2e      # End-to-end tests
 ```
 
 ### Code Quality
 
 ```bash
-pnpm run lint          # Linter avec ESLint (auto-fix)
-pnpm run format        # Formatter avec Prettier
+pnpm run lint          # Lint with ESLint (auto-fix)
+pnpm run format        # Format with Prettier
 ```
 
-## 🧪 Tests
+## 🧪 Testing
 
-Le projet utilise **Jest** pour les tests unitaires et E2E.
+The project uses **Jest** for unit and E2E tests.
 
-### Lancer tous les tests
+### Run all tests
 
 ```bash
 pnpm test
 ```
 
-### Tests en mode watch (développement)
+### Tests in watch mode (development)
 
 ```bash
 pnpm test:watch
 ```
 
-### Tests avec couverture de code
+### Tests with code coverage
 
 ```bash
 pnpm test:cov
 ```
 
-Le rapport de couverture sera généré dans `/coverage/`.
+The coverage report will be generated in `/coverage/`.
 
-### Tests E2E
+### E2E Tests
 
 ```bash
 pnpm test:e2e
 ```
 
-### Convention de nommage
+### Naming conventions
 
-- Tests unitaires : `*.spec.ts` (à côté du fichier testé)
-- Tests E2E : dans le dossier `/test/`
-- Mock data : `*.mock.ts`
+- Unit tests: `*.spec.ts` (next to the tested file)
+- E2E tests: in the `/test/` folder
+- Mock data: `*.mock.ts`
 
-## 📚 Documentation API
+## 📚 API Documentation
 
-La documentation interactive de l'API est générée automatiquement avec **Swagger/OpenAPI**.
+The interactive API documentation is automatically generated with **Swagger/OpenAPI**.
 
-Une fois le serveur démarré, accédez à :
+Once the server is started, access:
 
 **http://localhost:3000/api**
 
-Vous y trouverez :
-- Liste complète des endpoints
-- Schémas de requêtes/réponses
-- Possibilité de tester directement les API
+You'll find:
+- Complete list of endpoints
+- Request/response schemas
+- Ability to test APIs directly
 
 ## 🏗️ Modules
 
-Le projet est organisé en modules NestJS :
+The project is organized into NestJS modules:
 
-### `categories` - Gestion des catégories
+### `categories` - Categories Management
 
-Gestion des catégories de tests avec schémas de validation personnalisés (Zod).
+Management of test categories with custom validation schemas (Zod).
 
-**Endpoints principaux** :
-- `GET /categories` - Liste toutes les catégories
-- `GET /categories/:id` - Récupérer une catégorie
-- `POST /categories` - Créer une catégorie
-- `PATCH /categories/:id` - Mettre à jour une catégorie
-- `DELETE /categories/:id` - Supprimer une catégorie
+**Main endpoints**:
+- `GET /categories` - List all categories
+- `GET /categories/:id` - Get a category
+- `POST /categories` - Create a category
+- `PATCH /categories/:id` - Update a category
+- `DELETE /categories/:id` - Delete a category
 
-### `tests` - Gestion des tests
+### `tests` - Tests Management
 
-Gestion des tests avec relations vers les catégories et fichiers.
+Management of tests with relationships to categories and files.
 
-**Endpoints principaux** :
-- `GET /tests` - Liste tous les tests
-- `GET /tests/:id` - Récupérer un test
-- `POST /tests` - Créer un test
-- `PATCH /tests/:id` - Mettre à jour un test
-- `DELETE /tests/:id` - Supprimer un test
+**Main endpoints**:
+- `GET /tests` - List all tests
+- `GET /tests/:id` - Get a test
+- `POST /tests` - Create a test
+- `PATCH /tests/:id` - Update a test
+- `DELETE /tests/:id` - Delete a test
 
-### `users` - Gestion des utilisateurs
+### `users` - Users Management
 
-Gestion des utilisateurs avec système de rôles (RBAC).
+User management with role-based system (RBAC).
 
-**Endpoints principaux** :
-- `GET /users` - Liste tous les utilisateurs
-- `GET /users/:id` - Récupérer un utilisateur
-- `PATCH /users/:id` - Mettre à jour un utilisateur
-- `DELETE /users/:id` - Supprimer un utilisateur
+**Main endpoints**:
+- `GET /users` - List all users
+- `GET /users/:id` - Get a user
+- `PATCH /users/:id` - Update a user
+- `DELETE /users/:id` - Delete a user
 
-### `auth` - Authentification
+### `auth` - Authentication
 
-Module d'authentification basé sur **Better Auth** avec :
-- Inscription et connexion par email/password
-- Gestion de sessions
-- Protection des routes via guards
-- Système de rôles (Admin, User, Viewer)
+Authentication module based on **Better Auth** with:
+- Email/password registration and login
+- Session management
+- Route protection via guards
+- Role system (Admin, User, Viewer)
 
-**Endpoints principaux** :
-- `POST /api/auth/sign-up` - Inscription
-- `POST /api/auth/sign-in` - Connexion
-- `POST /api/auth/sign-out` - Déconnexion
-- `GET /api/auth/session` - Session actuelle
+**Main endpoints**:
+- `POST /api/auth/sign-up` - Registration
+- `POST /api/auth/sign-in` - Login
+- `POST /api/auth/sign-out` - Logout
+- `GET /api/auth/session` - Current session
