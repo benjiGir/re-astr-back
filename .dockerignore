@@ -1,0 +1,71 @@
+# Dependencies
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Testing
+coverage
+.nyc_output
+*.log
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE & OS
+.vscode
+.idea
+.DS_Store
+*.swp
+*.swo
+*~
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+.github
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# Documentation
+README.md
+CONTRIBUTING.md
+LICENSE
+*.md
+
+# CI/CD
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+
+# Development
+.editorconfig
+.prettierrc
+.eslintrc.js
+jest.config.ts
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+drizzle
+
+# Temporary files
+tmp
+temp
+*.tmp

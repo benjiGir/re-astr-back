@@ -17,13 +17,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - re-astr-network
 
   minio:
     image: minio/minio:latest
     container_name: re-astr-minio
     ports:
-      - "9000:9000"  # API
-      - "9001:9001"  # Console Web UI
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -35,9 +37,43 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - re-astr-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: re-astr-app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/re-astr
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-in-production}
+      COOKIE_SECRET: ${COOKIE_SECRET:-change-me-in-production}
+      BASE_URL: http://localhost:3000
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_DEFAULT_BUCKET: uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - re-astr-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
     driver: local
   minio_data:
     driver: local
+
+networks:
+  re-astr-network:
+    driver: bridge

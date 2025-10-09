@@ -185,6 +185,41 @@ Drizzle Studio will be accessible at: http://localhost:4983
 
 ## 🚀 Getting Started
 
+### Option 1: Docker (Recommended for quick start)
+
+**Development (dependencies only):**
+```bash
+# Start PostgreSQL + MinIO
+./docker-helper.sh dev
+
+# Or manually:
+docker-compose -f docker-compose.dev.yml up -d
+
+# Run app locally with hot-reload
+pnpm run start:dev
+```
+
+**Production (full stack):**
+```bash
+# Build and start everything
+./docker-helper.sh up
+
+# Or manually:
+docker-compose up -d
+
+# View logs
+./docker-helper.sh logs
+```
+
+Access:
+- **API**: http://localhost:3000
+- **Swagger**: http://localhost:3000/api
+- **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
+
+See [DOCKER.md](./DOCKER.md) for detailed Docker documentation.
+
+### Option 2: Local Development
+
 ### Development mode (recommended)
 
 Start the server with automatic reload (watch mode):
