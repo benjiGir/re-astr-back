@@ -216,8 +216,6 @@ Access:
 - **Swagger**: http://localhost:3000/api
 - **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
 
-See [DOCKER.md](./DOCKER.md) for detailed Docker documentation.
-
 ### Option 2: Local Development
 
 ### Development mode (recommended)
