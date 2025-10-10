@@ -13,6 +13,7 @@ Backend server for the RE-ASTR application (Automotive Software Testing Results)
 - [Project Structure](#-project-structure)
 - [Available Scripts](#-available-scripts)
 - [Testing](#-testing)
+- [Logging](#-logging)
 - [API Documentation](#-api-documentation)
 - [Modules](#-modules)
 
@@ -24,6 +25,7 @@ Backend server for the RE-ASTR application (Automotive Software Testing Results)
 - **ORM**: [Drizzle ORM](https://orm.drizzle.team/) v0.44
 - **Authentication**: [Better Auth](https://www.better-auth.com/) v1.3
 - **Validation**: class-validator + class-transformer + Zod
+- **Logging**: [Pino](https://getpino.io/) v10 (high-performance JSON logger)
 - **API Documentation**: Swagger/OpenAPI
 - **File Storage**: MinIO (S3-compatible)
 - **Language**: TypeScript 5.9
@@ -353,6 +355,61 @@ pnpm test:e2e
 - Unit tests: `*.spec.ts` (next to the tested file)
 - E2E tests: in the `/test/` folder
 - Mock data: `*.mock.ts`
+
+## 📊 Logging
+
+The application uses **Pino**, a high-performance JSON logger optimized for Node.js and Fastify.
+
+### Features
+
+- **Ultra-fast performance** - Asynchronous logging with minimal overhead
+- **Structured JSON logs** - Easy to parse and analyze in production
+- **Pretty-printing in development** - Colorized, human-readable output
+- **Automatic HTTP request logging** - All requests are logged with context
+- **Sensitive data redaction** - Passwords, tokens, and cookies are automatically redacted
+- **Context-aware** - Each log includes service name, request ID, and user ID
+
+### Quick Start
+
+Inject `PinoLogger` into your service:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { PinoLogger } from 'nestjs-pino';
+
+@Injectable()
+export class MyService {
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext(MyService.name);
+  }
+
+  async doSomething() {
+    // Structured logging (recommended)
+    this.logger.info({ userId: '123', action: 'create' }, 'User created item');
+
+    // Different log levels
+    this.logger.debug('Detailed debug information');
+    this.logger.warn({ threshold: 90 }, 'Approaching rate limit');
+    this.logger.error({ error: err.message }, 'Operation failed');
+  }
+}
+```
+
+### Configuration
+
+Log level can be controlled via environment variable:
+
+```bash
+# Set in .env
+LOG_LEVEL=debug  # trace, debug, info, warn, error, fatal
+```
+
+- **Development**: Logs are pretty-printed in color
+- **Production**: Logs are output as JSON (one line per entry)
+
+### Complete Documentation
+
+For detailed logging guidelines, best practices, and examples, see [LOGGER.md](.claude/LOGGER.md).
 
 ## 📚 API Documentation
 

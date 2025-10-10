@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PinoLogger } from 'nestjs-pino';
 import { CreateCategoryDto } from '@modules/categories/dto/create-category.dto';
 import { UpdateCategoryDto } from '@modules/categories/dto/update-category.dto';
 import { CATEGORIES_REPOSITORY, type ICategoriesRepository } from '@modules/categories/interfaces/categories-repository.interface';
@@ -8,10 +9,15 @@ export class CategoriesService {
   constructor(
     @Inject(CATEGORIES_REPOSITORY)
     private readonly categoriesRepository: ICategoriesRepository,
-  ) {}
+    private readonly logger: PinoLogger,
+  ) {
+    this.logger.setContext(CategoriesService.name);
+  }
 
   async create(createCategoryDto: CreateCategoryDto) {
-    return this.categoriesRepository.create({
+    this.logger.info({ name: createCategoryDto.name }, 'Creating new category');
+
+    const category = await this.categoriesRepository.create({
       name: createCategoryDto.name,
       description: createCategoryDto.description,
       baseSchema: createCategoryDto.baseSchema,
@@ -22,6 +28,9 @@ export class CategoriesService {
         fields: [],
       },
     });
+
+    this.logger.info({ categoryId: category.id, name: category.name }, 'Category created successfully');
+    return category;
   }
 
   async findAll() {
@@ -32,6 +41,7 @@ export class CategoriesService {
     const category = await this.categoriesRepository.findById(id);
 
     if (!category) {
+      this.logger.warn({ categoryId: id }, 'Category not found');
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
@@ -39,21 +49,28 @@ export class CategoriesService {
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    this.logger.info({ categoryId: id }, 'Updating category');
+
     await this.findOne(id);
 
-    return this.categoriesRepository.update(id, {
+    const updated = await this.categoriesRepository.update(id, {
       name: updateCategoryDto.name,
       description: updateCategoryDto.description,
       baseSchema: updateCategoryDto.baseSchema,
       customFieldsSchema: updateCategoryDto.customFieldsSchema,
     });
+
+    this.logger.info({ categoryId: id, name: updated.name }, 'Category updated successfully');
+    return updated;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    this.logger.info({ categoryId: id }, 'Deleting category');
 
+    await this.findOne(id);
     await this.categoriesRepository.delete(id);
 
+    this.logger.info({ categoryId: id }, 'Category deleted successfully');
     return { message: `Category with ID ${id} has been deleted` };
   }
 }

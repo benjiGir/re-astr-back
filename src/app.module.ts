@@ -1,6 +1,7 @@
 import {ClassSerializerInterceptor, Module, ValidationPipe} from '@nestjs/common'
 import {APP_FILTER, APP_INTERCEPTOR, APP_PIPE} from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
+import { LoggerModule } from 'nestjs-pino'
 import { AppController } from '@/app.controller'
 import { AppService } from '@/app.service'
 import { DatabaseModule } from '@database/database.module'
@@ -10,6 +11,7 @@ import { TestsModule } from '@modules/tests/tests.module'
 import { UsersModule } from '@modules/users/users.module'
 import { MinioModule } from '@/storage/minio/minio.module'
 import { ValidationModule } from '@common/validation/validation.module'
+import { loggerConfig } from '@config/logger.config'
 
 @Module({
   imports: [
@@ -17,6 +19,7 @@ import { ValidationModule } from '@common/validation/validation.module'
       isGlobal: true,
       envFilePath: '.env',
     }),
+    LoggerModule.forRoot(loggerConfig),
     DatabaseModule,
     ValidationModule,
     MinioModule,

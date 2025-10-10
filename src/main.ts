@@ -4,14 +4,31 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
+import { Logger } from 'nestjs-pino'
+import pino from 'pino'
 import { AppModule } from '@/app.module'
 import { Swagger } from '@utils/swagger/swagger'
+
+const bootstrapLogger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: process.env.NODE_ENV === 'development' ? {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+      ignore: 'pid,hostname',
+    },
+  } : undefined,
+})
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
+    { bufferLogs: true },
   )
+
+  app.useLogger(app.get(Logger))
 
   await app.register(require('@fastify/cookie'), {
     secret: process.env.COOKIE_SECRET || 'your-secret-key'
@@ -31,6 +48,10 @@ async function bootstrap() {
 
   Swagger.setup(app)
 
-  await app.listen(3000)
+  const port = process.env.PORT || 3000
+  await app.listen(port, '0.0.0.0')
+
+  bootstrapLogger.info({ port }, `🚀 Application is running on: http://localhost:${port}`)
+  bootstrapLogger.info({ port, apiUrl: `http://localhost:${port}/api` }, `📚 API Documentation available at: http://localhost:${port}/api`)
 }
 bootstrap()
