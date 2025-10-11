@@ -32,12 +32,12 @@ export class ResponseHandlerService {
         const cookies = Array.isArray(value) ? value : [value]
 
         cookies.forEach((cookieString) => {
-          const [nameValue, ...optionsParts] = cookieString.split(';').map(s => s.trim())
+          const [nameValue, ...optionsParts] = cookieString.split(';').map((s: string) => s.trim())
           const [name, val] = nameValue.split('=')
 
           const options: any = {}
-          optionsParts.forEach(part => {
-            const [optKey, optValue] = part.split('=').map(s => s?.trim())
+          optionsParts.forEach((part: string) => {
+            const [optKey, optValue] = part.split('=').map((s: string) => s?.trim())
             const lowerKey = optKey.toLowerCase()
 
             if (lowerKey === 'path') options.path = optValue

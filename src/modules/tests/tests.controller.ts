@@ -36,7 +36,7 @@ export class TestsController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  create(@User() user: UserDto, @Body() createTestDto: CreateTestDto, @Request() req: any) {
+  create(@User() user: UserDto, @Body() createTestDto: CreateTestDto, @Request() _req: any) {
     return this.testsService.create(createTestDto, user.id);
   }
 
@@ -65,7 +65,7 @@ export class TestsController {
   @ApiResponse({ status: 200, description: 'Test updated successfully' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test not found' })
-  update(@User() user: UserDto, @Param('id') id: string, @Body() updateTestDto: UpdateTestDto, @Request() req: any) {
+  update(@User() user: UserDto, @Param('id') id: string, @Body() updateTestDto: UpdateTestDto, @Request() _req: any) {
     return this.testsService.update(id, updateTestDto, user.id);
   }
 

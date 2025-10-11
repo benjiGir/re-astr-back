@@ -40,7 +40,7 @@ export class TestFilesController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test not found' })
-  create(@User() user: UserDto, @Body() createTestFileDto: CreateTestFileDto, @Request() req: any) {
+  create(@User() user: UserDto, @Body() createTestFileDto: CreateTestFileDto, @Request() _req: any) {
     return this.testFilesService.create(createTestFileDto, user.id);
   }
 
