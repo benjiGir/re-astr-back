@@ -1,5 +1,5 @@
 import {ClassSerializerInterceptor, Module, ValidationPipe} from '@nestjs/common'
-import {APP_FILTER, APP_INTERCEPTOR, APP_PIPE} from '@nestjs/core'
+import { APP_INTERCEPTOR, APP_PIPE} from '@nestjs/core'
 import { ConfigModule } from '@nestjs/config'
 import { LoggerModule } from 'nestjs-pino'
 import { AppController } from '@/app.controller'

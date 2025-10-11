@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTestDto } from '@modules/tests/dto/create-test.dto';
 import { UpdateTestDto } from '@modules/tests/dto/update-test.dto';
 import { TESTS_REPOSITORY, type ITestsRepository } from '@modules/tests/interfaces/tests-repository.interface';

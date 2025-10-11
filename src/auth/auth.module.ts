@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { AuthService } from '@/auth/auth.service'
 import { AuthController } from '@/auth/auth.controller'
-import { TestController } from '@/auth/test.controller'
 import { AuthGuard } from '@/auth/guards/auth.guard'
 import { RequestConverterService } from '@/auth/services/request-converter.service'
 import { ResponseHandlerService } from '@/auth/services/response-handler.service'
@@ -16,7 +15,7 @@ import {DatabaseConfigModule} from "@config/database/config.module";
     RequestConverterService,
     ResponseHandlerService
   ],
-  controllers: [AuthController, TestController],
+  controllers: [AuthController],
   exports: [AuthService, AuthGuard]
 })
 export class AuthModule {}
