@@ -51,6 +51,6 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0')
 
   bootstrapLogger.info({ port }, `🚀 Application is running on: http://localhost:${port}`)
-  bootstrapLogger.info({ port, apiUrl: `http://localhost:${port}/api` }, `📚 API Documentation available at: http://localhost:${port}/api`)
+  bootstrapLogger.info({ port, apiUrl: `http://localhost:${port}/docs` }, `📚 API Documentation available at: http://localhost:${port}/docs`)
 }
 bootstrap()
