@@ -12,6 +12,7 @@ import { UsersModule } from '@modules/users/users.module'
 import { MinioModule } from '@/storage/minio/minio.module'
 import { ValidationModule } from '@common/validation/validation.module'
 import { loggerConfig } from '@config/logger.config'
+import { HealthModule } from '@/health/health.module'
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { loggerConfig } from '@config/logger.config'
       envFilePath: '.env',
     }),
     LoggerModule.forRoot(loggerConfig),
+    HealthModule,
     DatabaseModule,
     ValidationModule,
     MinioModule,
