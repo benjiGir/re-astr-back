@@ -4,6 +4,26 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-  }
+    "^.+\\.(ts|js)$": ["ts-jest", {
+      "tsconfig": {
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
+      }
+    }]
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(@faker-js))"
+  ],
+  "globalSetup": "<rootDir>/setup-testcontainers.ts",
+  "globalTeardown": "<rootDir>/teardown-testcontainers.ts",
+  "moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/../src/$1",
+    "^@modules/(.*)$": "<rootDir>/../src/modules/$1",
+    "^@database/(.*)$": "<rootDir>/../src/database/$1",
+    "^@common/(.*)$": "<rootDir>/../src/common/$1",
+    "^@config/(.*)$": "<rootDir>/../src/config/$1",
+    "^@utils/(.*)$": "<rootDir>/../src/utils/$1"
+  },
+  "testTimeout": 30000
 }
