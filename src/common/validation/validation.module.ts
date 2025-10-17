@@ -1,5 +1,5 @@
-import { Module, Global } from '@nestjs/common';
-import { SchemaValidationService } from './schema-validation.service';
+import { Global, Module } from '@nestjs/common'
+import { SchemaValidationService } from './schema-validation.service'
 
 @Global()
 @Module({

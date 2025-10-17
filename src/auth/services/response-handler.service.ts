@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { AppConfigService } from '../../config/app/config.service'
+import type { AppConfigService } from '../../config/app/config.service'
 
 @Injectable()
 export class ResponseHandlerService {
@@ -42,7 +42,7 @@ export class ResponseHandlerService {
 
             if (lowerKey === 'path') options.path = optValue
             else if (lowerKey === 'domain') options.domain = optValue
-            else if (lowerKey === 'max-age') options.maxAge = parseInt(optValue)
+            else if (lowerKey === 'max-age') options.maxAge = Number.parseInt(optValue)
             else if (lowerKey === 'expires') options.expires = new Date(optValue)
             else if (lowerKey === 'httponly') options.httpOnly = true
             else if (lowerKey === 'secure') options.secure = true
@@ -57,11 +57,15 @@ export class ResponseHandlerService {
     })
   }
 
-  handleAuthError(error: any, fastifyReply: any, requestInfo?: { url: string; method: string }): void {
+  handleAuthError(
+    error: any,
+    fastifyReply: any,
+    requestInfo?: { url: string; method: string },
+  ): void {
     console.error('Better Auth error:', error)
 
     const errorResponse: any = {
-      error: 'Authentication error'
+      error: 'Authentication error',
     }
 
     if (this.appConfigService.env === 'development' && requestInfo) {
@@ -75,7 +79,7 @@ export class ResponseHandlerService {
 
   handleServiceNotReady(fastifyReply: any): void {
     fastifyReply.status(503).send({
-      error: 'Authentication service not ready'
+      error: 'Authentication service not ready',
     })
   }
 }

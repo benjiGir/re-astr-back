@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject, IsEnum } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator'
 
 export class CreateTestDto {
   @ApiProperty({
@@ -8,7 +8,7 @@ export class CreateTestDto {
   })
   @IsString()
   @IsNotEmpty()
-  categoryId!: string;
+  categoryId!: string
 
   @ApiProperty({
     description: 'Test name',
@@ -16,7 +16,7 @@ export class CreateTestDto {
   })
   @IsString()
   @IsNotEmpty()
-  name!: string;
+  name!: string
 
   @ApiPropertyOptional({
     description: 'Test description',
@@ -24,7 +24,7 @@ export class CreateTestDto {
   })
   @IsString()
   @IsOptional()
-  description?: string;
+  description?: string
 
   @ApiPropertyOptional({
     description: 'Test status',
@@ -33,7 +33,7 @@ export class CreateTestDto {
   })
   @IsEnum(['draft', 'in_progress', 'completed', 'failed', 'archived'])
   @IsOptional()
-  status?: 'draft' | 'in_progress' | 'completed' | 'failed' | 'archived';
+  status?: 'draft' | 'in_progress' | 'completed' | 'failed' | 'archived'
 
   @ApiProperty({
     description: 'Common data based on category base schema',
@@ -44,7 +44,7 @@ export class CreateTestDto {
     },
   })
   @IsObject()
-  commonData!: Record<string, any>;
+  commonData!: Record<string, any>
 
   @ApiPropertyOptional({
     description: 'Custom data fields',
@@ -55,7 +55,7 @@ export class CreateTestDto {
   })
   @IsObject()
   @IsOptional()
-  customData?: Record<string, any>;
+  customData?: Record<string, any>
 
   @ApiPropertyOptional({
     description: 'Additional metadata',
@@ -66,5 +66,5 @@ export class CreateTestDto {
   })
   @IsObject()
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>
 }

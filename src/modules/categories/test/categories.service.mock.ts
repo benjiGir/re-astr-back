@@ -1,5 +1,5 @@
-import type { Category } from '@database/schema/categories.schema';
-import type { ICategoriesRepository } from '@modules/categories/interfaces/categories-repository.interface';
+import type { Category } from '@database/schema/categories.schema'
+import type { ICategoriesRepository } from '@modules/categories/interfaces/categories-repository.interface'
 
 /**
  * Mock category data for testing
@@ -33,7 +33,7 @@ export const mockCategory: Category = {
   },
   createdAt: new Date('2024-01-01T10:00:00Z'),
   updatedAt: new Date('2024-01-01T10:00:00Z'),
-};
+}
 
 /**
  * Another mock category for testing multiple categories
@@ -66,12 +66,12 @@ export const mockCategory2: Category = {
   },
   createdAt: new Date('2024-01-02T10:00:00Z'),
   updatedAt: new Date('2024-01-02T10:00:00Z'),
-};
+}
 
 /**
  * Array of mock categories
  */
-export const mockCategories: Category[] = [mockCategory, mockCategory2];
+export const mockCategories: Category[] = [mockCategory, mockCategory2]
 
 /**
  * Mock repository for testing
@@ -82,4 +82,4 @@ export const createMockCategoriesRepository = (): ICategoriesRepository => ({
   findById: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
-});
+})

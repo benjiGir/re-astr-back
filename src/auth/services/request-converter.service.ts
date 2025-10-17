@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import {FastifyRequest} from "fastify";
+import type { FastifyRequest } from 'fastify'
 
 @Injectable()
 export class RequestConverterService {

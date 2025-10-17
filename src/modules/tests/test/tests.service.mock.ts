@@ -1,4 +1,4 @@
-import type { Test } from '@database/schema/tests.schema';
+import type { Test } from '@database/schema/tests.schema'
 
 export const mockTest: Test = {
   id: '123e4567-e89b-12d3-a456-426614174000',
@@ -22,7 +22,7 @@ export const mockTest: Test = {
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
   completedAt: null,
-};
+}
 
 export const mockCompletedTest: Test = {
   id: '223e4567-e89b-12d3-a456-426614174000',
@@ -42,7 +42,7 @@ export const mockCompletedTest: Test = {
   createdAt: new Date('2024-01-02'),
   updatedAt: new Date('2024-01-03'),
   completedAt: new Date('2024-01-03'),
-};
+}
 
 export const mockInProgressTest: Test = {
   id: '323e4567-e89b-12d3-a456-426614174000',
@@ -65,6 +65,6 @@ export const mockInProgressTest: Test = {
   createdAt: new Date('2024-01-05'),
   updatedAt: new Date('2024-01-06'),
   completedAt: null,
-};
+}
 
-export const mockTests: Test[] = [mockTest, mockCompletedTest, mockInProgressTest];
+export const mockTests: Test[] = [mockTest, mockCompletedTest, mockInProgressTest]

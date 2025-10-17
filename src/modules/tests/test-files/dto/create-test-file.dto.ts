@@ -1,5 +1,13 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject, IsEnum, IsNumber, IsDateString } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import {
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator'
 
 export class CreateTestFileDto {
   @ApiProperty({
@@ -8,14 +16,14 @@ export class CreateTestFileDto {
   })
   @IsString()
   @IsNotEmpty()
-  testId!: string;
+  testId!: string
 
   @ApiProperty({
     description: 'File type',
     enum: ['screenshot', 'report', 'documentation', 'other'],
   })
   @IsEnum(['screenshot', 'report', 'documentation', 'other'])
-  fileType!: 'screenshot' | 'report' | 'documentation' | 'other';
+  fileType!: 'screenshot' | 'report' | 'documentation' | 'other'
 
   @ApiProperty({
     description: 'Original filename',
@@ -23,7 +31,7 @@ export class CreateTestFileDto {
   })
   @IsString()
   @IsNotEmpty()
-  originalFilename!: string;
+  originalFilename!: string
 
   @ApiProperty({
     description: 'Stored filename (unique)',
@@ -31,7 +39,7 @@ export class CreateTestFileDto {
   })
   @IsString()
   @IsNotEmpty()
-  storedFilename!: string;
+  storedFilename!: string
 
   @ApiPropertyOptional({
     description: 'Bucket name',
@@ -39,7 +47,7 @@ export class CreateTestFileDto {
   })
   @IsString()
   @IsOptional()
-  bucketName?: string;
+  bucketName?: string
 
   @ApiProperty({
     description: 'Object key (full path in MinIO)',
@@ -47,14 +55,14 @@ export class CreateTestFileDto {
   })
   @IsString()
   @IsNotEmpty()
-  objectKey!: string;
+  objectKey!: string
 
   @ApiProperty({
     description: 'File size in bytes',
     example: 1547892,
   })
   @IsNumber()
-  fileSize!: number;
+  fileSize!: number
 
   @ApiProperty({
     description: 'MIME type',
@@ -62,7 +70,7 @@ export class CreateTestFileDto {
   })
   @IsString()
   @IsNotEmpty()
-  mimeType!: string;
+  mimeType!: string
 
   @ApiPropertyOptional({
     description: 'SHA-256 checksum',
@@ -70,7 +78,7 @@ export class CreateTestFileDto {
   })
   @IsString()
   @IsOptional()
-  checksum?: string;
+  checksum?: string
 
   @ApiPropertyOptional({
     description: 'Additional metadata',
@@ -81,7 +89,7 @@ export class CreateTestFileDto {
   })
   @IsObject()
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>
 
   @ApiPropertyOptional({
     description: 'Expiration date (ISO 8601)',
@@ -89,5 +97,5 @@ export class CreateTestFileDto {
   })
   @IsDateString()
   @IsOptional()
-  expiresAt?: string;
+  expiresAt?: string
 }

@@ -1,10 +1,10 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
+import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
 
 export class SignUpBodyDto {
   @ApiProperty({
     description: 'User email address',
-    example: 'user@example.com'
+    example: 'user@example.com',
   })
   @IsEmail()
   @IsNotEmpty()
@@ -13,7 +13,7 @@ export class SignUpBodyDto {
   @ApiProperty({
     description: 'User password',
     example: 'SecurePassword123!',
-    minLength: 8
+    minLength: 8,
   })
   @IsString()
   @IsNotEmpty()
@@ -23,7 +23,7 @@ export class SignUpBodyDto {
   @ApiProperty({
     description: 'User name',
     example: 'John Doe',
-    required: false
+    required: false,
   })
   @IsString()
   name?: string
@@ -32,7 +32,7 @@ export class SignUpBodyDto {
 export class SignInBodyDto {
   @ApiProperty({
     description: 'User email address',
-    example: 'user@example.com'
+    example: 'user@example.com',
   })
   @IsEmail()
   @IsNotEmpty()
@@ -40,7 +40,7 @@ export class SignInBodyDto {
 
   @ApiProperty({
     description: 'User password',
-    example: 'SecurePassword123!'
+    example: 'SecurePassword123!',
   })
   @IsString()
   @IsNotEmpty()
@@ -50,7 +50,7 @@ export class SignInBodyDto {
 export class ForgotPasswordBodyDto {
   @ApiProperty({
     description: 'Email address to send reset link',
-    example: 'user@example.com'
+    example: 'user@example.com',
   })
   @IsEmail()
   @IsNotEmpty()
@@ -59,7 +59,7 @@ export class ForgotPasswordBodyDto {
   @ApiProperty({
     description: 'Redirect URL after password reset',
     example: 'http://localhost:3000/reset-password',
-    required: false
+    required: false,
   })
   @IsString()
   redirectTo?: string
@@ -69,7 +69,7 @@ export class ResetPasswordBodyDto {
   @ApiProperty({
     description: 'New password',
     example: 'NewSecurePassword123!',
-    minLength: 8
+    minLength: 8,
   })
   @IsString()
   @IsNotEmpty()
@@ -78,7 +78,7 @@ export class ResetPasswordBodyDto {
 
   @ApiProperty({
     description: 'Password reset token',
-    example: 'reset-token-here'
+    example: 'reset-token-here',
   })
   @IsString()
   @IsNotEmpty()
@@ -88,7 +88,7 @@ export class ResetPasswordBodyDto {
 export class VerifyEmailBodyDto {
   @ApiProperty({
     description: 'Email verification token',
-    example: 'verification-token-here'
+    example: 'verification-token-here',
   })
   @IsString()
   @IsNotEmpty()

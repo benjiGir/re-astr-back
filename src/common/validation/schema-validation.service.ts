@@ -1,30 +1,30 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { z, ZodSchema, ZodError } from 'zod';
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { ZodError, type ZodSchema, z } from 'zod'
 import type {
   BaseSchema,
   CustomFieldsSchema,
   FieldDefinition,
   FieldType,
-  ValidationResult,
   ValidationError,
-} from './schema.types';
+  ValidationResult,
+} from './schema.types'
 
 @Injectable()
 export class SchemaValidationService {
   validateCommonData(data: Record<string, any>, baseSchema: BaseSchema): ValidationResult {
     try {
-      const zodSchema = this.buildZodSchemaFromFields(baseSchema.fields);
-      zodSchema.parse(data);
+      const zodSchema = this.buildZodSchemaFromFields(baseSchema.fields)
+      zodSchema.parse(data)
 
-      return { valid: true, errors: [] };
+      return { valid: true, errors: [] }
     } catch (error) {
       if (error instanceof ZodError) {
         return {
           valid: false,
           errors: this.formatZodErrors(error),
-        };
+        }
       }
-      throw error;
+      throw error
     }
   }
 
@@ -42,9 +42,9 @@ export class SchemaValidationService {
               message: 'Custom fields are not allowed for this category',
             },
           ],
-        };
+        }
       }
-      return { valid: true, errors: [] };
+      return { valid: true, errors: [] }
     }
 
     if (
@@ -59,140 +59,136 @@ export class SchemaValidationService {
             message: `Maximum ${customFieldsSchema.maxCustomFields} custom fields allowed, got ${Object.keys(data).length}`,
           },
         ],
-      };
+      }
     }
 
     if (customFieldsSchema.fields.length > 0) {
       try {
-        const zodSchema = this.buildZodSchemaFromFields(customFieldsSchema.fields);
-        zodSchema.parse(data);
-        return { valid: true, errors: [] };
+        const zodSchema = this.buildZodSchemaFromFields(customFieldsSchema.fields)
+        zodSchema.parse(data)
+        return { valid: true, errors: [] }
       } catch (error) {
         if (error instanceof ZodError) {
           return {
             valid: false,
             errors: this.formatZodErrors(error),
-          };
+          }
         }
-        throw error;
+        throw error
       }
     }
 
     if (customFieldsSchema.allowedTypes && customFieldsSchema.allowedTypes.length > 0) {
-      const errors: ValidationError[] = [];
+      const errors: ValidationError[] = []
 
       for (const [key, value] of Object.entries(data)) {
-        const detectedType = this.detectValueType(value);
+        const detectedType = this.detectValueType(value)
         if (!customFieldsSchema.allowedTypes.includes(detectedType)) {
           errors.push({
             field: key,
             message: `Type '${detectedType}' not allowed. Allowed types: ${customFieldsSchema.allowedTypes.join(', ')}`,
             value,
-          });
+          })
         }
       }
 
       if (errors.length > 0) {
-        return { valid: false, errors };
+        return { valid: false, errors }
       }
     }
 
-    return { valid: true, errors: [] };
+    return { valid: true, errors: [] }
   }
 
   private buildZodSchemaFromFields(fields: FieldDefinition[]): ZodSchema {
-    const shape: Record<string, ZodSchema> = {};
+    const shape: Record<string, ZodSchema> = {}
 
     for (const field of fields) {
-      let fieldSchema = this.getZodSchemaForType(field.type);
+      let fieldSchema = this.getZodSchemaForType(field.type)
 
       if (field.validation) {
-        fieldSchema = this.applyValidationRules(fieldSchema, field.validation, field.type);
+        fieldSchema = this.applyValidationRules(fieldSchema, field.validation, field.type)
       }
 
       if (field.required) {
-        shape[field.key] = fieldSchema;
+        shape[field.key] = fieldSchema
       } else {
-        shape[field.key] = fieldSchema.optional();
+        shape[field.key] = fieldSchema.optional()
       }
     }
 
-    return z.object(shape);
+    return z.object(shape)
   }
 
   private getZodSchemaForType(type: FieldType): ZodSchema {
     switch (type) {
       case 'text':
-        return z.string();
+        return z.string()
       case 'number':
-        return z.number();
+        return z.number()
       case 'boolean':
-        return z.boolean();
+        return z.boolean()
       case 'date':
-        return z.string().datetime().or(z.date());
+        return z.string().datetime().or(z.date())
       case 'email':
-        return z.string().email();
+        return z.string().email()
       case 'url':
-        return z.string().url();
+        return z.string().url()
       default:
-        return z.string();
+        return z.string()
     }
   }
 
-  private applyValidationRules(
-    schema: ZodSchema,
-    validation: any,
-    type: FieldType,
-  ): ZodSchema {
-    let result = schema;
+  private applyValidationRules(schema: ZodSchema, validation: any, type: FieldType): ZodSchema {
+    let result = schema
 
     if (type === 'number') {
       if (validation.min !== undefined) {
-        result = (result as z.ZodNumber).min(validation.min);
+        result = (result as z.ZodNumber).min(validation.min)
       }
       if (validation.max !== undefined) {
-        result = (result as z.ZodNumber).max(validation.max);
+        result = (result as z.ZodNumber).max(validation.max)
       }
     }
 
     if (type === 'text') {
       if (validation.minLength !== undefined) {
-        result = (result as z.ZodString).min(validation.minLength);
+        result = (result as z.ZodString).min(validation.minLength)
       }
       if (validation.maxLength !== undefined) {
-        result = (result as z.ZodString).max(validation.maxLength);
+        result = (result as z.ZodString).max(validation.maxLength)
       }
       if (validation.pattern) {
-        result = (result as z.ZodString).regex(new RegExp(validation.pattern));
+        result = (result as z.ZodString).regex(new RegExp(validation.pattern))
       }
       if (validation.enum) {
-        result = z.enum(validation.enum as [string, ...string[]]);
+        result = z.enum(validation.enum as [string, ...string[]])
       }
     }
 
-    return result;
+    return result
   }
 
   private detectValueType(value: any): FieldType {
     if (typeof value === 'string') {
       if (!isNaN(Date.parse(value))) {
-        return 'date';
+        return 'date'
       }
       if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        return 'email';
+        return 'email'
       }
       try {
-        new URL(value);
-        return 'url';
+        new URL(value)
+        return 'url'
       } catch {
-        return 'text';
+        return 'text'
       }
     }
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'boolean') return 'boolean';
-    if (value instanceof Date) return 'date';
+    if (typeof value === 'number') return 'number'
+    if (typeof value === 'boolean') return 'boolean'
+    if (value instanceof Date) return 'date'
 
-    return 'text';
+    return 'text'
   }
 
   private formatZodErrors(error: ZodError): ValidationError[] {
@@ -200,16 +196,14 @@ export class SchemaValidationService {
       field: err.path.join('.'),
       message: err.message,
       value: err.path.length > 0 ? undefined : err,
-    }));
+    }))
   }
 
   validateOrThrow(result: ValidationResult, context: string): void {
     if (!result.valid) {
-      const errorMessages = result.errors
-        .map((err) => `${err.field}: ${err.message}`)
-        .join('; ');
+      const errorMessages = result.errors.map((err) => `${err.field}: ${err.message}`).join('; ')
 
-      throw new BadRequestException(`${context} validation failed: ${errorMessages}`);
+      throw new BadRequestException(`${context} validation failed: ${errorMessages}`)
     }
   }
 }

@@ -3,7 +3,7 @@
  * Ce fichier n'est PAS utilisé en production, uniquement pour documentation
  */
 
-import type { NewCategory, NewTest, NewTestFile } from './index';
+import type { NewCategory, NewTest, NewTestFile } from './index'
 
 // ==========================================
 // EXEMPLE 1: Catégorie "Tests de Température"
@@ -55,7 +55,7 @@ export const exampleCategory1: NewCategory = {
     allowedTypes: ['text', 'number', 'boolean', 'date', 'select'],
     fields: [], // Les champs custom seront ajoutés dynamiquement
   },
-};
+}
 
 // Test utilisant cette catégorie
 export const exampleTest1: NewTest = {
@@ -91,7 +91,7 @@ export const exampleTest1: NewTest = {
 
   createdBy: 'user-uuid',
   completedAt: new Date('2025-01-15T14:30:00Z'),
-};
+}
 
 // Fichiers associés à ce test
 export const exampleTestFiles1: NewTestFile[] = [
@@ -129,7 +129,7 @@ export const exampleTestFiles1: NewTestFile[] = [
     },
     uploadedBy: 'user-uuid',
   },
-];
+]
 
 // ==========================================
 // EXEMPLE 2: Catégorie "Tests de Vibration"
@@ -176,7 +176,7 @@ export const exampleCategory2: NewCategory = {
     maxCustomFields: 15,
     allowedTypes: ['text', 'number', 'boolean', 'date', 'select', 'textarea'],
   },
-};
+}
 
 export const exampleTest2: NewTest = {
   categoryId: 'uuid-categorie-vibration',
@@ -206,7 +206,7 @@ export const exampleTest2: NewTest = {
   },
 
   createdBy: 'user-uuid',
-};
+}
 
 // ==========================================
 // EXEMPLE 3: Catégorie "Tests Logiciels"
@@ -259,12 +259,12 @@ export const exampleCategory3: NewCategory = {
     maxCustomFields: 20,
     allowedTypes: ['text', 'number', 'boolean', 'date', 'select', 'textarea', 'url'],
   },
-};
+}
 
 export const exampleTest3: NewTest = {
   categoryId: 'uuid-categorie-software',
   name: 'Load Test - API Gateway v2.1.0',
-  description: 'Test de charge sur la nouvelle version de l\'API Gateway',
+  description: "Test de charge sur la nouvelle version de l'API Gateway",
   status: 'completed',
 
   commonData: {
@@ -296,4 +296,4 @@ export const exampleTest3: NewTest = {
 
   createdBy: 'user-uuid',
   completedAt: new Date('2025-01-16T15:45:00Z'),
-};
+}

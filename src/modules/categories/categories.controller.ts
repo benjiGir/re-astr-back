@@ -1,22 +1,22 @@
+import type { CreateCategoryDto } from '@modules/categories/dto/create-category.dto'
+import type { UpdateCategoryDto } from '@modules/categories/dto/update-category.dto'
+import type { CategoriesService } from '@modules/categories/services/categories.service'
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
   UseGuards,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
-import { CategoriesService } from '@modules/categories/services/categories.service';
-import { CreateCategoryDto } from '@modules/categories/dto/create-category.dto';
-import { UpdateCategoryDto } from '@modules/categories/dto/update-category.dto';
-import { AuthGuard } from '@/auth/guards/auth.guard';
-import { RolesGuard } from '@/auth/guards/roles.guard';
-import { Roles } from '@/auth/decorators/roles.decorator';
+} from '@nestjs/common'
+import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { Roles } from '@/auth/decorators/roles.decorator'
+import { AuthGuard } from '@/auth/guards/auth.guard'
+import { RolesGuard } from '@/auth/guards/roles.guard'
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -32,14 +32,14 @@ export class CategoriesController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoriesService.create(createCategoryDto);
+    return this.categoriesService.create(createCategoryDto)
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
   @ApiResponse({ status: 200, description: 'Return all categories' })
   findAll() {
-    return this.categoriesService.findAll();
+    return this.categoriesService.findAll()
   }
 
   @Get(':id')
@@ -47,7 +47,7 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: 'Return the category' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   findOne(@Param('id') id: string) {
-    return this.categoriesService.findOne(id);
+    return this.categoriesService.findOne(id)
   }
 
   @Patch(':id')
@@ -57,7 +57,7 @@ export class CategoriesController {
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.update(id, updateCategoryDto);
+    return this.categoriesService.update(id, updateCategoryDto)
   }
 
   @Delete(':id')
@@ -68,6 +68,6 @@ export class CategoriesController {
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   remove(@Param('id') id: string) {
-    return this.categoriesService.remove(id);
+    return this.categoriesService.remove(id)
   }
 }

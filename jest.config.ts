@@ -1,4 +1,4 @@
-import type { Config } from 'jest';
+import type { Config } from 'jest'
 
 const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
@@ -7,9 +7,7 @@ const config: Config = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(better-auth|@noble)/)',
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(better-auth|@noble)/)'],
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage',
   coveragePathIgnorePatterns: [
@@ -40,6 +38,6 @@ const config: Config = {
     '^@config/(.*)$': '<rootDir>/config/$1',
     '^@utils/(.*)$': '<rootDir>/utils/$1',
   },
-};
+}
 
-export default config;
+export default config

@@ -1,7 +1,7 @@
-import { SetMetadata } from '@nestjs/common';
-import type { UserRole } from '@database/schema/users.schema';
+import type { UserRole } from '@database/schema/users.schema'
+import { SetMetadata } from '@nestjs/common'
 
-export const ROLES_KEY = 'roles';
+export const ROLES_KEY = 'roles'
 
 /**
  * Decorator to specify required roles for a route or controller
@@ -19,4 +19,4 @@ export const ROLES_KEY = 'roles';
  * // Multiple specific roles (not hierarchical, must match one)
  * @Roles('master', 'archivist')
  */
-export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
+export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles)

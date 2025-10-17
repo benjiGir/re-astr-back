@@ -1,7 +1,7 @@
-import type { Params } from 'nestjs-pino';
+import type { Params } from 'nestjs-pino'
 
-const isProduction = process.env.NODE_ENV === 'production';
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production'
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 export const loggerConfig: Params = {
   pinoHttp: {
@@ -42,4 +42,4 @@ export const loggerConfig: Params = {
       censor: '[REDACTED]',
     },
   },
-};
+}

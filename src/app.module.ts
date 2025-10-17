@@ -1,18 +1,18 @@
-import {ClassSerializerInterceptor, Module, ValidationPipe} from '@nestjs/common'
-import { APP_INTERCEPTOR, APP_PIPE} from '@nestjs/core'
-import { ConfigModule } from '@nestjs/config'
-import { LoggerModule } from 'nestjs-pino'
-import { AppController } from '@/app.controller'
-import { AppService } from '@/app.service'
+import { ValidationModule } from '@common/validation/validation.module'
+import { loggerConfig } from '@config/logger.config'
 import { DatabaseModule } from '@database/database.module'
-import { AuthModule } from '@/auth/auth.module'
 import { CategoriesModule } from '@modules/categories/categories.module'
 import { TestsModule } from '@modules/tests/tests.module'
 import { UsersModule } from '@modules/users/users.module'
-import { MinioModule } from '@/storage/minio/minio.module'
-import { ValidationModule } from '@common/validation/validation.module'
-import { loggerConfig } from '@config/logger.config'
+import { ClassSerializerInterceptor, Module, ValidationPipe } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { LoggerModule } from 'nestjs-pino'
+import { AppController } from '@/app.controller'
+import { AppService } from '@/app.service'
+import { AuthModule } from '@/auth/auth.module'
 import { HealthModule } from '@/health/health.module'
+import { MinioModule } from '@/storage/minio/minio.module'
 
 @Module({
   imports: [
@@ -38,13 +38,12 @@ import { HealthModule } from '@/health/health.module'
       useValue: new ValidationPipe({
         transform: true,
         whitelist: true,
-
       }),
     },
     {
       provide: APP_INTERCEPTOR,
-      useClass: ClassSerializerInterceptor
-    }
+      useClass: ClassSerializerInterceptor,
+    },
   ],
 })
 export class AppModule {}

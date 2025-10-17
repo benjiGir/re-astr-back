@@ -1,4 +1,4 @@
-import type { TestFile } from '@database/schema/test-files.schema';
+import type { TestFile } from '@database/schema/test-files.schema'
 
 export const mockTestFile: TestFile = {
   id: '123e4567-e89b-12d3-a456-426614174000',
@@ -17,7 +17,7 @@ export const mockTestFile: TestFile = {
   uploadedBy: 'user-123',
   uploadedAt: new Date('2024-01-01'),
   expiresAt: null,
-};
+}
 
 export const mockReportFile: TestFile = {
   id: '223e4567-e89b-12d3-a456-426614174000',
@@ -36,7 +36,7 @@ export const mockReportFile: TestFile = {
   uploadedBy: 'user-456',
   uploadedAt: new Date('2024-01-02'),
   expiresAt: null,
-};
+}
 
 export const mockDocumentationFile: TestFile = {
   id: '323e4567-e89b-12d3-a456-426614174000',
@@ -53,10 +53,6 @@ export const mockDocumentationFile: TestFile = {
   uploadedBy: 'user-123',
   uploadedAt: new Date('2024-01-03'),
   expiresAt: new Date('2024-12-31'),
-};
+}
 
-export const mockTestFiles: TestFile[] = [
-  mockTestFile,
-  mockReportFile,
-  mockDocumentationFile,
-];
+export const mockTestFiles: TestFile[] = [mockTestFile, mockReportFile, mockDocumentationFile]

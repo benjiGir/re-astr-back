@@ -1,4 +1,4 @@
-import type { User } from '@database/schema/users.schema';
+import type { User } from '@database/schema/users.schema'
 
 export const mockUser: User = {
   id: '123e4567-e89b-12d3-a456-426614174000',
@@ -9,7 +9,7 @@ export const mockUser: User = {
   role: 'user',
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
-};
+}
 
 export const mockMasterUser: User = {
   id: '223e4567-e89b-12d3-a456-426614174000',
@@ -20,7 +20,7 @@ export const mockMasterUser: User = {
   role: 'master',
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
-};
+}
 
 export const mockContributorUser: User = {
   id: '323e4567-e89b-12d3-a456-426614174000',
@@ -31,6 +31,6 @@ export const mockContributorUser: User = {
   role: 'contributor',
   createdAt: new Date('2024-01-02'),
   updatedAt: new Date('2024-01-02'),
-};
+}
 
-export const mockUsers: User[] = [mockUser, mockMasterUser, mockContributorUser];
+export const mockUsers: User[] = [mockUser, mockMasterUser, mockContributorUser]

@@ -1,21 +1,21 @@
-import { Controller, Post, Get, Body, Req, Res, HttpCode, HttpStatus } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger'
-import { AuthService } from './auth.service'
-import { RequestConverterService } from './services/request-converter.service'
-import { ResponseHandlerService } from './services/response-handler.service'
-import {
-  SignUpBodyDto,
-  SignInBodyDto,
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common'
+import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import type { AuthService } from './auth.service'
+import type {
   ForgotPasswordBodyDto,
   ResetPasswordBodyDto,
+  SignInBodyDto,
+  SignUpBodyDto,
 } from './dto/auth-body.dto'
 import {
   AuthResponseDto,
-  SignOutResponseDto,
   ForgotPasswordResponseDto,
   ResetPasswordResponseDto,
   SessionResponseDto,
+  SignOutResponseDto,
 } from './dto/auth-response.dto'
+import type { RequestConverterService } from './services/request-converter.service'
+import type { ResponseHandlerService } from './services/response-handler.service'
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -57,12 +57,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Sign out the current user' })
-  @ApiResponse({ status: 200, description: 'User successfully signed out', type: SignOutResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully signed out',
+    type: SignOutResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async signOut(
-    @Req() request: any,
-    @Res({ passthrough: false }) reply: any,
-  ): Promise<void> {
+  async signOut(@Req() request: any, @Res({ passthrough: false }) reply: any): Promise<void> {
     await this.handleAuthRequest(request, reply, '/sign-out')
   }
 
@@ -72,17 +73,18 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current session' })
   @ApiResponse({ status: 200, description: 'Current session retrieved', type: SessionResponseDto })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  async getSession(
-    @Req() request: any,
-    @Res({ passthrough: false }) reply: any,
-  ): Promise<void> {
+  async getSession(@Req() request: any, @Res({ passthrough: false }) reply: any): Promise<void> {
     await this.handleAuthRequest(request, reply, '/get-session')
   }
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset' })
-  @ApiResponse({ status: 200, description: 'Password reset email sent', type: ForgotPasswordResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent',
+    type: ForgotPasswordResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   async forgotPassword(
     @Body() body: ForgotPasswordBodyDto,
@@ -95,7 +97,11 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password with token' })
-  @ApiResponse({ status: 200, description: 'Password successfully reset', type: ResetPasswordResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password successfully reset',
+    type: ResetPasswordResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async resetPassword(
     @Body() body: ResetPasswordBodyDto,
@@ -126,7 +132,9 @@ export class AuthController {
         protocol: request.protocol,
       }
 
-      const betterAuthRequest = this.requestConverter.convertFastifyToBetterAuth(modifiedRequest as any)
+      const betterAuthRequest = this.requestConverter.convertFastifyToBetterAuth(
+        modifiedRequest as any,
+      )
       const response = await this.authService.auth.handler(betterAuthRequest)
 
       await this.responseHandler.handleBetterAuthResponse(response, reply)

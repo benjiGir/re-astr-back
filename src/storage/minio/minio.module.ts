@@ -1,6 +1,6 @@
-import { Global, Module } from '@nestjs/common';
-import { MinioService } from './minio.service';
-import { MinioConfigModule } from '@config/minio/config.module';
+import { MinioConfigModule } from '@config/minio/config.module'
+import { Global, Module } from '@nestjs/common'
+import { MinioService } from './minio.service'
 
 @Global()
 @Module({

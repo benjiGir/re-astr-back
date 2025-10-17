@@ -1,5 +1,5 @@
-import {index, pgTable, text, timestamp, uuid} from "drizzle-orm/pg-core";
-import {users} from "./users.schema";
+import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { users } from './users.schema'
 
 export const sessions = pgTable(
   'sessions',
@@ -22,4 +22,4 @@ export const sessions = pgTable(
     index('sessions_user_id_idx').on(table.userId),
     index('sessions_token_idx').on(table.token),
   ],
-);
+)

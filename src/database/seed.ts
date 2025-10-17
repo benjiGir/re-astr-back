@@ -1,29 +1,29 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import argon2 from 'argon2';
-import { users, accounts, categories, tests } from './schema';
+import argon2 from 'argon2'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { accounts, categories, tests, users } from './schema'
 
-const connectionString = process.env.DATABASE_URL!;
+const connectionString = process.env.DATABASE_URL!
 
 async function seed() {
-  console.log('🌱 Starting database seed...\n');
+  console.log('🌱 Starting database seed...\n')
 
-  const client = postgres(connectionString);
-  const db = drizzle(client);
+  const client = postgres(connectionString)
+  const db = drizzle(client)
 
   try {
     // Clear existing data (in reverse order of dependencies)
-    console.log('🗑️  Clearing existing data...');
-    await db.delete(tests);
-    await db.delete(categories);
-    await db.delete(accounts);
-    await db.delete(users);
-    console.log('✅ Data cleared\n');
+    console.log('🗑️  Clearing existing data...')
+    await db.delete(tests)
+    await db.delete(categories)
+    await db.delete(accounts)
+    await db.delete(users)
+    console.log('✅ Data cleared\n')
 
     // ==================== USERS ====================
-    console.log('👥 Creating users...');
+    console.log('👥 Creating users...')
 
-    const password = await argon2.hash('Password123!');
+    const password = await argon2.hash('Password123!')
 
     const [master] = await db
       .insert(users)
@@ -33,7 +33,7 @@ async function seed() {
         emailVerified: true,
         role: 'master',
       })
-      .returning();
+      .returning()
 
     const [archivist] = await db
       .insert(users)
@@ -43,7 +43,7 @@ async function seed() {
         emailVerified: true,
         role: 'archivist',
       })
-      .returning();
+      .returning()
 
     const [contributor] = await db
       .insert(users)
@@ -53,7 +53,7 @@ async function seed() {
         emailVerified: true,
         role: 'contributor',
       })
-      .returning();
+      .returning()
 
     const [regularUser] = await db
       .insert(users)
@@ -63,12 +63,12 @@ async function seed() {
         emailVerified: true,
         role: 'user',
       })
-      .returning();
+      .returning()
 
-    console.log(`✅ Created ${4} users`);
+    console.log(`✅ Created ${4} users`)
 
     // Create accounts for each user (email/password auth)
-    console.log('🔐 Creating user accounts...');
+    console.log('🔐 Creating user accounts...')
 
     for (const user of [master, archivist, contributor, regularUser]) {
       await db.insert(accounts).values({
@@ -76,13 +76,13 @@ async function seed() {
         providerId: 'credential',
         userId: user.id,
         password,
-      });
+      })
     }
 
-    console.log('✅ Created accounts for all users\n');
+    console.log('✅ Created accounts for all users\n')
 
     // ==================== CATEGORIES ====================
-    console.log('📁 Creating categories...');
+    console.log('📁 Creating categories...')
 
     const [temperatureCategory] = await db
       .insert(categories)
@@ -125,7 +125,7 @@ async function seed() {
           fields: [],
         },
       })
-      .returning();
+      .returning()
 
     const [vibrationCategory] = await db
       .insert(categories)
@@ -174,7 +174,7 @@ async function seed() {
           fields: [],
         },
       })
-      .returning();
+      .returning()
 
     const [emsCategory] = await db
       .insert(categories)
@@ -215,12 +215,12 @@ async function seed() {
           fields: [],
         },
       })
-      .returning();
+      .returning()
 
-    console.log(`✅ Created ${3} categories\n`);
+    console.log(`✅ Created ${3} categories\n`)
 
     // ==================== TESTS ====================
-    console.log('🧪 Creating tests...');
+    console.log('🧪 Creating tests...')
 
     // Temperature Tests
     await db.insert(tests).values([
@@ -289,7 +289,7 @@ async function seed() {
         },
         createdBy: contributor.id,
       },
-    ]);
+    ])
 
     // Vibration Tests
     await db.insert(tests).values([
@@ -339,7 +339,7 @@ async function seed() {
         createdBy: contributor.id,
         completedAt: new Date('2024-02-05'),
       },
-    ]);
+    ])
 
     // EMS Tests
     await db.insert(tests).values([
@@ -380,36 +380,36 @@ async function seed() {
         },
         createdBy: regularUser.id,
       },
-    ]);
+    ])
 
-    console.log(`✅ Created ${8} tests\n`);
+    console.log(`✅ Created ${8} tests\n`)
 
-    console.log('✨ Database seed completed successfully!\n');
-    console.log('📊 Summary:');
-    console.log(`   - 4 users (1 master, 1 archivist, 1 contributor, 1 user)`);
-    console.log(`   - 3 categories (Temperature, Vibration, EMS)`);
-    console.log(`   - 8 tests (various statuses)\n`);
+    console.log('✨ Database seed completed successfully!\n')
+    console.log('📊 Summary:')
+    console.log(`   - 4 users (1 master, 1 archivist, 1 contributor, 1 user)`)
+    console.log(`   - 3 categories (Temperature, Vibration, EMS)`)
+    console.log(`   - 8 tests (various statuses)\n`)
 
-    console.log('🔑 Login credentials (all users):');
-    console.log(`   Email: alice@re-astr.com (master)`);
-    console.log(`   Email: bob@re-astr.com (archivist)`);
-    console.log(`   Email: charlie@re-astr.com (contributor)`);
-    console.log(`   Email: diana@re-astr.com (user)`);
-    console.log(`   Password: Password123!\n`);
+    console.log('🔑 Login credentials (all users):')
+    console.log(`   Email: alice@re-astr.com (master)`)
+    console.log(`   Email: bob@re-astr.com (archivist)`)
+    console.log(`   Email: charlie@re-astr.com (contributor)`)
+    console.log(`   Email: diana@re-astr.com (user)`)
+    console.log(`   Password: Password123!\n`)
   } catch (error) {
-    console.error('❌ Seed failed:', error);
-    throw error;
+    console.error('❌ Seed failed:', error)
+    throw error
   } finally {
-    await client.end();
+    await client.end()
   }
 }
 
 seed()
   .then(() => {
-    console.log('👋 Seed script finished');
-    process.exit(0);
+    console.log('👋 Seed script finished')
+    process.exit(0)
   })
   .catch((error) => {
-    console.error('💥 Fatal error:', error);
-    process.exit(1);
-  });
+    console.error('💥 Fatal error:', error)
+    process.exit(1)
+  })

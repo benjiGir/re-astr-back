@@ -1,7 +1,7 @@
-import { pgTable, text, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { categories } from './categories.schema';
-import { users } from './users.schema';
+import { sql } from 'drizzle-orm'
+import { jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { categories } from './categories.schema'
+import { users } from './users.schema'
 
 export const testStatusEnum = pgEnum('test_status', [
   'draft',
@@ -9,12 +9,10 @@ export const testStatusEnum = pgEnum('test_status', [
   'completed',
   'failed',
   'archived',
-]);
+])
 
 export const tests = pgTable('tests', {
-  id: text()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: text().primaryKey().default(sql`gen_random_uuid()`),
   categoryId: text('category_id')
     .notNull()
     .references(() => categories.id, { onDelete: 'restrict' }),
@@ -36,7 +34,7 @@ export const tests = pgTable('tests', {
     .notNull()
     .$onUpdateFn(() => new Date()),
   completedAt: timestamp('completed_at'),
-});
+})
 
-export type Test = typeof tests.$inferSelect;
-export type NewTest = typeof tests.$inferInsert;
+export type Test = typeof tests.$inferSelect
+export type NewTest = typeof tests.$inferInsert

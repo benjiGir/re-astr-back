@@ -1,7 +1,6 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { HealthService } from './health.service';
-import type { HealthStatus, ReadinessStatus } from './health.service';
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common'
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import type { HealthService, HealthStatus, ReadinessStatus } from './health.service'
 
 @ApiTags('Health')
 @Controller('health')
@@ -27,7 +26,7 @@ export class HealthController {
     },
   })
   getHealth(): HealthStatus {
-    return this.healthService.getHealth();
+    return this.healthService.getHealth()
   }
 
   @Get('ready')
@@ -72,6 +71,6 @@ export class HealthController {
     description: 'Application is not ready',
   })
   async getReadiness(): Promise<ReadinessStatus> {
-    return this.healthService.getReadiness();
+    return this.healthService.getReadiness()
   }
 }

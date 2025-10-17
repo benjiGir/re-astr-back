@@ -1,13 +1,11 @@
-import {index, pgTable, text, timestamp} from "drizzle-orm/pg-core";
-import {sql} from "drizzle-orm";
-import {users} from "./users.schema";
+import { sql } from 'drizzle-orm'
+import { index, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { users } from './users.schema'
 
 export const accounts = pgTable(
   'accounts',
   {
-    id: text('id')
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
     accountId: text('account_id').notNull(),
     providerId: text('provider_id').notNull(),
     userId: text('user_id')
@@ -27,4 +25,4 @@ export const accounts = pgTable(
       .$onUpdateFn(() => new Date()),
   },
   (table) => [index('accounts_user_id_idx').on(table.userId)],
-);
+)

@@ -1,6 +1,6 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import type { UserRole } from '@database/schema/users.schema';
+import type { UserRole } from '@database/schema/users.schema'
+import { ApiProperty } from '@nestjs/swagger'
+import { IsEnum, IsNotEmpty } from 'class-validator'
 
 export class AssignRoleDto {
   @ApiProperty({
@@ -10,5 +10,5 @@ export class AssignRoleDto {
   })
   @IsEnum(['master', 'archivist', 'contributor', 'user'])
   @IsNotEmpty()
-  role!: UserRole;
+  role!: UserRole
 }

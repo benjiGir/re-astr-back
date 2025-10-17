@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject, IsEnum, IsDateString } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsDateString, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator'
 
 export class UploadTestFileDto {
   @ApiProperty({
@@ -8,14 +8,14 @@ export class UploadTestFileDto {
   })
   @IsString()
   @IsNotEmpty()
-  testId!: string;
+  testId!: string
 
   @ApiProperty({
     description: 'File type',
     enum: ['screenshot', 'report', 'documentation', 'other'],
   })
   @IsEnum(['screenshot', 'report', 'documentation', 'other'])
-  fileType!: 'screenshot' | 'report' | 'documentation' | 'other';
+  fileType!: 'screenshot' | 'report' | 'documentation' | 'other'
 
   @ApiPropertyOptional({
     description: 'Additional metadata',
@@ -26,7 +26,7 @@ export class UploadTestFileDto {
   })
   @IsObject()
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>
 
   @ApiPropertyOptional({
     description: 'Expiration date (ISO 8601)',
@@ -34,5 +34,5 @@ export class UploadTestFileDto {
   })
   @IsDateString()
   @IsOptional()
-  expiresAt?: string;
+  expiresAt?: string
 }

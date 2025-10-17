@@ -1,26 +1,26 @@
+import { User } from '@common/decorators/user.decorator'
+import type { CreateTestDto } from '@modules/tests/dto/create-test.dto'
+import type { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
+import type { TestsService } from '@modules/tests/tests.service'
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
   Query,
   Request,
   UseGuards,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiCookieAuth } from '@nestjs/swagger';
-import { TestsService } from '@modules/tests/tests.service';
-import { CreateTestDto } from '@modules/tests/dto/create-test.dto';
-import { UpdateTestDto } from '@modules/tests/dto/update-test.dto';
-import {User} from "@common/decorators/user.decorator";
-import {UserDto} from "@/auth/dto/auth-response.dto";
-import { AuthGuard } from '@/auth/guards/auth.guard';
-import { RolesGuard } from '@/auth/guards/roles.guard';
-import { Roles } from '@/auth/decorators/roles.decorator';
+} from '@nestjs/common'
+import { ApiCookieAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { Roles } from '@/auth/decorators/roles.decorator'
+import type { UserDto } from '@/auth/dto/auth-response.dto'
+import { AuthGuard } from '@/auth/guards/auth.guard'
+import { RolesGuard } from '@/auth/guards/roles.guard'
 
 @ApiTags('Tests')
 @Controller('tests')
@@ -37,7 +37,7 @@ export class TestsController {
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   create(@User() user: UserDto, @Body() createTestDto: CreateTestDto, @Request() _req: any) {
-    return this.testsService.create(createTestDto, user.id);
+    return this.testsService.create(createTestDto, user.id)
   }
 
   @Get()
@@ -46,9 +46,9 @@ export class TestsController {
   @ApiResponse({ status: 200, description: 'Return all tests' })
   findAll(@Query('categoryId') categoryId?: string) {
     if (categoryId) {
-      return this.testsService.findByCategory(categoryId);
+      return this.testsService.findByCategory(categoryId)
     }
-    return this.testsService.findAll();
+    return this.testsService.findAll()
   }
 
   @Get(':id')
@@ -56,7 +56,7 @@ export class TestsController {
   @ApiResponse({ status: 200, description: 'Return the test' })
   @ApiResponse({ status: 404, description: 'Test not found' })
   findOne(@Param('id') id: string) {
-    return this.testsService.findOne(id);
+    return this.testsService.findOne(id)
   }
 
   @Patch(':id')
@@ -65,8 +65,13 @@ export class TestsController {
   @ApiResponse({ status: 200, description: 'Test updated successfully' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test not found' })
-  update(@User() user: UserDto, @Param('id') id: string, @Body() updateTestDto: UpdateTestDto, @Request() _req: any) {
-    return this.testsService.update(id, updateTestDto, user.id);
+  update(
+    @User() user: UserDto,
+    @Param('id') id: string,
+    @Body() updateTestDto: UpdateTestDto,
+    @Request() _req: any,
+  ) {
+    return this.testsService.update(id, updateTestDto, user.id)
   }
 
   @Delete(':id')
@@ -77,6 +82,6 @@ export class TestsController {
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Test not found' })
   remove(@Param('id') id: string) {
-    return this.testsService.remove(id);
+    return this.testsService.remove(id)
   }
 }

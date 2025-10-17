@@ -1,5 +1,5 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import type { UserRole } from '@database/schema/users.schema'
+import { createParamDecorator, type ExecutionContext } from '@nestjs/common'
 
 export interface CurrentUserData {
   userId: string
@@ -15,14 +15,14 @@ export const CurrentUser = createParamDecorator(
     const sessionId = request.headers['x-session-id'] as string
     const role = request.headers['x-user-role'] as UserRole
 
-    if (!userId || !sessionId || !role) {
+    if (!(userId && sessionId && role)) {
       throw new Error('User data not found in request headers')
     }
 
     return {
       userId,
       sessionId,
-      role
+      role,
     }
-  }
+  },
 )

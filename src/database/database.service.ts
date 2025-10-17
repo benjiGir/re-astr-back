@@ -1,9 +1,9 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import type { Sql } from 'postgres'
+import type { DatabaseConfigService } from '@config/database/config.service'
 import * as schema from '@database/schema'
-import {DatabaseConfigService} from "@config/database/config.service";
+import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common'
+import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import type { Sql } from 'postgres'
+import postgres from 'postgres'
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {

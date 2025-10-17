@@ -2,44 +2,44 @@
  * Types for dynamic field schemas
  */
 
-export type FieldType = 'text' | 'number' | 'boolean' | 'date' | 'email' | 'url';
+export type FieldType = 'text' | 'number' | 'boolean' | 'date' | 'email' | 'url'
 
 export interface FieldValidation {
-  min?: number;
-  max?: number;
-  minLength?: number;
-  maxLength?: number;
-  pattern?: string;
-  enum?: string[];
+  min?: number
+  max?: number
+  minLength?: number
+  maxLength?: number
+  pattern?: string
+  enum?: string[]
 }
 
 export interface FieldDefinition {
-  key: string;
-  label: string;
-  type: FieldType;
-  required: boolean;
-  validation?: FieldValidation;
-  defaultValue?: any;
+  key: string
+  label: string
+  type: FieldType
+  required: boolean
+  validation?: FieldValidation
+  defaultValue?: any
 }
 
 export interface BaseSchema {
-  fields: FieldDefinition[];
+  fields: FieldDefinition[]
 }
 
 export interface CustomFieldsSchema {
-  allowCustomFields: boolean;
-  maxCustomFields?: number;
-  allowedTypes?: FieldType[];
-  fields: FieldDefinition[];
+  allowCustomFields: boolean
+  maxCustomFields?: number
+  allowedTypes?: FieldType[]
+  fields: FieldDefinition[]
 }
 
 export interface ValidationError {
-  field: string;
-  message: string;
-  value?: any;
+  field: string
+  message: string
+  value?: any
 }
 
 export interface ValidationResult {
-  valid: boolean;
-  errors: ValidationError[];
+  valid: boolean
+  errors: ValidationError[]
 }

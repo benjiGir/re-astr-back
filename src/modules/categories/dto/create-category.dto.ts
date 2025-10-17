@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator'
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -8,7 +8,7 @@ export class CreateCategoryDto {
   })
   @IsString()
   @IsNotEmpty()
-  name!: string;
+  name!: string
 
   @ApiPropertyOptional({
     description: 'Category description',
@@ -16,7 +16,7 @@ export class CreateCategoryDto {
   })
   @IsString()
   @IsOptional()
-  description?: string;
+  description?: string
 
   @ApiProperty({
     description: 'Base schema defining common fields for all tests in this category',
@@ -33,7 +33,7 @@ export class CreateCategoryDto {
     },
   })
   @IsObject()
-  baseSchema!: Record<string, any>;
+  baseSchema!: Record<string, any>
 
   @ApiPropertyOptional({
     description: 'Custom fields schema rules',
@@ -45,5 +45,5 @@ export class CreateCategoryDto {
   })
   @IsObject()
   @IsOptional()
-  customFieldsSchema?: Record<string, any>;
+  customFieldsSchema?: Record<string, any>
 }
