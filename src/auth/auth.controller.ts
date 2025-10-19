@@ -26,7 +26,7 @@ export class AuthController {
     private readonly responseHandler: ResponseHandlerService,
   ) {}
 
-  @Post('sign-up')
+  @Post('sign-up/email')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User successfully registered', type: AuthResponseDto })
@@ -40,7 +40,7 @@ export class AuthController {
     await this.handleAuthRequest(request, reply, '/sign-up/email', body)
   }
 
-  @Post('sign-in')
+  @Post('sign-in/email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in a user' })
   @ApiResponse({ status: 200, description: 'User successfully signed in', type: AuthResponseDto })
