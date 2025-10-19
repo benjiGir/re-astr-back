@@ -5,7 +5,7 @@ import {
   type ICategoriesRepository,
 } from '@modules/categories/interfaces/categories-repository.interface'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
-import type { PinoLogger } from 'nestjs-pino'
+import { PinoLogger } from 'nestjs-pino'
 
 @Injectable()
 export class CategoriesService {

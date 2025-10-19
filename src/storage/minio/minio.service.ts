@@ -1,4 +1,4 @@
-import type { MinioConfigService } from '@config/minio/config.service'
+import { MinioConfigService } from '@config/minio/config.service'
 import {
   BadRequestException,
   Injectable,

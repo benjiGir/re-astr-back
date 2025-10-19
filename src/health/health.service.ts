@@ -1,7 +1,7 @@
-import type { DatabaseService } from '@database/database.service'
+import { DatabaseService } from '@database/database.service'
 import { Injectable } from '@nestjs/common'
-import type { PinoLogger } from 'nestjs-pino'
-import type { MinioService } from '@/storage/minio/minio.service'
+import { PinoLogger } from 'nestjs-pino'
+import { MinioService } from '@/storage/minio/minio.service'
 
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy'

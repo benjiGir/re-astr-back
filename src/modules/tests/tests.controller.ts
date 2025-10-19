@@ -1,7 +1,7 @@
 import { User } from '@common/decorators/user.decorator'
 import type { CreateTestDto } from '@modules/tests/dto/create-test.dto'
 import type { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
-import type { TestsService } from '@modules/tests/tests.service'
+import { TestsService } from '@modules/tests/tests.service'
 import {
   Body,
   Controller,

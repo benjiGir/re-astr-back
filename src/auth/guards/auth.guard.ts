@@ -1,4 +1,4 @@
-import type { DatabaseService } from '@database/database.service'
+import { DatabaseService } from '@database/database.service'
 import { users } from '@database/schema/users.schema'
 import {
   type CanActivate,
@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
-import type { AuthService } from '../auth.service'
+import { AuthService } from '../auth.service'
 
 @Injectable()
 export class AuthGuard implements CanActivate {

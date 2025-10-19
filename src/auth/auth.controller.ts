@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common'
 import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
-import type { AuthService } from './auth.service'
+import { AuthService } from './auth.service'
 import type {
   ForgotPasswordBodyDto,
   ResetPasswordBodyDto,
@@ -14,8 +14,8 @@ import {
   SessionResponseDto,
   SignOutResponseDto,
 } from './dto/auth-response.dto'
-import type { RequestConverterService } from './services/request-converter.service'
-import type { ResponseHandlerService } from './services/response-handler.service'
+import { RequestConverterService } from './services/request-converter.service'
+import { ResponseHandlerService } from './services/response-handler.service'
 
 @ApiTags('Authentication')
 @Controller('auth')

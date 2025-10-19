@@ -8,5 +8,6 @@ import { HealthService } from './health.service'
   imports: [DatabaseModule, MinioModule],
   controllers: [HealthController],
   providers: [HealthService],
+  exports: [HealthService],
 })
 export class HealthModule {}

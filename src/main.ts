@@ -1,5 +1,7 @@
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
+import cookie from '@fastify/cookie'
+import multipart from '@fastify/multipart'
 import { Swagger } from '@utils/swagger/swagger'
 import { Logger } from 'nestjs-pino'
 import pino from 'pino'
@@ -27,11 +29,11 @@ async function bootstrap() {
 
   app.useLogger(app.get(Logger))
 
-  await app.register(require('@fastify/cookie'), {
+  await app.register(cookie, {
     secret: process.env.COOKIE_SECRET || 'your-secret-key',
   })
 
-  await app.register(require('@fastify/multipart'), {
+  await app.register(multipart, {
     limits: {
       fileSize: 50 * 1024 * 1024,
       files: 10,

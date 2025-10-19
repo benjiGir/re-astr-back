@@ -1,4 +1,4 @@
-import type { DatabaseService } from '@database/database.service'
+import { DatabaseService } from '@database/database.service'
 import { type Category, categories, type NewCategory } from '@database/schema/categories.schema'
 import type { ICategoriesRepository } from '@modules/categories/interfaces/categories-repository.interface'
 import { Injectable } from '@nestjs/common'

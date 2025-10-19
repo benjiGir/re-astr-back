@@ -1,4 +1,4 @@
-import type { DatabaseConfigService } from '@config/database/config.service'
+import { DatabaseConfigService } from '@config/database/config.service'
 import * as schema from '@database/schema'
 import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common'
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
@@ -12,7 +12,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private databaseConfigService: DatabaseConfigService) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     const databaseUrl = this.databaseConfigService.url
 
     this.client = postgres(databaseUrl, {

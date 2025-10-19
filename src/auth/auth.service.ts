@@ -1,12 +1,12 @@
-import type { AppConfigService } from '@config/app/config.service'
-import type { DatabaseConfigService } from '@config/database/config.service'
+import { AppConfigService } from '@config/app/config.service'
+import { DatabaseConfigService } from '@config/database/config.service'
 import { accounts, sessions, users, verifications } from '@database/index'
 import { Injectable, type OnModuleInit } from '@nestjs/common'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import type { PinoLogger } from 'nestjs-pino'
+import { PinoLogger } from 'nestjs-pino'
 import postgres from 'postgres'
 
 @Injectable()

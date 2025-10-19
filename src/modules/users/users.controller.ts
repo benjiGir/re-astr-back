@@ -15,7 +15,7 @@ import { AuthGuard } from '@/auth/guards/auth.guard'
 import { RolesGuard } from '@/auth/guards/roles.guard'
 import type { AssignRoleDto } from './dto/assign-role.dto'
 import type { UpdateUserDto } from './dto/update-user.dto'
-import type { UsersService } from './services/users.service'
+import { UsersService } from './services/users.service'
 
 @ApiTags('Users')
 @Controller('users')

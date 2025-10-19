@@ -1,6 +1,6 @@
 import type { CreateCategoryDto } from '@modules/categories/dto/create-category.dto'
 import type { UpdateCategoryDto } from '@modules/categories/dto/update-category.dto'
-import type { CategoriesService } from '@modules/categories/services/categories.service'
+import { CategoriesService } from '@modules/categories/services/categories.service'
 import {
   Body,
   Controller,

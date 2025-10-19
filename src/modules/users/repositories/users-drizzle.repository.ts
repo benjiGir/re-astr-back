@@ -2,7 +2,7 @@ import type { User, UserRole } from '@database/schema/users.schema'
 import { users } from '@database/schema/users.schema'
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
-import type { DatabaseService } from '@/database'
+import { DatabaseService } from '@/database'
 import type { IUsersRepository } from '../interfaces/users-repository.interface'
 
 @Injectable()

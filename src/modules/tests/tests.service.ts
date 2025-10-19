@@ -1,6 +1,6 @@
 import type { BaseSchema, CustomFieldsSchema } from '@common/validation/schema.types'
-import type { SchemaValidationService } from '@common/validation/schema-validation.service'
-import type { CategoriesService } from '@modules/categories/services/categories.service'
+import { SchemaValidationService } from '@common/validation/schema-validation.service'
+import { CategoriesService } from '@modules/categories/services/categories.service'
 import type { CreateTestDto } from '@modules/tests/dto/create-test.dto'
 import type { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
 import {

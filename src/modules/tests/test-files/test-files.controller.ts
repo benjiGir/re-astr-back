@@ -31,7 +31,7 @@ import { RolesGuard } from '@/auth/guards/roles.guard'
 import type { CreateTestFileDto } from './dto/create-test-file.dto'
 import type { UpdateTestFileDto } from './dto/update-test-file.dto'
 import type { UploadTestFileDto } from './dto/upload-test-file.dto'
-import type { TestFilesService } from './test-files.service'
+import { TestFilesService } from './test-files.service'
 
 @ApiTags('Test files')
 @Controller('test-files')

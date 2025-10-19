@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
-import type { DatabaseService } from '../../../../database/database.service'
+import { DatabaseService } from '../../../../database/database.service'
 import {
   type NewTestFile,
   type TestFile,
