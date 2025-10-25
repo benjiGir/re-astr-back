@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { PinoLogger } from 'nestjs-pino'
 import postgres from 'postgres'
+import argon2 from "argon2";
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -47,6 +48,18 @@ export class AuthService implements OnModuleInit {
       emailAndPassword: {
         enabled: this.appConfigServie.emailPasswordEnabled,
         requireEmailVerification: this.appConfigServie.emailPasswordRequireEmailVerification,
+        password: {
+          // Fonction custom pour hasher
+          hash: async (password: string) => {
+            return await argon2.hash(password);
+          },
+
+          // Fonction custom pour vérifier
+          verify: async ({hash, password}) => {
+            return await argon2.verify(hash, password);
+          }
+        }
+
       },
       session: {
         expiresIn: this.appConfigServie.sessionExpiresIn,
@@ -55,6 +68,7 @@ export class AuthService implements OnModuleInit {
       secret: this.appConfigServie.betterAuthSecret,
       baseURL: this.appConfigServie.baseUrl,
       basePath: '/auth',
+      trustedOrigins: [ "http://localhost:5173" ],
     })
 
     this.logger.info(
