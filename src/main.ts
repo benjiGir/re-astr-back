@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
-import cookie from '@fastify/cookie'
+import fastifyCookie from '@fastify/cookie'
 import multipart from '@fastify/multipart'
 import { Swagger } from '@utils/swagger/swagger'
 import { Logger } from 'nestjs-pino'
@@ -29,7 +29,7 @@ async function bootstrap() {
 
   app.useLogger(app.get(Logger))
 
-  await app.register(cookie, {
+  await app.register(fastifyCookie, {
     secret: process.env.COOKIE_SECRET || 'your-secret-key',
   })
 
