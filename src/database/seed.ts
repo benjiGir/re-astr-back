@@ -72,7 +72,7 @@ async function seed() {
 
     for (const user of [master, archivist, contributor, regularUser]) {
       await db.insert(accounts).values({
-        accountId: user.email,
+        accountId: user.id,
         providerId: 'credential',
         userId: user.id,
         password,
