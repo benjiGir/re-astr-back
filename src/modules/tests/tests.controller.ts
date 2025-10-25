@@ -1,6 +1,6 @@
 import { User } from '@common/decorators/user.decorator'
-import type { CreateTestDto } from '@modules/tests/dto/create-test.dto'
-import type { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
+import { CreateTestDto } from '@modules/tests/dto/create-test.dto'
+import { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
 import { TestsService } from '@modules/tests/tests.service'
 import {
   Body,
@@ -18,7 +18,7 @@ import {
 } from '@nestjs/common'
 import { ApiCookieAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { Roles } from '@/auth/decorators/roles.decorator'
-import type { UserDto } from '@/auth/dto/auth-response.dto'
+import { UserDto } from '@/auth/dto/auth-response.dto'
 import { AuthGuard } from '@/auth/guards/auth.guard'
 import { RolesGuard } from '@/auth/guards/roles.guard'
 

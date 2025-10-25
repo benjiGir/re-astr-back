@@ -13,8 +13,8 @@ import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@ne
 import { Roles } from '@/auth/decorators/roles.decorator'
 import { AuthGuard } from '@/auth/guards/auth.guard'
 import { RolesGuard } from '@/auth/guards/roles.guard'
-import type { AssignRoleDto } from './dto/assign-role.dto'
-import type { UpdateUserDto } from './dto/update-user.dto'
+import { AssignRoleDto } from './dto/assign-role.dto'
+import { UpdateUserDto } from './dto/update-user.dto'
 import { UsersService } from './services/users.service'
 
 @ApiTags('Users')

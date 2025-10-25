@@ -25,12 +25,12 @@ import {
 } from '@nestjs/swagger'
 import type { FastifyReply } from 'fastify'
 import { Roles } from '@/auth/decorators/roles.decorator'
-import type { UserDto } from '@/auth/dto/auth-response.dto'
+import { UserDto } from '@/auth/dto/auth-response.dto'
 import { AuthGuard } from '@/auth/guards/auth.guard'
 import { RolesGuard } from '@/auth/guards/roles.guard'
-import type { CreateTestFileDto } from './dto/create-test-file.dto'
-import type { UpdateTestFileDto } from './dto/update-test-file.dto'
-import type { UploadTestFileDto } from './dto/upload-test-file.dto'
+import { CreateTestFileDto } from './dto/create-test-file.dto'
+import { UpdateTestFileDto } from './dto/update-test-file.dto'
+import { UploadTestFileDto } from './dto/upload-test-file.dto'
 import { TestFilesService } from './test-files.service'
 
 @ApiTags('Test files')

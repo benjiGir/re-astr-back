@@ -50,7 +50,8 @@
         "useNamingConvention": "off",
         "useNodejsImportProtocol": "error",
         "useNumberNamespace": "error",
-        "useShorthandFunctionType": "error"
+        "useShorthandFunctionType": "error",
+        "useImportType": "off"
       },
       "suspicious": {
         "noExplicitAny": "warn",
