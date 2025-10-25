@@ -45,7 +45,7 @@
     "class-transform": "^0.7.0",
     "class-validator": "^0.14.2",
     "drizzle-orm": "^0.44.5",
-    "fastify": "^5.6.1",
+    "fastify": "5.4.0",
     "minio": "^8.0.6",
     "nestjs-pino": "^4.4.1",
     "pino": "^10.0.0",
