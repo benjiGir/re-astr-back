@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common'
 import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { PinoLogger } from 'nestjs-pino'
 import { AuthService } from './auth.service'
 import {
   ForgotPasswordBodyDto,
@@ -24,7 +25,10 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly requestConverter: RequestConverterService,
     private readonly responseHandler: ResponseHandlerService,
-  ) {}
+    private readonly logger: PinoLogger,
+  ) {
+    this.logger.setContext(AuthController.name)
+  }
 
   @Post('sign-up/email')
   @HttpCode(HttpStatus.CREATED)
@@ -64,7 +68,48 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   async signOut(@Req() request: any, @Res({ passthrough: false }) reply: any): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/sign-out')
+    try {
+      // Extraire le token de session depuis les cookies Fastify parsés
+      const cookieValue = request.cookies?.['better-auth.session_token']
+
+      if (!cookieValue) {
+        reply.status(401).send({ error: 'No session token found' })
+        return
+      }
+
+      // Better Auth signe ses cookies avec son propre secret (BETTER_AUTH_SECRET)
+      // Le format est: token.signature - on extrait juste la partie token
+      const sessionToken = cookieValue.split('.')[0]
+
+      // Vérifier la session
+      const session = await this.authService.verifySession(sessionToken)
+
+      if (!session) {
+        reply.status(401).send({ error: 'Invalid or expired session' })
+        return
+      }
+
+      // Supprimer la session de la base de données
+      await this.authService.deleteSession(sessionToken)
+
+      // Supprimer le cookie côté client
+      reply.clearCookie('better-auth.session_token', {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+      })
+
+      reply.status(200).send({ success: true })
+    } catch (error) {
+      this.logger.error(
+        { error: error instanceof Error ? error.message : 'Unknown' },
+        'Sign out failed',
+      )
+      this.responseHandler.handleAuthError(error, reply, {
+        url: '/sign-out',
+        method: 'POST',
+      })
+    }
   }
 
   @Get('session')
@@ -74,7 +119,33 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Current session retrieved', type: SessionResponseDto })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   async getSession(@Req() request: any, @Res({ passthrough: false }) reply: any): Promise<void> {
-    await this.handleAuthRequest(request, reply, '/get-session')
+    try {
+      // Extraire le token de session depuis les cookies Fastify parsés
+      const cookieValue = request.cookies?.['better-auth.session_token']
+
+      if (!cookieValue) {
+        reply.status(401).send({ error: 'Not authenticated' })
+        return
+      }
+
+      // Better Auth signe ses cookies - extraire la partie token
+      const sessionToken = cookieValue.split('.')[0]
+
+      // Vérifier la session
+      const result = await this.authService.verifySession(sessionToken)
+
+      if (result) {
+        reply.status(200).send({
+          session: result.session,
+          user: result.user,
+        })
+      } else {
+        reply.status(401).send({ error: 'Not authenticated' })
+      }
+    } catch (error) {
+      this.logger.error({ error: error instanceof Error ? error.message : 'Unknown' }, 'Get session failed')
+      reply.status(500).send({ error: 'Internal server error' })
+    }
   }
 
   @Post('forgot-password')

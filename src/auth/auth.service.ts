@@ -64,6 +64,7 @@ export class AuthService implements OnModuleInit {
       session: {
         expiresIn: this.appConfigServie.sessionExpiresIn,
         updateAge: this.appConfigServie.sessionUpdateAge,
+
       },
       secret: this.appConfigServie.betterAuthSecret,
       baseURL: this.appConfigServie.baseUrl,
@@ -123,6 +124,24 @@ export class AuthService implements OnModuleInit {
         'Session verification failed',
       )
       return null
+    }
+  }
+
+  async deleteSession(sessionToken: string): Promise<boolean> {
+    try {
+      await this.db
+        .delete(sessions)
+        .where(eq(sessions.token, sessionToken))
+
+      this.logger.info({ sessionToken: sessionToken.substring(0, 20) + '...' }, 'Session deleted successfully')
+
+      return true
+    } catch (error) {
+      this.logger.error(
+        { error: error instanceof Error ? error.message : 'Unknown error' },
+        'Session deletion failed',
+      )
+      return false
     }
   }
 }

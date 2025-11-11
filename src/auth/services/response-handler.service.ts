@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common'
+import { PinoLogger } from 'nestjs-pino'
 import { AppConfigService } from '../../config/app/config.service'
 
 @Injectable()
 export class ResponseHandlerService {
-  constructor(private readonly appConfigService: AppConfigService) {}
+  constructor(
+    private readonly appConfigService: AppConfigService,
+    private readonly logger: PinoLogger,
+  ) {
+    this.logger.setContext(ResponseHandlerService.name)
+  }
 
   async handleBetterAuthResponse(response: any, fastifyReply: any): Promise<void> {
     if (response instanceof Response) {
@@ -23,7 +29,7 @@ export class ResponseHandlerService {
   }
 
   private async handleDirectResponse(response: any, fastifyReply: any): Promise<void> {
-    fastifyReply.status(200).send(response)
+    await fastifyReply.status(200).send(response)
   }
 
   private copyResponseHeaders(response: Response, fastifyReply: any): void {
@@ -62,7 +68,14 @@ export class ResponseHandlerService {
     fastifyReply: any,
     requestInfo?: { url: string; method: string },
   ): void {
-    console.error('Better Auth error:', error)
+    this.logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        url: requestInfo?.url,
+        method: requestInfo?.method,
+      },
+      'Better Auth error',
+    )
 
     const errorResponse: any = {
       error: 'Authentication error',
