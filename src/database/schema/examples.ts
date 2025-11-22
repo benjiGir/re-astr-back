@@ -52,7 +52,7 @@ export const exampleCategory1: NewCategory = {
   customFieldsSchema: {
     allowCustomFields: true,
     maxCustomFields: 10,
-    allowedTypes: ['text', 'number', 'boolean', 'date', 'select'],
+    allowedTypes: ['text', 'number', 'boolean', 'date'],
     fields: [], // Les champs custom seront ajoutés dynamiquement
   },
 }
@@ -158,9 +158,11 @@ export const exampleCategory2: NewCategory = {
       {
         key: 'axis',
         label: 'Axe de vibration',
-        type: 'select',
+        type: 'text',
         required: true,
-        options: ['X', 'Y', 'Z', 'XYZ'],
+        validation: {
+          enum: ['X', 'Y', 'Z', 'XYZ'],
+        },
       },
       {
         key: 'duration_minutes',
@@ -174,7 +176,8 @@ export const exampleCategory2: NewCategory = {
   customFieldsSchema: {
     allowCustomFields: true,
     maxCustomFields: 15,
-    allowedTypes: ['text', 'number', 'boolean', 'date', 'select', 'textarea'],
+    allowedTypes: ['text', 'number', 'boolean', 'date', 'array', 'object'],
+    fields: [],
   },
 }
 
@@ -221,9 +224,11 @@ export const exampleCategory3: NewCategory = {
       {
         key: 'test_type',
         label: 'Type de test',
-        type: 'select',
+        type: 'text',
         required: true,
-        options: ['unit', 'integration', 'e2e', 'performance', 'security'],
+        validation: {
+          enum: ['unit', 'integration', 'e2e', 'performance', 'security'],
+        },
       },
       {
         key: 'framework',
@@ -247,9 +252,11 @@ export const exampleCategory3: NewCategory = {
       {
         key: 'environment',
         label: 'Environnement',
-        type: 'select',
+        type: 'text',
         required: true,
-        options: ['development', 'staging', 'production'],
+        validation: {
+          enum: ['development', 'staging', 'production'],
+        },
       },
     ],
   },
@@ -257,7 +264,8 @@ export const exampleCategory3: NewCategory = {
   customFieldsSchema: {
     allowCustomFields: true,
     maxCustomFields: 20,
-    allowedTypes: ['text', 'number', 'boolean', 'date', 'select', 'textarea', 'url'],
+    allowedTypes: ['text', 'number', 'boolean', 'date', 'url', 'array', 'object'],
+    fields: [],
   },
 }
 

@@ -92,29 +92,31 @@ async function seed() {
         baseSchema: {
           fields: [
             {
-              name: 'component',
+              key: 'component',
               type: 'text',
               required: true,
               label: 'Component Name',
             },
             {
-              name: 'temperature',
+              key: 'temperature',
               type: 'number',
               required: true,
               label: 'Temperature (°C)',
             },
             {
-              name: 'duration',
+              key: 'duration',
               type: 'number',
               required: true,
               label: 'Test Duration (hours)',
             },
             {
-              name: 'result',
-              type: 'select',
+              key: 'result',
+              type: 'text',
               required: true,
               label: 'Test Result',
-              options: ['Pass', 'Fail', 'Inconclusive'],
+              validation: {
+                enum: ['Pass', 'Fail', 'Inconclusive'],
+              },
             },
           ],
         },
@@ -135,35 +137,37 @@ async function seed() {
         baseSchema: {
           fields: [
             {
-              name: 'component',
+              key: 'component',
               type: 'text',
               required: true,
               label: 'Component Name',
             },
             {
-              name: 'frequency',
+              key: 'frequency',
               type: 'number',
               required: true,
               label: 'Frequency (Hz)',
             },
             {
-              name: 'amplitude',
+              key: 'amplitude',
               type: 'number',
               required: true,
               label: 'Amplitude (mm)',
             },
             {
-              name: 'duration',
+              key: 'duration',
               type: 'number',
               required: true,
               label: 'Duration (minutes)',
             },
             {
-              name: 'result',
-              type: 'select',
+              key: 'result',
+              type: 'text',
               required: true,
               label: 'Test Result',
-              options: ['Pass', 'Fail'],
+              validation: {
+                enum: ['Pass', 'Fail'],
+              },
             },
           ],
         },
@@ -184,29 +188,31 @@ async function seed() {
         baseSchema: {
           fields: [
             {
-              name: 'component',
+              key: 'component',
               type: 'text',
               required: true,
               label: 'Component Name',
             },
             {
-              name: 'fieldStrength',
+              key: 'fieldStrength',
               type: 'number',
               required: true,
               label: 'Field Strength (V/m)',
             },
             {
-              name: 'frequency',
+              key: 'frequency',
               type: 'number',
               required: true,
               label: 'Frequency (MHz)',
             },
             {
-              name: 'result',
-              type: 'select',
+              key: 'result',
+              type: 'text',
               required: true,
               label: 'Test Result',
-              options: ['Pass', 'Fail', 'Degraded Performance'],
+              validation: {
+                enum: ['Pass', 'Fail', 'Degraded Performance'],
+              },
             },
           ],
         },
