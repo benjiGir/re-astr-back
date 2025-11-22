@@ -325,6 +325,143 @@ describe('SchemaValidationService', () => {
     })
   })
 
+  describe('validateBaseSchema', () => {
+    it('should accept valid baseSchema', () => {
+      const validSchema: BaseSchema = {
+        fields: [
+          {
+            key: 'temperature',
+            label: 'Temperature',
+            type: 'number',
+            required: true,
+            validation: { min: -50, max: 150 },
+          },
+        ],
+      }
+
+      const result = service.validateBaseSchema(validSchema)
+
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('should reject baseSchema with empty field key', () => {
+      const invalidSchema = {
+        fields: [
+          {
+            key: '',
+            label: 'Temperature',
+            type: 'number',
+            required: true,
+          },
+        ],
+      }
+
+      const result = service.validateBaseSchema(invalidSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors.length).toBeGreaterThan(0)
+    })
+
+    it('should reject baseSchema with invalid field type', () => {
+      const invalidSchema = {
+        fields: [
+          {
+            key: 'test',
+            label: 'Test',
+            type: 'invalid_type',
+            required: true,
+          },
+        ],
+      }
+
+      const result = service.validateBaseSchema(invalidSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors.length).toBeGreaterThan(0)
+    })
+
+    it('should accept baseSchema with empty fields array', () => {
+      const validSchema: BaseSchema = {
+        fields: [],
+      }
+
+      const result = service.validateBaseSchema(validSchema)
+
+      expect(result.valid).toBe(true)
+    })
+  })
+
+  describe('validateCustomFieldsSchema', () => {
+    it('should accept valid customFieldsSchema', () => {
+      const validSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        maxCustomFields: 10,
+        allowedTypes: ['text', 'number'],
+        fields: [],
+      }
+
+      const result = service.validateCustomFieldsSchema(validSchema)
+
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('should accept minimal customFieldsSchema', () => {
+      const validSchema: CustomFieldsSchema = {
+        allowCustomFields: false,
+        fields: [],
+      }
+
+      const result = service.validateCustomFieldsSchema(validSchema)
+
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject customFieldsSchema with negative maxCustomFields', () => {
+      const invalidSchema = {
+        allowCustomFields: true,
+        maxCustomFields: -5,
+        fields: [],
+      }
+
+      const result = service.validateCustomFieldsSchema(invalidSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors.length).toBeGreaterThan(0)
+    })
+
+    it('should reject customFieldsSchema with invalid allowedType', () => {
+      const invalidSchema = {
+        allowCustomFields: true,
+        allowedTypes: ['text', 'invalid_type'],
+        fields: [],
+      }
+
+      const result = service.validateCustomFieldsSchema(invalidSchema)
+
+      expect(result.valid).toBe(false)
+    })
+
+    it('should accept customFieldsSchema with predefined fields', () => {
+      const validSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        fields: [
+          {
+            key: 'operator',
+            label: 'Operator Name',
+            type: 'text',
+            required: false,
+          },
+        ],
+      }
+
+      const result = service.validateCustomFieldsSchema(validSchema)
+
+      expect(result.valid).toBe(true)
+    })
+  })
+
   describe('validateOrThrow', () => {
     it('should not throw on valid result', () => {
       const validResult = { valid: true, errors: [] }

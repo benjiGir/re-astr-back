@@ -11,6 +11,76 @@ import type {
 
 @Injectable()
 export class SchemaValidationService {
+  // Zod schemas for validating schema definitions themselves
+  private readonly fieldTypeSchema = z.enum(['text', 'number', 'boolean', 'date', 'email', 'url'])
+
+  private readonly fieldValidationSchema = z
+    .object({
+      min: z.number().optional(),
+      max: z.number().optional(),
+      minLength: z.number().optional(),
+      maxLength: z.number().optional(),
+      pattern: z.string().optional(),
+      enum: z.array(z.string()).optional(),
+    })
+    .optional()
+
+  private readonly fieldDefinitionSchema = z.object({
+    key: z.string().min(1, 'Field key must not be empty'),
+    label: z.string().min(1, 'Field label must not be empty'),
+    type: this.fieldTypeSchema,
+    required: z.boolean(),
+    validation: this.fieldValidationSchema,
+    defaultValue: z.any().optional(),
+  })
+
+  private readonly baseSchemaSchema = z.object({
+    fields: z.array(this.fieldDefinitionSchema),
+  })
+
+  private readonly customFieldsSchemaSchema = z.object({
+    allowCustomFields: z.boolean(),
+    maxCustomFields: z.number().positive().optional(),
+    allowedTypes: z.array(this.fieldTypeSchema).optional(),
+    fields: z.array(this.fieldDefinitionSchema),
+  })
+
+  /**
+   * Validates a BaseSchema definition
+   */
+  validateBaseSchema(schema: unknown): ValidationResult {
+    try {
+      this.baseSchemaSchema.parse(schema)
+      return { valid: true, errors: [] }
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return {
+          valid: false,
+          errors: this.formatZodErrors(error),
+        }
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Validates a CustomFieldsSchema definition
+   */
+  validateCustomFieldsSchema(schema: unknown): ValidationResult {
+    try {
+      this.customFieldsSchemaSchema.parse(schema)
+      return { valid: true, errors: [] }
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return {
+          valid: false,
+          errors: this.formatZodErrors(error),
+        }
+      }
+      throw error
+    }
+  }
+
   validateCommonData(data: Record<string, any>, baseSchema: BaseSchema): ValidationResult {
     try {
       const zodSchema = this.buildZodSchemaFromFields(baseSchema.fields)
@@ -172,24 +242,46 @@ export class SchemaValidationService {
   }
 
   private detectValueType(value: any): FieldType {
-    if (typeof value === 'string') {
-      if (!isNaN(Date.parse(value))) {
-        return 'date'
-      }
-      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        return 'email'
-      }
-      try {
-        new URL(value)
-        return 'url'
-      } catch {
-        return 'text'
-      }
-    }
+    // Handle primitive types first
     if (typeof value === 'number') return 'number'
     if (typeof value === 'boolean') return 'boolean'
     if (value instanceof Date) return 'date'
 
+    if (typeof value === 'string') {
+      // Check for ISO 8601 date format (strict)
+      // Matches: 2024-01-01, 2024-01-01T12:00:00, 2024-01-01T12:00:00.000Z, etc.
+      const iso8601Regex =
+        /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})?)?$/
+      if (iso8601Regex.test(value)) {
+        // Double-check it's a valid date
+        const parsed = Date.parse(value)
+        if (!isNaN(parsed)) {
+          return 'date'
+        }
+      }
+
+      // Check for email format (aligned with common email validation)
+      // More strict than simple pattern to avoid false positives
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+      if (emailRegex.test(value)) {
+        return 'email'
+      }
+
+      // Check for URL format
+      // Must start with http:// or https:// to avoid false positives
+      if (value.startsWith('http://') || value.startsWith('https://')) {
+        try {
+          new URL(value)
+          return 'url'
+        } catch {
+          // Invalid URL, fall through to text
+        }
+      }
+
+      return 'text'
+    }
+
+    // Default to text for any other type
     return 'text'
   }
 
