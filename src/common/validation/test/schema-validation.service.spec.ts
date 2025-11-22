@@ -242,6 +242,87 @@ describe('SchemaValidationService', () => {
 
       expect(result.valid).toBe(false)
     })
+
+    it('should validate both predefined fields AND additional fields against allowedTypes', () => {
+      const customFieldsSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        allowedTypes: ['text', 'number'],
+        fields: [
+          {
+            key: 'operator',
+            label: 'Operator',
+            type: 'text',
+            required: false,
+          },
+        ],
+      }
+
+      const validData = {
+        operator: 'John Doe',
+        testNumber: 42,
+        notes: 'Some notes',
+      }
+
+      const result = service.validateCustomData(validData, customFieldsSchema)
+
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('should reject additional fields with disallowed types even when predefined fields exist', () => {
+      const customFieldsSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        allowedTypes: ['text', 'number'],
+        fields: [
+          {
+            key: 'operator',
+            label: 'Operator',
+            type: 'text',
+            required: false,
+          },
+        ],
+      }
+
+      const invalidData = {
+        operator: 'John Doe',
+        testDate: '2024-01-01',
+      }
+
+      const result = service.validateCustomData(invalidData, customFieldsSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors.length).toBeGreaterThan(0)
+      expect(result.errors[0].field).toBe('testDate')
+      expect(result.errors[0].message).toContain("Type 'date' not allowed")
+    })
+
+    it('should accumulate errors from both predefined field validation and type checking', () => {
+      const customFieldsSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        allowedTypes: ['text', 'number'],
+        fields: [
+          {
+            key: 'operator',
+            label: 'Operator',
+            type: 'text',
+            required: true,
+          },
+        ],
+      }
+
+      const invalidData = {
+        testDate: '2024-01-01',
+      }
+
+      const result = service.validateCustomData(invalidData, customFieldsSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors.length).toBeGreaterThan(0)
+
+      const errorFields = result.errors.map((e) => e.field)
+      expect(errorFields).toContain('operator')
+      expect(errorFields).toContain('testDate')
+    })
   })
 
   describe('validateOrThrow', () => {

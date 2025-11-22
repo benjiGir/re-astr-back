@@ -1,3 +1,4 @@
+import type { BaseSchema, CustomFieldsSchema } from '@common/validation/schema.types'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator'
 
@@ -33,7 +34,7 @@ export class CreateCategoryDto {
     },
   })
   @IsObject()
-  baseSchema!: Record<string, any>
+  baseSchema!: BaseSchema
 
   @ApiPropertyOptional({
     description: 'Custom fields schema rules',
@@ -45,5 +46,5 @@ export class CreateCategoryDto {
   })
   @IsObject()
   @IsOptional()
-  customFieldsSchema?: Record<string, any>
+  customFieldsSchema?: CustomFieldsSchema
 }

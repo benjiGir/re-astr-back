@@ -62,39 +62,41 @@ export class SchemaValidationService {
       }
     }
 
+    const allErrors: ValidationError[] = []
+
+    // Step 1: Validate predefined fields if any
     if (customFieldsSchema.fields.length > 0) {
       try {
         const zodSchema = this.buildZodSchemaFromFields(customFieldsSchema.fields)
         zodSchema.parse(data)
-        return { valid: true, errors: [] }
       } catch (error) {
         if (error instanceof ZodError) {
-          return {
-            valid: false,
-            errors: this.formatZodErrors(error),
-          }
+          allErrors.push(...this.formatZodErrors(error))
+        } else {
+          throw error
         }
-        throw error
       }
     }
 
+    // Step 2: Validate additional fields (not in predefined fields) against allowedTypes
     if (customFieldsSchema.allowedTypes && customFieldsSchema.allowedTypes.length > 0) {
-      const errors: ValidationError[] = []
+      const predefinedKeys = new Set(customFieldsSchema.fields.map((f) => f.key))
+      const additionalFields = Object.entries(data).filter(([key]) => !predefinedKeys.has(key))
 
-      for (const [key, value] of Object.entries(data)) {
+      for (const [key, value] of additionalFields) {
         const detectedType = this.detectValueType(value)
         if (!customFieldsSchema.allowedTypes.includes(detectedType)) {
-          errors.push({
+          allErrors.push({
             field: key,
             message: `Type '${detectedType}' not allowed. Allowed types: ${customFieldsSchema.allowedTypes.join(', ')}`,
             value,
           })
         }
       }
+    }
 
-      if (errors.length > 0) {
-        return { valid: false, errors }
-      }
+    if (allErrors.length > 0) {
+      return { valid: false, errors: allErrors }
     }
 
     return { valid: true, errors: [] }

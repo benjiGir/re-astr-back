@@ -172,7 +172,7 @@ describe('TestsService', () => {
       jest.spyOn(schemaValidationService, 'validateCommonData').mockReturnValue(validationResult)
       jest
         .spyOn(schemaValidationService, 'validateOrThrow')
-        .mockImplementation((result, context) => {
+        .mockImplementation((_result, context) => {
           if (context === 'commonData') {
             throw new BadRequestException('commonData validation failed')
           }
@@ -192,7 +192,7 @@ describe('TestsService', () => {
       jest.spyOn(schemaValidationService, 'validateCustomData').mockReturnValue(validationResult)
       jest
         .spyOn(schemaValidationService, 'validateOrThrow')
-        .mockImplementation((result, context) => {
+        .mockImplementation((_result, context) => {
           if (context === 'customData') {
             throw new BadRequestException('customData validation failed')
           }

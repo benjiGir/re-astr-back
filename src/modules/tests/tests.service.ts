@@ -1,4 +1,3 @@
-import type { BaseSchema, CustomFieldsSchema } from '@common/validation/schema.types'
 import { SchemaValidationService } from '@common/validation/schema-validation.service'
 import { CategoriesService } from '@modules/categories/services/categories.service'
 import type { CreateTestDto } from '@modules/tests/dto/create-test.dto'
@@ -23,14 +22,14 @@ export class TestsService {
 
     const commonDataValidation = this.schemaValidationService.validateCommonData(
       createTestDto.commonData,
-      category.baseSchema as BaseSchema,
+      category.baseSchema,
     )
     this.schemaValidationService.validateOrThrow(commonDataValidation, 'commonData')
 
     const customData = createTestDto.customData || {}
     const customDataValidation = this.schemaValidationService.validateCustomData(
       customData,
-      category.customFieldsSchema as CustomFieldsSchema,
+      category.customFieldsSchema,
     )
     this.schemaValidationService.validateOrThrow(customDataValidation, 'customData')
 
@@ -76,7 +75,7 @@ export class TestsService {
     if (updateTestDto.commonData) {
       const commonDataValidation = this.schemaValidationService.validateCommonData(
         updateTestDto.commonData,
-        category.baseSchema as BaseSchema,
+        category.baseSchema,
       )
       this.schemaValidationService.validateOrThrow(commonDataValidation, 'commonData')
     }
@@ -84,7 +83,7 @@ export class TestsService {
     if (updateTestDto.customData !== undefined) {
       const customDataValidation = this.schemaValidationService.validateCustomData(
         updateTestDto.customData,
-        category.customFieldsSchema as CustomFieldsSchema,
+        category.customFieldsSchema,
       )
       this.schemaValidationService.validateOrThrow(customDataValidation, 'customData')
     }
