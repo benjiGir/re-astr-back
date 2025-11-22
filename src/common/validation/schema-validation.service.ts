@@ -11,8 +11,20 @@ import type {
 
 @Injectable()
 export class SchemaValidationService {
+  // Cache for compiled Zod schemas to improve performance
+  private readonly zodSchemaCache = new Map<string, ZodSchema>()
+
   // Zod schemas for validating schema definitions themselves
-  private readonly fieldTypeSchema = z.enum(['text', 'number', 'boolean', 'date', 'email', 'url'])
+  private readonly fieldTypeSchema = z.enum([
+    'text',
+    'number',
+    'boolean',
+    'date',
+    'email',
+    'url',
+    'array',
+    'object',
+  ])
 
   private readonly fieldValidationSchema = z
     .object({
@@ -173,10 +185,19 @@ export class SchemaValidationService {
   }
 
   private buildZodSchemaFromFields(fields: FieldDefinition[]): ZodSchema {
+    // Create a cache key from the fields configuration
+    const cacheKey = JSON.stringify(fields)
+
+    // Check if we already have this schema compiled
+    const cachedSchema = this.zodSchemaCache.get(cacheKey)
+    if (cachedSchema) {
+      return cachedSchema
+    }
+
     const shape: Record<string, ZodSchema> = {}
 
     for (const field of fields) {
-      let fieldSchema = this.getZodSchemaForType(field.type)
+      let fieldSchema = this.getZodSchemaForType(field.type, field.validation)
 
       if (field.validation) {
         fieldSchema = this.applyValidationRules(fieldSchema, field.validation, field.type)
@@ -189,10 +210,15 @@ export class SchemaValidationService {
       }
     }
 
-    return z.object(shape)
+    const schema = z.object(shape)
+
+    // Cache the compiled schema
+    this.zodSchemaCache.set(cacheKey, schema)
+
+    return schema
   }
 
-  private getZodSchemaForType(type: FieldType): ZodSchema {
+  private getZodSchemaForType(type: FieldType, validation?: any): ZodSchema {
     switch (type) {
       case 'text':
         return z.string()
@@ -206,6 +232,28 @@ export class SchemaValidationService {
         return z.string().email()
       case 'url':
         return z.string().url()
+      case 'array':
+        // Determine array item type
+        if (validation?.itemType) {
+          const itemSchema = this.getZodSchemaForType(validation.itemType)
+          return z.array(itemSchema)
+        }
+        return z.array(z.any())
+      case 'object':
+        // Support nested object validation
+        if (validation?.properties) {
+          const nestedShape: Record<string, ZodSchema> = {}
+          for (const [key, fieldDef] of Object.entries(validation.properties)) {
+            const def = fieldDef as any
+            let schema = this.getZodSchemaForType(def.type, def.validation)
+            if (def.validation) {
+              schema = this.applyValidationRules(schema, def.validation, def.type)
+            }
+            nestedShape[key] = def.required ? schema : schema.optional()
+          }
+          return z.object(nestedShape)
+        }
+        return z.record(z.string(), z.any())
       default:
         return z.string()
     }
@@ -238,14 +286,41 @@ export class SchemaValidationService {
       }
     }
 
+    if (type === 'array') {
+      if (validation.minItems !== undefined) {
+        result = (result as z.ZodArray<any>).min(validation.minItems)
+      }
+      if (validation.maxItems !== undefined) {
+        result = (result as z.ZodArray<any>).max(validation.maxItems)
+      }
+    }
+
     return result
   }
 
   private detectValueType(value: any): FieldType {
-    // Handle primitive types first
+    // Handle null/undefined
+    if (value === null || value === undefined) return 'text'
+
+    // Handle arrays first (before object check since arrays are objects)
+    if (Array.isArray(value)) return 'array'
+
+    // Handle Date instances
+    if (value instanceof Date) return 'date'
+
+    // Handle primitive types
     if (typeof value === 'number') return 'number'
     if (typeof value === 'boolean') return 'boolean'
-    if (value instanceof Date) return 'date'
+
+    // Handle objects (plain objects, not arrays or dates)
+    if (typeof value === 'object' && value !== null) {
+      // Check if it's a plain object (not an instance of a class)
+      if (value.constructor === Object) {
+        return 'object'
+      }
+      // If it's an instance of a class, treat as text for safety
+      return 'text'
+    }
 
     if (typeof value === 'string') {
       // Check for ISO 8601 date format (strict)

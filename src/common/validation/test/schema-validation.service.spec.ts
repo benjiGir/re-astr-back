@@ -462,6 +462,183 @@ describe('SchemaValidationService', () => {
     })
   })
 
+  describe('validateCommonData with array and object types', () => {
+    it('should validate array fields with itemType', () => {
+      const baseSchema: BaseSchema = {
+        fields: [
+          {
+            key: 'tags',
+            label: 'Tags',
+            type: 'array',
+            required: true,
+            validation: {
+              itemType: 'text',
+              minItems: 1,
+              maxItems: 5,
+            },
+          },
+        ],
+      }
+
+      const validData = {
+        tags: ['tag1', 'tag2', 'tag3'],
+      }
+
+      const result = service.validateCommonData(validData, baseSchema)
+
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject array with too many items', () => {
+      const baseSchema: BaseSchema = {
+        fields: [
+          {
+            key: 'tags',
+            label: 'Tags',
+            type: 'array',
+            required: true,
+            validation: {
+              itemType: 'text',
+              maxItems: 3,
+            },
+          },
+        ],
+      }
+
+      const invalidData = {
+        tags: ['tag1', 'tag2', 'tag3', 'tag4'],
+      }
+
+      const result = service.validateCommonData(invalidData, baseSchema)
+
+      expect(result.valid).toBe(false)
+    })
+
+    it('should validate nested object fields', () => {
+      const baseSchema: BaseSchema = {
+        fields: [
+          {
+            key: 'metadata',
+            label: 'Metadata',
+            type: 'object',
+            required: true,
+            validation: {
+              properties: {
+                author: {
+                  key: 'author',
+                  label: 'Author',
+                  type: 'text',
+                  required: true,
+                },
+                version: {
+                  key: 'version',
+                  label: 'Version',
+                  type: 'number',
+                  required: false,
+                },
+              },
+            },
+          },
+        ],
+      }
+
+      const validData = {
+        metadata: {
+          author: 'John Doe',
+          version: 1,
+        },
+      }
+
+      const result = service.validateCommonData(validData, baseSchema)
+
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject object with missing required nested field', () => {
+      const baseSchema: BaseSchema = {
+        fields: [
+          {
+            key: 'metadata',
+            label: 'Metadata',
+            type: 'object',
+            required: true,
+            validation: {
+              properties: {
+                author: {
+                  key: 'author',
+                  label: 'Author',
+                  type: 'text',
+                  required: true,
+                },
+              },
+            },
+          },
+        ],
+      }
+
+      const invalidData = {
+        metadata: {
+          version: 1,
+        },
+      }
+
+      const result = service.validateCommonData(invalidData, baseSchema)
+
+      expect(result.valid).toBe(false)
+    })
+  })
+
+  describe('detectValueType for array and object', () => {
+    it('should detect array type', () => {
+      const customFieldsSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        allowedTypes: ['array'],
+        fields: [],
+      }
+
+      const data = {
+        tags: ['tag1', 'tag2'],
+      }
+
+      const result = service.validateCustomData(data, customFieldsSchema)
+
+      expect(result.valid).toBe(true)
+    })
+
+    it('should detect object type', () => {
+      const customFieldsSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        allowedTypes: ['object'],
+        fields: [],
+      }
+
+      const data = {
+        metadata: { key: 'value' },
+      }
+
+      const result = service.validateCustomData(data, customFieldsSchema)
+
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject array when only object is allowed', () => {
+      const customFieldsSchema: CustomFieldsSchema = {
+        allowCustomFields: true,
+        allowedTypes: ['object'],
+        fields: [],
+      }
+
+      const data = {
+        tags: ['tag1', 'tag2'],
+      }
+
+      const result = service.validateCustomData(data, customFieldsSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors[0].message).toContain("Type 'array' not allowed")
+    })
+  })
+
   describe('validateOrThrow', () => {
     it('should not throw on valid result', () => {
       const validResult = { valid: true, errors: [] }
