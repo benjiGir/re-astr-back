@@ -112,7 +112,7 @@ export class AuthController {
     }
   }
 
-  @Get('session')
+  @Get('get-session')
   @HttpCode(HttpStatus.OK)
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Get current session' })
