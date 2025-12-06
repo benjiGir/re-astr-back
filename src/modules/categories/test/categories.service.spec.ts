@@ -1,3 +1,5 @@
+import { getMockLoggerProvider } from '@common/logger/test/logger.mock'
+import { SchemaValidationService } from '@common/validation/schema-validation.service'
 import type { CreateCategoryDto } from '@modules/categories/dto/create-category.dto'
 import type { UpdateCategoryDto } from '@modules/categories/dto/update-category.dto'
 import {
@@ -23,10 +25,12 @@ describe('CategoriesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CategoriesService,
+        SchemaValidationService,
         {
           provide: CATEGORIES_REPOSITORY,
           useValue: mockRepo,
         },
+        getMockLoggerProvider(),
       ],
     }).compile()
 

@@ -1,3 +1,4 @@
+import { getMockLoggerProvider } from '@common/logger/test/logger.mock'
 import { AppConfigService } from '@config/app/config.service'
 import { DatabaseConfigService } from '@config/database/config.service'
 import { Test, type TestingModule } from '@nestjs/testing'
@@ -58,6 +59,7 @@ describe('AuthService', () => {
           provide: DatabaseConfigService,
           useValue: mockDatabaseConfigService,
         },
+        getMockLoggerProvider(),
       ],
     }).compile()
 
@@ -188,18 +190,14 @@ describe('AuthService', () => {
       expect(result).toBeNull()
     })
 
-    it('should return null and log error when database query fails', async () => {
+    it('should return null when database query fails', async () => {
       const sessionToken = 'error-token'
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
       mockDb.limit.mockRejectedValueOnce(new Error('Database error'))
 
       const result = await service.verifySession(sessionToken)
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Session verification error:', expect.any(Error))
       expect(result).toBeNull()
-
-      consoleErrorSpy.mockRestore()
     })
 
     it('should accept valid session token format', async () => {

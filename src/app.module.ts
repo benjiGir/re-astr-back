@@ -1,5 +1,5 @@
+import { LoggerModule } from '@common/logger/logger.module'
 import { ValidationModule } from '@common/validation/validation.module'
-import { loggerConfig } from '@config/logger.config'
 import { DatabaseModule } from '@database/database.module'
 import { CategoriesModule } from '@modules/categories/categories.module'
 import { TestsModule } from '@modules/tests/tests.module'
@@ -7,7 +7,6 @@ import { UsersModule } from '@modules/users/users.module'
 import { ClassSerializerInterceptor, Module, ValidationPipe } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
-import { LoggerModule } from 'nestjs-pino'
 import { AppController } from '@/app.controller'
 import { AppService } from '@/app.service'
 import { AuthModule } from '@/auth/auth.module'
@@ -20,7 +19,7 @@ import { MinioModule } from '@/storage/minio/minio.module'
       isGlobal: true,
       envFilePath: '.env',
     }),
-    LoggerModule.forRoot(loggerConfig),
+    LoggerModule,
     HealthModule,
     DatabaseModule,
     ValidationModule,

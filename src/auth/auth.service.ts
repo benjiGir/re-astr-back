@@ -1,3 +1,4 @@
+import { LoggerService } from '@common/logger/logger.service'
 import { AppConfigService } from '@config/app/config.service'
 import { DatabaseConfigService } from '@config/database/config.service'
 import { accounts, sessions, users, verifications } from '@database/index'
@@ -6,7 +7,6 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import { PinoLogger } from 'nestjs-pino'
 import postgres from 'postgres'
 import argon2 from "argon2";
 
@@ -18,7 +18,7 @@ export class AuthService implements OnModuleInit {
   constructor(
     private readonly appConfigServie: AppConfigService,
     private readonly databaseConfigService: DatabaseConfigService,
-    private readonly logger: PinoLogger,
+    private readonly logger: LoggerService,
   ) {
     this.logger.setContext(AuthService.name)
   }

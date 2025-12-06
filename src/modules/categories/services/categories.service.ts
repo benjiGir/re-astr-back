@@ -1,3 +1,4 @@
+import { LoggerService } from '@common/logger/logger.service'
 import { SchemaValidationService } from '@common/validation/schema-validation.service'
 import type { CreateCategoryDto } from '@modules/categories/dto/create-category.dto'
 import type { UpdateCategoryDto } from '@modules/categories/dto/update-category.dto'
@@ -6,14 +7,13 @@ import {
   type ICategoriesRepository,
 } from '@modules/categories/interfaces/categories-repository.interface'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
-import { PinoLogger } from 'nestjs-pino'
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @Inject(CATEGORIES_REPOSITORY)
     private readonly categoriesRepository: ICategoriesRepository,
-    private readonly logger: PinoLogger,
+    private readonly logger: LoggerService,
     private readonly schemaValidationService: SchemaValidationService,
   ) {
     this.logger.setContext(CategoriesService.name)

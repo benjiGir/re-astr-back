@@ -1,6 +1,6 @@
+import { LoggerService } from '@common/logger/logger.service'
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common'
 import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
-import { PinoLogger } from 'nestjs-pino'
 import { AuthService } from './auth.service'
 import {
   ForgotPasswordBodyDto,
@@ -25,7 +25,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly requestConverter: RequestConverterService,
     private readonly responseHandler: ResponseHandlerService,
-    private readonly logger: PinoLogger,
+    private readonly logger: LoggerService,
   ) {
     this.logger.setContext(AuthController.name)
   }

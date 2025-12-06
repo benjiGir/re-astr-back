@@ -1,6 +1,6 @@
+import { LoggerService } from '@common/logger/logger.service'
 import { DatabaseService } from '@database/database.service'
 import { Injectable } from '@nestjs/common'
-import { PinoLogger } from 'nestjs-pino'
 import { MinioService } from '@/storage/minio/minio.service'
 
 export interface HealthStatus {
@@ -27,7 +27,7 @@ export interface ServiceStatus {
 @Injectable()
 export class HealthService {
   constructor(
-    private readonly logger: PinoLogger,
+    private readonly logger: LoggerService,
     private readonly databaseService: DatabaseService,
     private readonly minioService: MinioService,
   ) {

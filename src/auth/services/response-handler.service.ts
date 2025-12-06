@@ -1,12 +1,12 @@
+import { LoggerService } from '@common/logger/logger.service'
 import { Injectable } from '@nestjs/common'
-import { PinoLogger } from 'nestjs-pino'
 import { AppConfigService } from '../../config/app/config.service'
 
 @Injectable()
 export class ResponseHandlerService {
   constructor(
     private readonly appConfigService: AppConfigService,
-    private readonly logger: PinoLogger,
+    private readonly logger: LoggerService,
   ) {
     this.logger.setContext(ResponseHandlerService.name)
   }
