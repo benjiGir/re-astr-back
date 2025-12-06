@@ -12,9 +12,12 @@ export const loggerConfig: Params = {
           target: 'pino-pretty',
           options: {
             colorize: true,
-            translateTime: 'SYS:standard',
-            ignore: 'pid,hostname',
+            translateTime: 'HH:MM:ss',
+            ignore: 'pid,hostname,req,res,responseTime,reqId,context',
+            messageFormat: '{levelLabel} \x1b[33m[{context}]\x1b[0m {msg}',
             singleLine: false,
+            hideObject: true,
+            customColors: 'trace:gray,debug:magenta,info:cyan,warn:yellow,error:red',
           },
         }
       : undefined,

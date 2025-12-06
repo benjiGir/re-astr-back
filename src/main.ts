@@ -15,8 +15,12 @@ const bootstrapLogger = pino({
           target: 'pino-pretty',
           options: {
             colorize: true,
-            translateTime: 'SYS:standard',
+            translateTime: 'HH:MM:ss',
             ignore: 'pid,hostname',
+            messageFormat: '{levelLabel} \x1b[32m[Bootstrap]\x1b[0m {msg}',
+            singleLine: true,
+            hideObject: true,
+            customColors: 'info:cyan,error:red',
           },
         }
       : undefined,
