@@ -1,7 +1,7 @@
-import { NestFactory } from '@nestjs/core'
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
 import fastifyCookie from '@fastify/cookie'
 import multipart from '@fastify/multipart'
+import { NestFactory } from '@nestjs/core'
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Swagger } from '@utils/swagger/swagger'
 import { Logger } from 'nestjs-pino'
 import pino from 'pino'
@@ -17,8 +17,8 @@ const bootstrapLogger = pino({
             colorize: true,
             translateTime: 'HH:MM:ss',
             ignore: 'pid,hostname',
-            messageFormat: '{levelLabel} \x1b[32m[Bootstrap]\x1b[0m {msg}',
-            singleLine: true,
+            messageFormat: '\x1b[32m[Bootstrap]\x1b[0m {msg}',
+            singleLine: false,
             hideObject: true,
             customColors: 'info:cyan,error:red',
           },

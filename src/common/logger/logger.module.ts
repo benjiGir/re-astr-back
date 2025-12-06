@@ -1,6 +1,6 @@
+import { loggerConfig } from '@common/logger/logger.config'
 import { Global, Module } from '@nestjs/common'
 import { LoggerModule as NestJsPinoLoggerModule, type Params } from 'nestjs-pino'
-import { loggerConfig } from '@config/logger.config'
 import type { ILogger } from './logger.interface'
 import { LoggerService } from './logger.service'
 import { NoopLoggerService } from './noop-logger.service'
