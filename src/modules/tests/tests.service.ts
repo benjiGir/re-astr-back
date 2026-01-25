@@ -34,6 +34,7 @@ export class TestsService {
     this.schemaValidationService.validateOrThrow(customDataValidation, 'customData')
 
     return this.testsRepository.create({
+      projectId: createTestDto.projectId,
       categoryId: createTestDto.categoryId,
       name: createTestDto.name,
       description: createTestDto.description,

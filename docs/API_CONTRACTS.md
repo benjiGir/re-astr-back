@@ -12,10 +12,11 @@
 2. [Authentication](#authentication)
 3. [Types de base](#types-de-base)
 4. [Système de validation dynamique](#système-de-validation-dynamique)
-5. [Categories API](#categories-api)
-6. [Tests API](#tests-api)
-7. [Gestion des erreurs](#gestion-des-erreurs)
-8. [Exemples complets](#exemples-complets)
+5. [Projects API](#projects-api)
+6. [Categories API](#categories-api)
+7. [Tests API](#tests-api)
+8. [Gestion des erreurs](#gestion-des-erreurs)
+9. [Exemples complets](#exemples-complets)
 
 ---
 
@@ -342,6 +343,164 @@ Le frontend doit :
 
 ---
 
+## Projects API
+
+### Types
+
+```typescript
+interface Project {
+  id: string
+  name: string                  // Nom unique du projet
+  description?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface CreateProjectDto {
+  name: string                  // Obligatoire, doit être unique
+  description?: string
+}
+
+interface UpdateProjectDto {
+  name?: string                 // Si fourni, doit rester unique
+  description?: string
+}
+```
+
+---
+
+### GET `/projects`
+
+Récupérer tous les projets.
+
+**Auth:** Session requise
+**Roles:** Tous
+
+**Response:** `200 OK`
+```typescript
+Project[]
+```
+
+**Exemple:**
+```typescript
+[
+  {
+    id: "proj-123",
+    name: "Avionics System Validation",
+    description: "Comprehensive testing program for next-generation avionics components",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
+  {
+    id: "proj-456",
+    name: "Automotive Electronics Certification",
+    description: "Testing automotive electronic components for ISO 26262 compliance",
+    createdAt: "2024-01-02T00:00:00Z",
+    updatedAt: "2024-01-02T00:00:00Z"
+  }
+]
+```
+
+---
+
+### GET `/projects/:id`
+
+Récupérer un projet par ID.
+
+**Auth:** Session requise
+**Roles:** Tous
+
+**Response:** `200 OK`
+```typescript
+Project
+```
+
+**Erreurs:**
+- `404` - Projet non trouvé
+
+---
+
+### POST `/projects`
+
+Créer un nouveau projet.
+
+**Auth:** Session requise
+**Roles:** `contributor` ou supérieur
+
+**Request Body:**
+```typescript
+{
+  name: string           // Nom unique obligatoire
+  description?: string   // Description optionnelle
+}
+```
+
+**Response:** `201 Created`
+```typescript
+Project
+```
+
+**Exemple de requête:**
+```json
+{
+  "name": "Medical Device Qualification",
+  "description": "Safety and reliability testing for medical electronic devices"
+}
+```
+
+**Erreurs:**
+- `400` - Données invalides (nom vide, trop long, etc.)
+- `403` - Permissions insuffisantes
+- `409` - Un projet avec ce nom existe déjà
+
+---
+
+### PATCH `/projects/:id`
+
+Mettre à jour un projet.
+
+**Auth:** Session requise
+**Roles:** `archivist` ou supérieur
+
+**Request Body:** (tous les champs optionnels)
+```typescript
+{
+  name?: string
+  description?: string
+}
+```
+
+**Response:** `200 OK`
+```typescript
+Project
+```
+
+**Erreurs:**
+- `400` - Données invalides
+- `403` - Permissions insuffisantes
+- `404` - Projet non trouvé
+- `409` - Le nouveau nom est déjà utilisé par un autre projet
+
+---
+
+### DELETE `/projects/:id`
+
+Supprimer un projet.
+
+⚠️ **IMPORTANT**: Un projet ne peut être supprimé que s'il n'a **aucun test associé**. Si des tests existent pour ce projet, la suppression sera refusée (erreur 409).
+
+**Auth:** Session requise
+**Roles:** `archivist` ou supérieur
+
+**Response:** `204 No Content`
+
+**Erreurs:**
+- `403` - Permissions insuffisantes
+- `404` - Projet non trouvé
+- `409` - Le projet a des tests associés (impossible de supprimer)
+
+---
+
 ## Categories API
 
 ### Types
@@ -508,6 +667,7 @@ type TestStatus = 'draft' | 'in_progress' | 'completed' | 'failed'
 
 interface Test {
   id: string
+  projectId: string                  // ID du projet (obligatoire)
   categoryId: string
   name: string
   description?: string
@@ -522,6 +682,7 @@ interface Test {
 }
 
 interface CreateTestDto {
+  projectId: string                // ID du projet (obligatoire)
   categoryId: string
   name: string
   description?: string
@@ -552,6 +713,7 @@ Récupérer tous les tests (avec filtrage optionnel).
 
 **Query Parameters:**
 - `categoryId?: string` - Filtrer par catégorie
+- `projectId?: string` - Filtrer par projet
 
 **Response:** `200 OK`
 ```typescript
@@ -562,6 +724,8 @@ Test[]
 ```bash
 GET /tests
 GET /tests?categoryId=cat-123
+GET /tests?projectId=proj-456
+GET /tests?projectId=proj-456&categoryId=cat-123
 ```
 
 ---
@@ -593,6 +757,7 @@ Créer un nouveau test.
 **Request Body:**
 ```typescript
 {
+  projectId: string               // ID du projet (obligatoire)
   categoryId: string              // ID de la catégorie
   name: string
   description?: string
@@ -623,7 +788,7 @@ Test
 **Erreurs:**
 - `400` - Validation échouée (commonData ou customData invalides)
 - `403` - Permissions insuffisantes
-- `404` - Catégorie non trouvée
+- `404` - Projet ou catégorie non trouvé(e)
 
 **Détails de validation:**
 
@@ -832,6 +997,7 @@ const newTest = await fetch('/tests', {
   headers: { 'Content-Type': 'application/json' },
   credentials: 'include',  // Envoie le cookie de session
   body: JSON.stringify({
+    projectId: "proj-avionics-789",  // ID du projet (obligatoire)
     categoryId: "cat-temp-123",
     name: "Test PCB v2.1 - High Temp",
     description: "Validation à 85°C pendant 48h",
@@ -862,6 +1028,7 @@ const newTest = await fetch('/tests', {
 // Response 201 Created:
 {
   id: "test-456",
+  projectId: "proj-avionics-789",
   categoryId: "cat-temp-123",
   name: "Test PCB v2.1 - High Temp",
   status: "in_progress",
@@ -922,6 +1089,7 @@ const category = {
 
 // Test créé avec ces types
 const test = {
+  projectId: "proj-software-123",
   categoryId: "cat-software",
   name: "Load Test API v2",
   commonData: {
@@ -1016,8 +1184,17 @@ export interface Category {
   updatedAt: Date
 }
 
+export interface Project {
+  id: string
+  name: string
+  description?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface Test {
   id: string
+  projectId: string
   categoryId: string
   name: string
   description?: string

@@ -68,6 +68,7 @@ describe('TestsService', () => {
 
   describe('create', () => {
     const createTestDto: CreateTestDto = {
+      projectId: 'proj-123',
       categoryId: 'cat-123',
       name: 'New Test',
       description: 'Test description',
@@ -102,6 +103,7 @@ describe('TestsService', () => {
         mockCategory.customFieldsSchema,
       )
       expect(repository.create).toHaveBeenCalledWith({
+        projectId: createTestDto.projectId,
         categoryId: createTestDto.categoryId,
         name: createTestDto.name,
         description: createTestDto.description,

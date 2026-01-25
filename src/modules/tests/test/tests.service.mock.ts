@@ -2,6 +2,7 @@ import type { Test } from '@database/schema/tests.schema'
 
 export const mockTest: Test = {
   id: '123e4567-e89b-12d3-a456-426614174000',
+  projectId: 'proj-123',
   categoryId: 'cat-123',
   name: 'Test de température #001',
   description: 'Validation de la résistance aux températures extrêmes',
@@ -26,6 +27,7 @@ export const mockTest: Test = {
 
 export const mockCompletedTest: Test = {
   id: '223e4567-e89b-12d3-a456-426614174000',
+  projectId: 'proj-123',
   categoryId: 'cat-123',
   name: 'Test de température #002',
   description: 'Test complété avec succès',
@@ -46,6 +48,7 @@ export const mockCompletedTest: Test = {
 
 export const mockInProgressTest: Test = {
   id: '323e4567-e89b-12d3-a456-426614174000',
+  projectId: 'proj-456',
   categoryId: 'cat-456',
   name: 'Test de résistance #001',
   description: 'Test en cours',

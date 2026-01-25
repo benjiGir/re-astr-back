@@ -2,8 +2,12 @@
 
 export * from './accounts.schema'
 export { accounts } from './accounts.schema'
+export * from './api-keys.schema'
+export { apiKeys } from './api-keys.schema'
 export * from './categories.schema'
 export { categories } from './categories.schema'
+export * from './projects.schema'
+export { projects } from './projects.schema'
 export * from './sessions.schema'
 export { sessions } from './sessions.schema'
 export * from './test-files.schema'

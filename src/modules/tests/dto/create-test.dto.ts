@@ -11,6 +11,14 @@ export class CreateTestDto {
   categoryId!: string
 
   @ApiProperty({
+    description: 'Project ID this test belongs to',
+    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  })
+  @IsString()
+  @IsNotEmpty()
+  projectId!: string
+
+  @ApiProperty({
     description: 'Test name',
     example: 'Test thermal cycling - PCB Rev 2.3',
   })
