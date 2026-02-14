@@ -1,6 +1,3 @@
-import { AuthOrApiKeyGuard } from '@/auth/guards/auth-or-api-key.guard'
-import { RolesGuard } from '@/auth/guards/roles.guard'
-import { Roles } from '@/auth/decorators/roles.decorator'
 import { CreateProjectDto } from '@modules/projects/dto/create-project.dto'
 import { UpdateProjectDto } from '@modules/projects/dto/update-project.dto'
 import { ProjectsService } from '@modules/projects/services/projects.service'
@@ -17,10 +14,12 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { Roles } from '@/auth/decorators/roles.decorator'
+import { RolesGuard } from '@/auth/guards/roles.guard'
 
 @ApiTags('Projects')
 @Controller('projects')
-@UseGuards(AuthOrApiKeyGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @ApiCookieAuth()
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}

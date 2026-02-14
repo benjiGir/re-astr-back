@@ -1,6 +1,7 @@
+import { DatabaseService } from '@database/database.service'
+import { NewTest, Test, tests } from '@database/schema/tests.schema'
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
-import { DatabaseService, type NewTest, type Test, tests } from '@/database'
 import type { ITestsRepository } from '../interfaces/tests-repository.interface'
 
 @Injectable()

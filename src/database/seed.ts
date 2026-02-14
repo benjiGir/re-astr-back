@@ -1,8 +1,11 @@
+import { accounts } from '@database/schema/accounts.schema'
+import { categories } from '@database/schema/categories.schema'
+import { projects } from '@database/schema/projects.schema'
+import { tests } from '@database/schema/tests.schema'
+import { users } from '@database/schema/users.schema'
 import argon2 from 'argon2'
-import { createHash } from 'node:crypto'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { accounts, apiKeys, categories, projects, tests, users } from './schema'
 
 const connectionString = process.env.DATABASE_URL!
 
@@ -18,7 +21,6 @@ async function seed() {
     await db.delete(tests)
     await db.delete(projects)
     await db.delete(categories)
-    await db.delete(apiKeys)
     await db.delete(accounts)
     await db.delete(users)
     console.log('✅ Data cleared\n')
@@ -430,34 +432,6 @@ async function seed() {
     console.log(`✅ Created ${8} tests\n`)
 
     // ==================== API KEYS ====================
-    console.log('🔐 Creating API keys...')
-
-    // Create test API keys for different users
-    const archivistApiKey = 'sk_live_archivist_key_for_development_12345'
-    const archivistKeyHash = createHash('sha256').update(archivistApiKey).digest('hex')
-    const archivistKeyPrefix = 'sk_live_...nt_12345'
-
-    await db.insert(apiKeys).values({
-      name: 'Bob Archivist Development Key',
-      keyHash: archivistKeyHash,
-      keyPrefix: archivistKeyPrefix,
-      expiresAt: null, // Never expires for development
-      userId: archivist.id,
-    })
-
-    const contributorApiKey = 'sk_live_contributor_key_for_development_67890'
-    const contributorKeyHash = createHash('sha256').update(contributorApiKey).digest('hex')
-    const contributorKeyPrefix = 'sk_live_...nt_67890'
-
-    await db.insert(apiKeys).values({
-      name: 'Charlie Contributor CI/CD Key',
-      keyHash: contributorKeyHash,
-      keyPrefix: contributorKeyPrefix,
-      expiresAt: null,
-      userId: contributor.id,
-    })
-
-    console.log(`✅ Created 2 API keys\n`)
 
     console.log('✨ Database seed completed successfully!\n')
     console.log('📊 Summary:')
@@ -465,7 +439,6 @@ async function seed() {
     console.log(`   - 3 categories (Temperature, Vibration, EMS)`)
     console.log(`   - 3 projects (Avionics, Automotive, Medical)`)
     console.log(`   - 8 tests (various statuses)`)
-    console.log(`   - 2 API keys (personal access tokens)\n`)
 
     console.log('🔑 Login credentials (all users):')
     console.log(`   Email: alice@re-astr.com (master)`)
@@ -473,13 +446,6 @@ async function seed() {
     console.log(`   Email: charlie@re-astr.com (contributor)`)
     console.log(`   Email: diana@re-astr.com (user)`)
     console.log(`   Password: Password123!\n`)
-
-    console.log('🔐 API Keys for testing (Personal Access Tokens):')
-    console.log(`   Bob's Key (archivist permissions):`)
-    console.log(`     X-API-Key: ${archivistApiKey}`)
-    console.log(`   Charlie's Key (contributor permissions):`)
-    console.log(`     X-API-Key: ${contributorApiKey}\n`)
-    console.log(`   ℹ️  Each key inherits the permissions of its owner\n`)
   } catch (error) {
     console.error('❌ Seed failed:', error)
     throw error

@@ -1,7 +1,6 @@
 import { LoggerModule } from '@common/logger/logger.module'
 import { ValidationModule } from '@common/validation/validation.module'
 import { DatabaseModule } from '@database/database.module'
-import { ApiKeysModule } from '@modules/api-keys/api-keys.module'
 import { CategoriesModule } from '@modules/categories/categories.module'
 import { ProjectsModule } from '@modules/projects/projects.module'
 import { TestsModule } from '@modules/tests/tests.module'
@@ -28,7 +27,6 @@ import { MinioModule } from '@/storage/minio/minio.module'
     MinioModule,
     AuthModule,
     UsersModule,
-    ApiKeysModule,
     CategoriesModule,
     ProjectsModule,
     TestsModule,
