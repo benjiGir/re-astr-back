@@ -19,6 +19,7 @@ describe('TestsService', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     findById: jest.fn(),
+    search: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   }
@@ -258,21 +259,21 @@ describe('TestsService', () => {
     })
   })
 
-  describe('findAll with filters', () => {
+  describe('search', () => {
     it('should return tests filtered by category', async () => {
       // Arrange
       const categoryId = 'cat-123'
       const categoryTests = [mockTest, mockCompletedTest]
 
       jest.spyOn(categoriesService, 'findOne').mockResolvedValue(mockCategory)
-      jest.spyOn(repository, 'findAll').mockResolvedValue(categoryTests)
+      jest.spyOn(repository, 'search').mockResolvedValue(categoryTests)
 
       // Act
-      const result = await service.findAll({ categoryId })
+      const result = await service.search({ categoryId })
 
       // Assert
       expect(categoriesService.findOne).toHaveBeenCalledWith(categoryId)
-      expect(repository.findAll).toHaveBeenCalledWith({ categoryId })
+      expect(repository.search).toHaveBeenCalledWith({ categoryId })
       expect(result).toEqual(categoryTests)
     })
 
@@ -283,22 +284,30 @@ describe('TestsService', () => {
         .mockRejectedValue(new NotFoundException('Category not found'))
 
       // Act & Assert
-      await expect(service.findAll({ categoryId: 'non-existent-cat' })).rejects.toThrow(
+      await expect(service.search({ categoryId: 'non-existent-cat' })).rejects.toThrow(
         NotFoundException,
       )
-      expect(repository.findAll).not.toHaveBeenCalled()
+      expect(repository.search).not.toHaveBeenCalled()
     })
 
-    it('should pass projectId and status filters through without category validation', async () => {
+    it('should pass projectId, status, and search filters through without category validation', async () => {
       // Arrange
-      jest.spyOn(repository, 'findAll').mockResolvedValue([mockTest])
+      jest.spyOn(repository, 'search').mockResolvedValue([mockTest])
 
       // Act
-      const result = await service.findAll({ projectId: 'proj-123', status: 'draft' })
+      const result = await service.search({
+        projectId: 'proj-123',
+        status: 'draft',
+        search: 'thermal',
+      })
 
       // Assert
       expect(categoriesService.findOne).not.toHaveBeenCalled()
-      expect(repository.findAll).toHaveBeenCalledWith({ projectId: 'proj-123', status: 'draft' })
+      expect(repository.search).toHaveBeenCalledWith({
+        projectId: 'proj-123',
+        status: 'draft',
+        search: 'thermal',
+      })
       expect(result).toEqual([mockTest])
     })
   })

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsEnum, IsOptional, IsString } from 'class-validator'
 
-export class FindTestsQueryDto {
+export class SearchTestsDto {
   @ApiPropertyOptional({ description: 'Filter by category ID' })
   @IsString()
   @IsOptional()
@@ -19,4 +19,11 @@ export class FindTestsQueryDto {
   @IsEnum(['draft', 'in_progress', 'completed', 'failed', 'archived'])
   @IsOptional()
   status?: 'draft' | 'in_progress' | 'completed' | 'failed' | 'archived'
+
+  @ApiPropertyOptional({
+    description: 'Free-text search across name, description, author, and tags',
+  })
+  @IsString()
+  @IsOptional()
+  search?: string
 }
