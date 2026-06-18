@@ -1,5 +1,6 @@
 import { User } from '@common/decorators/user.decorator'
 import { CreateTestDto } from '@modules/tests/dto/create-test.dto'
+import { FindTestsQueryDto } from '@modules/tests/dto/find-tests-query.dto'
 import { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
 import { TestsService } from '@modules/tests/tests.service'
 import {
@@ -43,12 +44,16 @@ export class TestsController {
   @Get()
   @ApiOperation({ summary: 'Get all tests' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category ID' })
+  @ApiQuery({ name: 'projectId', required: false, description: 'Filter by project ID' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status',
+    enum: ['draft', 'in_progress', 'completed', 'failed', 'archived'],
+  })
   @ApiResponse({ status: 200, description: 'Return all tests' })
-  findAll(@Query('categoryId') categoryId?: string) {
-    if (categoryId) {
-      return this.testsService.findByCategory(categoryId)
-    }
-    return this.testsService.findAll()
+  findAll(@Query() query: FindTestsQueryDto) {
+    return this.testsService.findAll(query)
   }
 
   @Get(':id')

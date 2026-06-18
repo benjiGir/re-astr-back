@@ -2,11 +2,16 @@ import type { NewTest, Test } from '../../../database/schema/tests.schema'
 
 export type TestWithAuthor = Test & { createdByName?: string | null }
 
+export interface TestFilters {
+  categoryId?: string
+  projectId?: string
+  status?: Test['status']
+}
+
 export interface ITestsRepository {
   create(data: NewTest): Promise<Test>
-  findAll(): Promise<TestWithAuthor[]>
+  findAll(filters?: TestFilters): Promise<TestWithAuthor[]>
   findById(id: string): Promise<TestWithAuthor | null>
-  findByCategory(categoryId: string): Promise<TestWithAuthor[]>
   update(id: string, data: Partial<NewTest>): Promise<Test>
   delete(id: string): Promise<void>
 }

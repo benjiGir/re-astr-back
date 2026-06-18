@@ -19,7 +19,6 @@ describe('TestsService', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     findById: jest.fn(),
-    findByCategory: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   }
@@ -259,33 +258,48 @@ describe('TestsService', () => {
     })
   })
 
-  describe('findByCategory', () => {
-    it('should return tests for a specific category', async () => {
+  describe('findAll with filters', () => {
+    it('should return tests filtered by category', async () => {
       // Arrange
       const categoryId = 'cat-123'
       const categoryTests = [mockTest, mockCompletedTest]
 
       jest.spyOn(categoriesService, 'findOne').mockResolvedValue(mockCategory)
-      jest.spyOn(repository, 'findByCategory').mockResolvedValue(categoryTests)
+      jest.spyOn(repository, 'findAll').mockResolvedValue(categoryTests)
 
       // Act
-      const result = await service.findByCategory(categoryId)
+      const result = await service.findAll({ categoryId })
 
       // Assert
       expect(categoriesService.findOne).toHaveBeenCalledWith(categoryId)
-      expect(repository.findByCategory).toHaveBeenCalledWith(categoryId)
+      expect(repository.findAll).toHaveBeenCalledWith({ categoryId })
       expect(result).toEqual(categoryTests)
     })
 
-    it('should throw NotFoundException when category does not exist', async () => {
+    it('should throw NotFoundException when filtered category does not exist', async () => {
       // Arrange
       jest
         .spyOn(categoriesService, 'findOne')
         .mockRejectedValue(new NotFoundException('Category not found'))
 
       // Act & Assert
-      await expect(service.findByCategory('non-existent-cat')).rejects.toThrow(NotFoundException)
-      expect(repository.findByCategory).not.toHaveBeenCalled()
+      await expect(service.findAll({ categoryId: 'non-existent-cat' })).rejects.toThrow(
+        NotFoundException,
+      )
+      expect(repository.findAll).not.toHaveBeenCalled()
+    })
+
+    it('should pass projectId and status filters through without category validation', async () => {
+      // Arrange
+      jest.spyOn(repository, 'findAll').mockResolvedValue([mockTest])
+
+      // Act
+      const result = await service.findAll({ projectId: 'proj-123', status: 'draft' })
+
+      // Assert
+      expect(categoriesService.findOne).not.toHaveBeenCalled()
+      expect(repository.findAll).toHaveBeenCalledWith({ projectId: 'proj-123', status: 'draft' })
+      expect(result).toEqual([mockTest])
     })
   })
 

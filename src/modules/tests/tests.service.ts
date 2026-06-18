@@ -1,6 +1,7 @@
 import { SchemaValidationService } from '@common/validation/schema-validation.service'
 import { CategoriesService } from '@modules/categories/services/categories.service'
 import type { CreateTestDto } from '@modules/tests/dto/create-test.dto'
+import type { FindTestsQueryDto } from '@modules/tests/dto/find-tests-query.dto'
 import type { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
 import {
   type ITestsRepository,
@@ -47,8 +48,12 @@ export class TestsService {
     })
   }
 
-  async findAll() {
-    return this.testsRepository.findAll()
+  async findAll(filters?: FindTestsQueryDto) {
+    if (filters?.categoryId) {
+      await this.categoriesService.findOne(filters.categoryId)
+    }
+
+    return this.testsRepository.findAll(filters)
   }
 
   async findOne(id: string) {
@@ -59,12 +64,6 @@ export class TestsService {
     }
 
     return test
-  }
-
-  async findByCategory(categoryId: string) {
-    await this.categoriesService.findOne(categoryId)
-
-    return this.testsRepository.findByCategory(categoryId)
   }
 
   async update(id: string, updateTestDto: UpdateTestDto, userId: string) {
