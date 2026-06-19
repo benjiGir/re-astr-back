@@ -1,3 +1,4 @@
+import { testStatusEnum } from '@database/schema/tests.schema'
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator'
 
@@ -14,11 +15,11 @@ export class SearchTestsDto {
 
   @ApiPropertyOptional({
     description: 'Filter by status',
-    enum: ['draft', 'in_progress', 'completed', 'failed', 'archived'],
+    enum: testStatusEnum.enumValues,
   })
-  @IsEnum(['draft', 'in_progress', 'completed', 'failed', 'archived'])
+  @IsEnum(testStatusEnum.enumValues)
   @IsOptional()
-  status?: 'draft' | 'in_progress' | 'completed' | 'failed' | 'archived'
+  status?: (typeof testStatusEnum.enumValues)[number]
 
   @ApiPropertyOptional({
     description: 'Free-text search across name, description, author, and tags',
