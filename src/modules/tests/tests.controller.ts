@@ -48,6 +48,7 @@ export class TestsController {
   }
 
   @Post('search')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Search tests with filters and free-text search' })
   @ApiResponse({ status: 200, description: 'Return matching tests' })
   search(@Body() searchTestsDto: SearchTestsDto) {
