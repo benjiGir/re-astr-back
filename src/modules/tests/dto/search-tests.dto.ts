@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsEnum, IsOptional, IsString } from 'class-validator'
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator'
 
 export class SearchTestsDto {
   @ApiPropertyOptional({ description: 'Filter by category ID' })
@@ -22,8 +22,10 @@ export class SearchTestsDto {
 
   @ApiPropertyOptional({
     description: 'Free-text search across name, description, author, and tags',
+    maxLength: 200,
   })
   @IsString()
   @IsOptional()
+  @MaxLength(200)
   search?: string
 }
