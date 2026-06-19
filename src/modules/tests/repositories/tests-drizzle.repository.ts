@@ -43,7 +43,8 @@ export class TestsDrizzleRepository implements ITestsRepository {
     if (filters.status) conditions.push(eq(tests.status, filters.status))
 
     if (filters.search) {
-      const term = `%${filters.search}%`
+      const escaped = filters.search.replace(/[\\%_]/g, '\\$&')
+      const term = `%${escaped}%`
       conditions.push(
         or(
           ilike(tests.name, term),
