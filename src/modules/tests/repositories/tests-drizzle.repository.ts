@@ -19,19 +19,19 @@ export class TestsDrizzleRepository implements ITestsRepository {
     return test
   }
 
-  async findAll(): Promise<TestWithAuthor[]> {
+  private selectWithAuthor() {
     return this.db.drizzle
       .select({ ...getTableColumns(tests), createdByName: users.name })
       .from(tests)
       .leftJoin(users, eq(tests.createdBy, users.id))
   }
 
+  async findAll(): Promise<TestWithAuthor[]> {
+    return this.selectWithAuthor()
+  }
+
   async findById(id: string): Promise<TestWithAuthor | null> {
-    const [test] = await this.db.drizzle
-      .select({ ...getTableColumns(tests), createdByName: users.name })
-      .from(tests)
-      .leftJoin(users, eq(tests.createdBy, users.id))
-      .where(eq(tests.id, id))
+    const [test] = await this.selectWithAuthor().where(eq(tests.id, id))
 
     return test || null
   }
@@ -64,11 +64,7 @@ export class TestsDrizzleRepository implements ITestsRepository {
       )
     }
 
-    return this.db.drizzle
-      .select({ ...getTableColumns(tests), createdByName: users.name })
-      .from(tests)
-      .leftJoin(users, eq(tests.createdBy, users.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
+    return this.selectWithAuthor().where(conditions.length > 0 ? and(...conditions) : undefined)
   }
 
   async update(id: string, data: Partial<NewTest>): Promise<Test> {
