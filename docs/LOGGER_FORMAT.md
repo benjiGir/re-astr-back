@@ -93,7 +93,7 @@ In production (`NODE_ENV=production`), logs are output as structured JSON for lo
 
 ## Configuration
 
-The logger configuration is in `/src/config/logger.config.ts`.
+The logger configuration is in `/src/common/logger/logger.config.ts`.
 
 ### Key Features
 
@@ -101,7 +101,7 @@ The logger configuration is in `/src/config/logger.config.ts`.
 - **HTTP Logging**: Automatic request/response logging
 - **Context Propagation**: Context (service name) flows through logs
 - **Structured Metadata**: Additional data as JSON objects
-- **Health Check Filtering**: `/health` and `/metrics` are not logged
+- **Health Check Filtering**: `/metrics` is not logged (⚠️ `/health` is NOT actually filtered — `logger.config.ts` `autoLogging.ignore` only checks `/metrics`)
 
 ## Usage in Code
 

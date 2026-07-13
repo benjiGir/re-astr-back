@@ -215,7 +215,7 @@ docker-compose up -d
 
 Access:
 - **API**: http://localhost:3000
-- **Swagger**: http://localhost:3000/api
+- **Swagger**: http://localhost:3000/docs
 - **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
 
 ### Option 2: Local Development
@@ -254,13 +254,17 @@ pnpm run start:debug
 re-astr/
 ├── src/
 │   ├── modules/           # Feature modules
+│   │   ├── projects/      # Projects management (container for tests)
 │   │   ├── categories/    # Test categories management
 │   │   ├── tests/         # Tests management
+│   │   │   └── test-files/# Test file uploads (MinIO-backed)
 │   │   └── users/         # Users management
 │   ├── auth/              # Authentication module (Better Auth)
+│   ├── health/            # Liveness/readiness checks
+│   ├── storage/minio/     # MinIO (S3-compatible) file storage
 │   ├── database/          # Drizzle ORM configuration
 │   │   └── schema/        # Database schemas
-│   ├── common/            # Shared utilities
+│   ├── common/            # Shared utilities (logger, validation, decorators)
 │   ├── config/            # Application configuration
 │   ├── utils/             # Utility functions
 │   ├── app.module.ts      # Root module
@@ -417,7 +421,7 @@ The interactive API documentation is automatically generated with **Swagger/Open
 
 Once the server is started, access:
 
-**http://localhost:3000/api**
+**http://localhost:3000/docs**
 
 You'll find:
 - Complete list of endpoints
@@ -427,6 +431,17 @@ You'll find:
 ## 🏗️ Modules
 
 The project is organized into NestJS modules:
+
+### `projects` - Projects Management
+
+Top-level container that tests belong to (`tests.projectId` is a required FK).
+
+**Main endpoints**:
+- `GET /projects` - List all projects
+- `GET /projects/:id` - Get a project
+- `POST /projects` - Create a project
+- `PATCH /projects/:id` - Update a project
+- `DELETE /projects/:id` - Delete a project
 
 ### `categories` - Categories Management
 
@@ -449,6 +464,17 @@ Management of tests with relationships to categories and files.
 - `POST /tests` - Create a test
 - `PATCH /tests/:id` - Update a test
 - `DELETE /tests/:id` - Delete a test
+
+### `test-files` - Test File Management
+
+File uploads attached to a test (screenshots, reports, docs), backed by MinIO (S3-compatible storage).
+
+**Main endpoints**:
+- `POST /test-files/upload` - Upload a file (multipart)
+- `GET /test-files?testId=` - List files for a test
+- `GET /test-files/:id/download` - Download a file
+- `GET /test-files/:id/presigned-url` - Get a temporary direct-access URL
+- `DELETE /test-files/:id` - Delete a file
 
 ### `users` - Users Management
 

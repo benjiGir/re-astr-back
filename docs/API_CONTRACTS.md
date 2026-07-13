@@ -15,8 +15,10 @@
 5. [Projects API](#projects-api)
 6. [Categories API](#categories-api)
 7. [Tests API](#tests-api)
-8. [Gestion des erreurs](#gestion-des-erreurs)
-9. [Exemples complets](#exemples-complets)
+8. [Test Files API](#test-files-api)
+9. [Users API](#users-api)
+10. [Gestion des erreurs](#gestion-des-erreurs)
+11. [Exemples complets](#exemples-complets)
 
 ---
 
@@ -143,7 +145,7 @@ Déconnexion et suppression de la session.
 
 ---
 
-### GET `/auth/session`
+### GET `/auth/get-session`
 
 Récupérer la session courante.
 
@@ -487,7 +489,7 @@ Project
 
 Supprimer un projet.
 
-⚠️ **IMPORTANT**: Un projet ne peut être supprimé que s'il n'a **aucun test associé**. Si des tests existent pour ce projet, la suppression sera refusée (erreur 409).
+⚠️ **BUG CONNU**: la contrainte FK `tests.projectId` est en `ON DELETE RESTRICT`, donc la suppression d'un projet avec des tests associés échoue bien en base — mais le service ne capte pas cette violation. Le frontend recevra une erreur **500 non formatée** (pas un 409 propre). Ne pas coder de gestion spécifique du 409 tant que ce n'est pas corrigé côté backend.
 
 **Auth:** Session requise
 **Roles:** `archivist` ou supérieur
@@ -497,7 +499,7 @@ Supprimer un projet.
 **Erreurs:**
 - `403` - Permissions insuffisantes
 - `404` - Projet non trouvé
-- `409` - Le projet a des tests associés (impossible de supprimer)
+- `500` - Le projet a des tests associés (violation FK non gérée, voir bug connu ci-dessus)
 
 ---
 
@@ -663,7 +665,7 @@ Supprimer une catégorie.
 ### Types
 
 ```typescript
-type TestStatus = 'draft' | 'in_progress' | 'completed' | 'failed'
+type TestStatus = 'draft' | 'in_progress' | 'completed' | 'failed' | 'archived'
 
 interface Test {
   id: string
@@ -713,7 +715,8 @@ Récupérer tous les tests (avec filtrage optionnel).
 
 **Query Parameters:**
 - `categoryId?: string` - Filtrer par catégorie
-- `projectId?: string` - Filtrer par projet
+
+⚠️ Il n'y a **pas** de filtre `projectId` malgré `projectId` étant une FK obligatoire sur `Test` — ni le controller ni le repository ne l'implémentent actuellement.
 
 **Response:** `200 OK`
 ```typescript
@@ -724,8 +727,6 @@ Test[]
 ```bash
 GET /tests
 GET /tests?categoryId=cat-123
-GET /tests?projectId=proj-456
-GET /tests?projectId=proj-456&categoryId=cat-123
 ```
 
 ---
@@ -850,6 +851,252 @@ Supprimer un test.
 **Erreurs:**
 - `403` - Permissions insuffisantes
 - `404` - Test non trouvé
+
+---
+
+## Test Files API
+
+### Types
+
+```typescript
+type FileType = 'screenshot' | 'report' | 'documentation' | 'other'
+
+interface TestFile {
+  id: string
+  testId: string
+  fileType: FileType
+  originalFilename: string
+  storedFilename: string
+  bucketName: string          // toujours 'test-archives' actuellement
+  objectKey: string           // clé S3/MinIO, partitionnée par date: tests/{year}/{month}/{storedFilename}
+  fileSize: number            // bytes, taille rapportée par MinIO (pas la taille brute du buffer)
+  mimeType: string
+  checksum?: string           // SHA-256
+  metadata?: Record<string, any>
+  uploadedBy: string          // User ID
+  uploadedAt: Date
+  expiresAt?: Date
+}
+```
+
+Un `TestFile` référence toujours un `Test` existant (`testId` obligatoire, vérifié en base par le service à chaque opération). La suppression d'un `Test` supprime en cascade ses `TestFile` **en base**, mais ne supprime PAS l'objet correspondant sur MinIO — fuite de stockage potentielle à surveiller.
+
+---
+
+### POST `/test-files/upload`
+
+Upload d'un fichier (multipart/form-data) et création de la métadonnée associée.
+
+**Auth:** Session requise
+**Roles:** `contributor` ou supérieur
+**Content-Type:** `multipart/form-data`
+**Limites serveur:** 50 MB par fichier, 10 fichiers max par requête
+
+**Response:** `201 Created`
+```typescript
+TestFile
+```
+
+**Erreurs:**
+- `400` - Fichier manquant ou invalide
+- `403` - Permissions insuffisantes
+- `404` - Test non trouvé
+
+⚠️ **BUG CONNU**: le controller injecte `@User()`, qui lit `request.user` — jamais peuplé par aucun guard/middleware. Cet endpoint lève actuellement une `TypeError` à l'exécution (`user.id` sur `undefined`). À corriger avant d'intégrer côté frontend.
+
+---
+
+### GET `/test-files?testId=`
+
+Lister les fichiers d'un test.
+
+**Auth:** Session requise
+**Roles:** Tous
+
+**Query Parameters:**
+- `testId?: string` - Filtrer par test
+
+**Response:** `200 OK`
+```typescript
+TestFile[]
+```
+
+---
+
+### GET `/test-files/:id`
+
+Récupérer la métadonnée d'un fichier.
+
+**Auth:** Session requise
+**Roles:** Tous
+
+**Response:** `200 OK`
+```typescript
+TestFile
+```
+
+---
+
+### GET `/test-files/:id/download`
+
+Télécharge le contenu binaire du fichier (stream).
+
+**Auth:** Session requise
+**Roles:** Tous (aucune restriction de rôle sur cet endpoint)
+
+**Response:** `200 OK` — flux binaire, `Content-Type` = `mimeType` du fichier
+
+---
+
+### GET `/test-files/:id/presigned-url?expirySeconds=`
+
+Génère une URL pré-signée MinIO pour accès direct au fichier.
+
+**Auth:** Session requise
+**Roles:** Tous
+
+**Query Parameters:**
+- `expirySeconds?: number` - Durée de validité (défaut: 3600)
+
+**Response:** `200 OK`
+```typescript
+{ url: string }
+```
+
+---
+
+### PATCH `/test-files/:id`
+
+Met à jour la métadonnée d'un fichier (pas le contenu binaire).
+
+**Auth:** Session requise
+**Roles:** `contributor` ou supérieur
+
+**Response:** `200 OK`
+```typescript
+TestFile
+```
+
+---
+
+### DELETE `/test-files/:id`
+
+Supprime le fichier (MinIO + métadonnée).
+
+**Auth:** Session requise
+**Roles:** `archivist` ou supérieur
+
+**Response:** `204 No Content`
+
+⚠️ **BUG CONNU**: si la suppression MinIO échoue, l'erreur n'est que loguée (`console.error`, pas le logger structuré) et la ligne en base est supprimée quand même — l'objet peut rester orphelin sur le storage.
+
+---
+
+## Users API
+
+### Types
+
+```typescript
+interface User {
+  id: string
+  name?: string
+  email: string
+  emailVerified: boolean
+  image?: string
+  role: 'user' | 'contributor' | 'archivist' | 'master'
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface UpdateUserDto {
+  name?: string
+  email?: string
+  image?: string
+  emailVerified?: boolean
+}
+
+interface AssignRoleDto {
+  role: 'user' | 'contributor' | 'archivist' | 'master'
+}
+```
+
+---
+
+### GET `/users`
+
+Lister tous les utilisateurs.
+
+**Auth:** Session requise
+**Roles:** Tous
+
+**Response:** `200 OK`
+```typescript
+User[]
+```
+
+---
+
+### GET `/users/:id`
+
+Récupérer un utilisateur par ID.
+
+**Auth:** Session requise
+**Roles:** Tous
+
+**Response:** `200 OK`
+```typescript
+User
+```
+
+**Erreurs:**
+- `404` - Utilisateur non trouvé
+
+---
+
+### PATCH `/users/:id`
+
+Met à jour le profil d'un utilisateur (`name`, `email`, `image`, `emailVerified`).
+
+**Auth:** Session requise
+**Roles:** Tous (⚠️ **BUG CONNU**: aucune vérification de rôle ni de propriété — un utilisateur `user` peut modifier le profil de n'importe quel autre utilisateur par ID. Ne pas exposer cet endpoint côté frontend sans restreindre à `self OR master` en attendant un correctif backend.)
+
+**Response:** `200 OK`
+```typescript
+User
+```
+
+**Erreurs:**
+- `404` - Utilisateur non trouvé
+- `409` - Email déjà utilisé par un autre utilisateur
+
+---
+
+### PATCH `/users/:id/role`
+
+Change le rôle d'un utilisateur.
+
+**Auth:** Session requise
+**Roles:** `master` uniquement
+
+**Response:** `200 OK`
+```typescript
+User
+```
+
+**Erreurs:**
+- `403` - Permissions insuffisantes
+- `404` - Utilisateur non trouvé
+
+---
+
+### DELETE `/users/:id`
+
+Supprime un utilisateur.
+
+**Auth:** Session requise
+**Roles:** `master` uniquement
+
+**Response:** `204 No Content`
 
 ---
 
@@ -1270,7 +1517,7 @@ if (!validationResult.success) {
 
 L'API expose également une documentation Swagger interactive :
 
-**URL**: `http://localhost:3000/api`
+**URL**: `http://localhost:3000/docs`
 
 Cette documentation Swagger permet de :
 - Tester les endpoints directement
