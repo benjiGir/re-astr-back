@@ -1,7 +1,7 @@
 # Migration NestJS → Effect
 
 > Plan de réécriture complète du backend RE-ASTR de NestJS (Fastify) vers Effect.
-> Statut : **Phase 0 terminée et vérifiée** (boot + `/health` + `/health/ready` + `/docs` + seed + tests, tous testés contre un Postgres réel). Stratégie : tranche verticale, module par module.
+> Statut : **Phase 1 terminée et vérifiée** — Projects (CRUD complet) + auth-lecture (`Authorization`, `CurrentUser`, RBAC) en place, le module de référence pour toutes les phases suivantes. Stratégie : tranche verticale, module par module.
 >
 > ⚠️ **Pivot en cours de Phase 0** : en plus d'Effect, le projet est passé sur **TypeScript 7** (natif, Go) et **Drizzle ORM v1 RC**. Drizzle v1 RC a une intégration Effect native (`drizzle-orm/effect-postgres`) mais elle exige **Effect v4 beta** (`effect@4.0.0-beta.97`) — toute la stack Effect (`effect`, `@effect/platform-node`, `@effect/sql-pg`, `@effect/opentelemetry`, `@effect/vitest`) est donc sur la ligne v4 beta, pas la v3 stable envisagée initialement. Voir §4 et §9 pour le détail et les risques.
 
@@ -173,20 +173,21 @@ Chaque phase se termine par un livrable **qui tourne** et **testé**. Projects (
 
 **Done when** ✅ : `tsx watch src/main.ts` démarre, `GET /health` → 200, `GET /health/ready` → 200 (503 si DB down), `/docs` affiche Scalar, `pnpm test` passe, `pnpm run db:push` + `pnpm run db:seed` fonctionnent contre un Postgres réel.
 
-### Phase 1 — Projects + auth-lecture (LE patron de référence)
+### Phase 1 — Projects + auth-lecture (LE patron de référence) — ✅ TERMINÉE
 **But** : une tranche verticale complète ET sécurisée qui fige tous les patterns réutilisables.
-1. `Project.ts` : `Schema.Class` pour `Project`, `CreateProject`, `UpdateProject` ; `ProjectNotFound`/`ProjectNameConflict` en `Schema.TaggedError`.
-2. `ProjectsRepo.ts` : `Context.Service` + `Layer` utilisant `PgDrizzle` (les 5 méthodes CRUD, requêtes `eq()` inchangées, mais renvoyant des `Effect`).
-3. `ProjectsService.ts` : `Context.Service` + `Layer`, logique métier + logs. **Corrige** le delete : capter la violation FK `restrict` → renvoyer un `409` propre au lieu d'un 500.
+1. `Project.ts` : `Schema.Class` pour `Project`, `CreateProject`, `UpdateProject` ; `ProjectNotFound`/`ProjectNameConflict`/`ProjectHasTests` en `Schema.ErrorClass` (pas `TaggedError` — c'est `ErrorClass` qui porte l'annotation `httpApiStatus` consommée par `HttpApiEndpoint`, cf. §9).
+2. `ProjectsRepo.ts` : `Context.Service` + `Layer` utilisant `Database` (`drizzle-orm/effect-postgres`). Erreur de repo typée `EffectDrizzleQueryError` (import `drizzle-orm/effect-core`, pas `effect-postgres`).
+3. `ProjectsService.ts` : `Context.Service` + `Layer`, logique métier + `Effect.logInfo(...).pipe(Effect.annotateLogs(...))`. **Corrige** le delete : capte la violation FK `restrict` (classifiée `ConstraintError` par `@effect/sql-pg`, dénichée via `Cause.squash` sur `EffectDrizzleQueryError.cause`) → `409 ProjectHasTests` au lieu d'un 500. Idem `UniqueViolation` → `409 ProjectNameConflict` sur `name` dupliqué.
 4. **Auth-lecture** (pattern réutilisé par tous les modules suivants) :
-   - `Cookie.ts` : signer/vérifier le cookie de session (`COOKIE_SECRET`).
-   - `CurrentUser.ts` : `Context.Service` portant l'identité + le rôle.
-   - `Authorization.ts` : `HttpApiMiddleware` + `HttpApiSecurity.apiKey({ key: "better-auth.session_token", in: "cookie" })` → lit le cookie, vérifie la session dans la table `sessions`, charge l'utilisateur, **fournit `CurrentUser`**. Middleware RBAC honorant `master > archivist > contributor > user`.
-   - Helper de test qui insère une session + forge un cookie signé (pour tester les endpoints protégés avant que le login existe en Phase 5).
-5. `ProjectsHttp.ts` : `HttpApiGroup.make("projects")` avec les 5 endpoints (mêmes paths + mêmes rôles requis qu'aujourd'hui), `.middleware(Authorization)`, `HttpApiBuilder.group` pour câbler les handlers. **Corrige les failles 1 & 2** dès ici : identité via `CurrentUser` (jamais un header spoofable).
-6. Tests (`@effect/vitest`) : `ProjectsRepo.test.ts` + `ProjectsService.test.ts` (Layers de test, repo mocké) + un test d'accès refusé/accepté selon le cookie.
+   - `Cookie.ts` : HMAC-SHA256 (`node:crypto`) sur `COOKIE_SECRET`, `${token}.${signature}`, comparaison `timingSafeEqual`. Nouveau schéma, pas compatible Better Auth (cf. §5/§7).
+   - `CurrentUser.ts` : `Context.Service` portant `{id, email, name, role}`.
+   - `Role.ts` : hiérarchie `master > archivist > contributor > user` + `requireRole(role)`, guard clause `yield*`-able qui lit `CurrentUser` lui-même et fail `HttpApiError.Forbidden`.
+   - `Authorization.ts` : `HttpApiMiddleware.Service<Self, {provides: CurrentUser}>()(...)` (le `provides`/`requires` va en paramètre de TYPE, pas dans les options runtime — cf. §9) + `HttpApiSecurity.apiKey({key: "better-auth.session_token", in: "cookie"})`. Lit le cookie (déjà décodé par le framework), vérifie via `Cookie.verify`, cherche la session (non expirée) puis l'utilisateur, fournit `CurrentUser` au handler.
+   - `test/SessionFixture.ts` : insère une session réelle + forge un cookie signé — utilisé pour la vérification manuelle (pas de login avant la Phase 5).
+5. `ProjectsHttp.ts` : `HttpApiGroup.make("projects")`, 5 endpoints (`HttpApiEndpoint.get/post/patch/delete(name, path, {params, payload, success, error})` — plus de `.addSuccess()/.addError()` chaîné, cf. §9), `.middleware(Authorization)` après tous les `.add()`. **Corrige les failles 1 & 2** : identité via `CurrentUser`, jamais un header spoofable — vérifié en live, `x-user-role: master` sans cookie renvoie 401.
+6. Tests (`@effect/vitest`) : `Cookie.spec.ts` (roundtrip + falsification + mauvais secret) + `ProjectsService.spec.ts` (repo mocké via `Layer.succeed` + `vi.fn()`, create/findOne/remove).
 
-**Done when** : CRUD `/projects` fonctionnel, **protégé par cookie de session**, tests verts, endpoints dans `/docs`. **On relit ensemble ce module : il sert de gabarit.**
+**Done when** ✅ : CRUD `/projects` fonctionnel et vérifié en live contre un Postgres réel avec de vrais cookies signés (via `SessionFixture`) — refus sans cookie (401), refus header spoofé (401), 403 sur rôle insuffisant, 409 sur nom dupliqué, 404 sur id manquant, **409 sur delete avec tests dépendants** (la faille d'origine, confirmée corrigée), 204 sur delete propre, `/docs` liste le groupe `projects`. `tsc`/`vitest`/`biome lint` propres.
 
 ### Phase 2 — Categories + validation dynamique
 **But** : porter la partie la plus délicate — la validation Zod dynamique.
@@ -242,13 +243,13 @@ Chaque phase se termine par un livrable **qui tourne** et **testé**. Projects (
 
 ## 6. Les 5 failles, corrigées par construction
 
-| # | Faille actuelle | Correction dans la réécriture | Phase |
-|---|---|---|---|
-| 1 | Bypass auth `/projects` (header `x-user-role` spoofable) | Identité via service `CurrentUser` fourni par le middleware, jamais un header | 1 |
-| 2 | `@User()` toujours `undefined` (→ TypeError) | `CurrentUser` garanti par le type du handler | 1 |
-| 3 | `PATCH /users/:id` sans garde | Garde `self OR master` via `CurrentUser` | 6 |
-| 4 | Secret cookie codé en dur | `Config.redacted` échoue si `COOKIE_SECRET` absent | 0 |
-| 5 | Delete FK `restrict` → 500 | Capture de l'erreur SQL → `409` typé | 1, 2 |
+| # | Faille actuelle | Correction dans la réécriture | Phase | Statut |
+|---|---|---|---|---|
+| 1 | Bypass auth `/projects` (header `x-user-role` spoofable) | Identité via service `CurrentUser` fourni par le middleware, jamais un header | 1 | ✅ vérifié en live (header spoofé → 401) |
+| 2 | `@User()` toujours `undefined` (→ TypeError) | `CurrentUser` garanti par le type du handler | 1 | ✅ (`CurrentUser` typé, plus de `@User()`) |
+| 3 | `PATCH /users/:id` sans garde | Garde `self OR master` via `CurrentUser` | 6 | ⏳ pas encore fait |
+| 4 | Secret cookie codé en dur | `Config.redacted` échoue si `COOKIE_SECRET` absent | 0 | ✅ testé (`Config.spec.ts`) |
+| 5 | Delete FK `restrict` → 500 | Capture de l'erreur SQL → `409` typé | 1 | ✅ vérifié en live (409 `ProjectHasTests`) |
 
 ## 7. Points de vigilance
 
@@ -290,6 +291,14 @@ Aucune doc/context7 fiable pour v4 beta au moment de la Phase 0 (trop récent). 
 | `Effect.Effect.Success<typeof x>` | `Effect.Success<typeof x>` | Le type utilitaire perd le préfixe dupliqué |
 | `Effect.catchAll(f)` | pas d'équivalent direct exporté | `Effect.catchCause(f)` (catch tout, y compris défauts/interruptions) est le remplaçant le plus proche pour "je veux juste un fallback quoi qu'il arrive" |
 | `PgDrizzle` (tag) importé de `@effect/sql-drizzle/Pg` | `PgDrizzle.make(config)` / `.makeWithDefaults()` importés de `drizzle-orm/effect-postgres` (namespace, pas une classe-tag) | Il faut définir **son propre** `Context.Service` autour (`Database` dans le code) — `drizzle-orm/effect-postgres` ne fournit pas de tag prêt à l'emploi comme le faisait `@effect/sql-drizzle` |
+| `Option.fromNullable(x)` | `Option.fromNullishOr(x)` | Traite toujours `null`/`undefined` comme `None`. Il existe aussi `fromNullishOr`-adjacent pour ne traiter QUE `undefined` comme absent |
+| `Effect.zipRight(a, b)` / `a.pipe(Effect.zipRight(b))` | `Effect.andThen(...)` | `zipRight` a disparu ; `andThen` couvre le même besoin (exécute `a`, jette son résultat, exécute `b`, retourne le résultat de `b`) |
+| `HttpApiMiddleware.Service<Self>()("id", {provides, security, error})` | `HttpApiMiddleware.Service<Self, {provides, requires}>()("id", {security, error})` | `provides`/`requires` sont des **paramètres de type** (2ᵉ generic), pas des champs de l'objet `options` runtime — celui-ci n'accepte que `error`/`security`/`requiredForClient` |
+| Middleware par sécurité : implémentation libre | `{[securityKey]: (httpEffect, {credential, endpoint, group}) => Effect<...>}` | Le framework décode déjà `credential` (via le schema de sécurité déclaré) et l'injecte — pas besoin d'appeler `HttpApiBuilder.securityDecode` soi-même dans l'implémentation du middleware |
+| Dépendances lues dans le handler par-requête | Requirement channel du handler **restreint** (`Requires | HttpRouter.Provided` uniquement) | Toute dépendance annexe (ex: `SessionConfig` dans un helper appelé par le middleware) doit être résolue **une fois** à la construction du `Layer.effect(Middleware, ...)`, puis fournie localement via `.pipe(Effect.provideService(X, resolvedX))` dans le handler — pas re-`yield*`ée à chaque requête |
+| `HttpApiEndpoint.get/post/patch/put/head/options` | idem | `DELETE` s'exporte comme `del as delete` en interne — le nom public est bien `HttpApiEndpoint.delete` (accès en propriété, `delete` seul comme identifiant est un mot réservé) |
+| `db.insert(...)`/`.update(...)`/`.delete(...)` échouent avec `SqlError` (comme `@effect/sql-pg` seul) | Drizzle enveloppe dans **`EffectDrizzleQueryError`** (`cause: Cause<unknown>` = `Cause.fail(sqlError)` au runtime malgré un type `Schema.Unknown`) | Import depuis `drizzle-orm/effect-core`, **pas** `drizzle-orm/effect-postgres` (qui ne le ré-exporte pas). Pour retrouver le `SqlError.reason._tag` (`UniqueViolation`, `ConstraintError`...) : `Cause.squash(error.cause as Cause.Cause<unknown>)` puis lire `.reason?._tag` en duck-typing |
+| `Context.Service`-produced class : accès au type de forme | `typeof MonService.Service` | La classe générée par `Context.Service<Self, Shape>()(id)` expose `Service` comme accesseur statique du type `Shape` — pratique pour typer un mock dans les tests sans dupliquer l'interface |
 
 **Autres points rencontrés** :
 - `tsconfig.json` sous TS7 : `baseUrl` **supprimé** (paths deviennent relatifs à la racine du projet directement, donc `"@/*": ["./src/*"]` avec le `./` obligatoire — sinon `TS5090`), `moduleResolution: "node"/"node10"/"classic"` supprimés (`nodenext`/`bundler` seuls survivants — on garde `nodenext`), défauts implicites changés (`rootDir` → `.` sauf précisé, `types` → `[]` sauf précisé → il faut `"types": ["node"]` explicite sinon `process`/`console`/`Buffer` globaux disparaissent).
@@ -298,6 +307,7 @@ Aucune doc/context7 fiable pour v4 beta au moment de la Phase 0 (trop récent). 
 - `@effect/sql-pg`'s `PgClient.layer({url, types})` demande le workaround `getTypeParser` documenté officiellement (orm.drizzle.team/docs/connect-effect-postgres) pour que les colonnes date/timestamp soient parsées par les codecs Drizzle plutôt que deux fois (une fois par `pg`, une fois par Drizzle) — liste d'OIDs Postgres à copier telle quelle, pas à improviser.
 - `.env` n'est **jamais** chargé automatiquement en dehors de NestJS → `import 'dotenv/config'` requis en tête de tout point d'entrée (`main.ts`, `Seed.ts`, et futurs scripts CLI).
 - `LOG_LEVEL` doit être capitalisé exactement (`Debug`, pas `debug`) — `Config.logLevel` valide contre l'union stricte `LogLevel`, sensible à la casse.
+- **Piège de laziness (indépendant de v4, pur Effect)** : `Effect.andThen(someEffect)` où `someEffect` est déjà une VALEUR construite (`repo.delete(id)`) appelle `repo.delete(id)` **immédiatement**, au moment où la chaîne `.pipe(...)` est construite — pas seulement quand `andThen` décide effectivement d'exécuter ce second effect. Repéré via un test qui vérifiait `expect(deleteFn).not.toHaveBeenCalled()` après un échec du premier effect : le mock AVAIT été appelé (pour construire la valeur Effect), même si l'Effect résultant n'avait jamais tourné. Fix : `Effect.andThen(() => repo.delete(id))` (thunk, appelé paresseusement par `andThen` uniquement si le premier effect réussit). Règle : préférer systématiquement la forme thunk dès qu'un des deux côtés vient d'un service/mock injecté.
 
 ### ⚠️ Point ouvert : connexion DB eager au boot
 
