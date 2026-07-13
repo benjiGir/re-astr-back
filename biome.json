@@ -43,7 +43,7 @@
         "useFilenamingConvention": {
           "level": "warn",
           "options": {
-            "filenameCases": ["kebab-case", "camelCase"]
+            "filenameCases": ["kebab-case", "camelCase", "PascalCase"]
           }
         },
         "useForOf": "warn",

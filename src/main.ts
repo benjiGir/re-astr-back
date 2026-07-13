@@ -1,63 +1,26 @@
-import fastifyCookie from '@fastify/cookie'
-import multipart from '@fastify/multipart'
-import { NestFactory } from '@nestjs/core'
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
-import { Swagger } from '@utils/swagger/swagger'
-import { Logger } from 'nestjs-pino'
-import pino from 'pino'
-import { AppModule } from '@/app.module'
+import { createServer } from 'node:http'
+import 'dotenv/config'
+import { NodeHttpServer, NodeRuntime } from '@effect/platform-node'
+import { Layer } from 'effect'
+import { HttpRouter } from 'effect/unstable/http'
+import { HttpApiBuilder, HttpApiScalar } from 'effect/unstable/httpapi'
+import { Api, HealthGroupLive } from '@/Api.js'
+import { AppConfig, ServerConfig } from '@/infra/Config.js'
+import { DatabaseLive } from '@/infra/Database.js'
+import { LoggerLive } from '@/infra/Logger.js'
+import { TelemetryLive } from '@/infra/Telemetry.js'
 
-const bootstrapLogger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport:
-    process.env.NODE_ENV === 'development'
-      ? {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            translateTime: 'HH:MM:ss',
-            ignore: 'pid,hostname',
-            messageFormat: '\x1b[32m[Bootstrap]\x1b[0m {msg}',
-            singleLine: false,
-            hideObject: true,
-            customColors: 'info:cyan,error:red',
-          },
-        }
-      : undefined,
-})
+const AppRoutes = Layer.mergeAll(HttpApiBuilder.layer(Api), HttpApiScalar.layer(Api, { path: '/docs' })).pipe(
+  Layer.provide(HealthGroupLive),
+)
 
-async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
-    bufferLogs: true,
-  })
+// HttpRouter.serve wires the base router + request-logging middleware in by default.
+const HttpLive = HttpRouter.serve(AppRoutes).pipe(Layer.provide(NodeHttpServer.layerConfig(createServer, ServerConfig)))
 
-  app.useLogger(app.get(Logger))
+// LoggerLive itself needs AppConfig (for nodeEnv/logLevel) — provideMerge so
+// AppConfig.Live satisfies that internally while staying available downstream too.
+const Infra = Layer.mergeAll(DatabaseLive, LoggerLive, TelemetryLive).pipe(Layer.provideMerge(AppConfig.Live))
 
-  await app.register(fastifyCookie, {
-    secret: process.env.COOKIE_SECRET || 'your-secret-key',
-  })
+const MainLive = HttpLive.pipe(Layer.provide(Infra))
 
-  await app.register(multipart, {
-    limits: {
-      fileSize: 50 * 1024 * 1024,
-      files: 10,
-    },
-  })
-
-  app.enableCors({
-    origin: true,
-    credentials: true,
-  })
-
-  Swagger.setup(app)
-
-  const port = process.env.PORT || 3000
-  await app.listen(port, '0.0.0.0')
-
-  bootstrapLogger.info({ port }, `🚀 Application is running on: http://localhost:${port}`)
-  bootstrapLogger.info(
-    { port, apiUrl: `http://localhost:${port}/docs` },
-    `📚 API Documentation available at: http://localhost:${port}/docs`,
-  )
-}
-bootstrap()
+NodeRuntime.runMain(Layer.launch(MainLive))
