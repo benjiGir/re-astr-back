@@ -2,6 +2,7 @@ import { Effect, Schema } from 'effect'
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from 'effect/unstable/httpapi'
 import { users } from '@/domain/schema/users.schema.js'
 import { Database } from '@/infra/Database.js'
+import { CategoriesGroup } from '@/modules/categories/CategoriesHttp.js'
 import { ProjectsGroup } from '@/modules/projects/ProjectsHttp.js'
 
 export class ServiceCheck extends Schema.Class<ServiceCheck>('ServiceCheck')({
@@ -30,7 +31,7 @@ const HealthGroup = HttpApiGroup.make('health')
   )
 
 // storage (Minio) isn't wired until Phase 4 — readiness only covers the database for now.
-export class Api extends HttpApi.make('re-astr').add(HealthGroup).add(ProjectsGroup) {}
+export class Api extends HttpApi.make('re-astr').add(HealthGroup).add(ProjectsGroup).add(CategoriesGroup) {}
 
 export const HealthGroupLive = HttpApiBuilder.group(Api, 'health', (handlers) =>
   handlers

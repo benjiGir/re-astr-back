@@ -1,8 +1,21 @@
 import { Effect, Schema } from 'effect'
-import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from 'effect/unstable/httpapi'
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiError,
+  HttpApiGroup,
+} from 'effect/unstable/httpapi'
 import { Authorization } from '@/auth/Authorization.js'
 import { requireRole } from '@/auth/Role.js'
-import { CreateProject, Project, ProjectHasTests, ProjectNameConflict, ProjectNotFound, UpdateProject } from '@/modules/projects/Project.js'
+import {
+  CreateProject,
+  Project,
+  ProjectHasTests,
+  ProjectNameConflict,
+  ProjectNotFound,
+  UpdateProject,
+} from '@/modules/projects/Project.js'
 import { ProjectsService } from '@/modules/projects/ProjectsService.js'
 
 export const ProjectsGroup = HttpApiGroup.make('projects')
@@ -14,7 +27,13 @@ export const ProjectsGroup = HttpApiGroup.make('projects')
     }),
   )
   .add(HttpApiEndpoint.get('findAll', '/projects', { success: Schema.Array(Project) }))
-  .add(HttpApiEndpoint.get('findOne', '/projects/:id', { params: { id: Schema.String }, success: Project, error: ProjectNotFound }))
+  .add(
+    HttpApiEndpoint.get('findById', '/projects/:id', {
+      params: { id: Schema.String },
+      success: Project,
+      error: ProjectNotFound,
+    }),
+  )
   .add(
     HttpApiEndpoint.patch('update', '/projects/:id', {
       params: { id: Schema.String },
@@ -46,7 +65,7 @@ export const ProjectsGroupLive = HttpApiBuilder.group(ProjectsApi, 'projects', (
         requireRole('contributor').pipe(Effect.andThen(() => service.create(payload))),
       )
       .handle('findAll', () => service.findAll())
-      .handle('findOne', ({ params }) => service.findOne(params.id))
+      .handle('findById', ({ params }) => service.findOne(params.id))
       .handle('update', ({ params, payload }) =>
         requireRole('archivist').pipe(Effect.andThen(() => service.update(params.id, payload))),
       )

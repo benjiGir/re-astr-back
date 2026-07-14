@@ -1,6 +1,6 @@
-import type { BaseSchema, CustomFieldsSchema } from './CategoryFields.js'
 import { sql } from 'drizzle-orm'
 import { jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import type { BaseSchema, CustomFieldsSchema } from './CategoryFields.js'
 
 export const categories = pgTable('categories', {
   id: text().primaryKey().default(sql`gen_random_uuid()`),

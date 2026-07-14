@@ -1,7 +1,7 @@
 # Migration NestJS → Effect
 
 > Plan de réécriture complète du backend RE-ASTR de NestJS (Fastify) vers Effect.
-> Statut : **Phase 1 terminée et vérifiée** — Projects (CRUD complet) + auth-lecture (`Authorization`, `CurrentUser`, RBAC) en place, le module de référence pour toutes les phases suivantes. Stratégie : tranche verticale, module par module.
+> Statut : **Phase 2 terminée et vérifiée** — Categories (CRUD complet) + portage de la validation dynamique Zod→`effect/Schema` (`common/validation/SchemaValidation.ts`, tests de parité). Stratégie : tranche verticale, module par module.
 >
 > ⚠️ **Pivot en cours de Phase 0** : en plus d'Effect, le projet est passé sur **TypeScript 7** (natif, Go) et **Drizzle ORM v1 RC**. Drizzle v1 RC a une intégration Effect native (`drizzle-orm/effect-postgres`) mais elle exige **Effect v4 beta** (`effect@4.0.0-beta.97`) — toute la stack Effect (`effect`, `@effect/platform-node`, `@effect/sql-pg`, `@effect/opentelemetry`, `@effect/vitest`) est donc sur la ligne v4 beta, pas la v3 stable envisagée initialement. Voir §4 et §9 pour le détail et les risques.
 
@@ -189,16 +189,18 @@ Chaque phase se termine par un livrable **qui tourne** et **testé**. Projects (
 
 **Done when** ✅ : CRUD `/projects` fonctionnel et vérifié en live contre un Postgres réel avec de vrais cookies signés (via `SessionFixture`) — refus sans cookie (401), refus header spoofé (401), 403 sur rôle insuffisant, 409 sur nom dupliqué, 404 sur id manquant, **409 sur delete avec tests dépendants** (la faille d'origine, confirmée corrigée), 204 sur delete propre, `/docs` liste le groupe `projects`. `tsc`/`vitest`/`biome lint` propres.
 
-### Phase 2 — Categories + validation dynamique
+### Phase 2 — Categories + validation dynamique — ✅ TERMINÉE
 **But** : porter la partie la plus délicate — la validation Zod dynamique.
-1. Module Categories sur le patron Projects.
-2. `common/validation` : porter `SchemaValidationService` de Zod vers `effect/Schema`.
-   - Meta-validation des `baseSchema`/`customFieldsSchema` (la *forme* des définitions de champs).
-   - **Construction dynamique** d'un `Schema` runtime depuis `FieldDefinition[]` (l'équivalent de `buildZodSchemaFromFields`) + cache mémoïsé.
-   - `allowCustomFields`/`maxCustomFields`/`allowedTypes` + détection de type des champs non déclarés.
-   - Support `array`/`object` (déjà présent côté Zod, à conserver).
+1. Module Categories sur le patron Projects (`Category.ts`, `CategoriesRepo.ts`, `CategoriesService.ts`, `CategoriesHttp.ts`). Pas de `CategoryNameConflict` : contrairement à `projects.name`, `categories.name` n'a pas de contrainte `unique` — le comportement d'origine n'en avait pas non plus. `CategoryHasTests` (409) ajouté sur le même modèle que `ProjectHasTests` : `tests.categoryId` a aussi `onDelete: 'restrict'`.
+2. `common/validation/SchemaValidation.ts` : `SchemaValidationService` porté de Zod vers `effect/Schema`, en fonctions pures (pas de `Context.Service` — aucun état/dépendance à injecter une fois le cache abandonné, cf. écart ci-dessous).
+   - Meta-validation des `baseSchema`/`customFieldsSchema` : gratuite une fois `CategoryFields.ts` en vrais `Schema` — le décodage HTTP du payload rejette déjà une définition mal formée. `validateBaseSchema`/`validateCustomFieldsSchema` existent quand même comme fonctions pures testables (parité) et réutilisables hors HTTP (ex. Seed).
+   - **Construction dynamique** d'un `Schema` runtime depuis `FieldDefinition[]` (`schemaForType`/`fieldsToShape`, un type par fonction pour rester sous le seuil de complexité Biome).
+   - `allowCustomFields`/`maxCustomFields`/`allowedTypes` + `detectValueType` pour les champs non déclarés.
+   - Support `array`/`object` (récursif via `Schema.suspend`, cf. §9).
+   - **Écart assumé** : pas de cache mémoïsé (`zodSchemaCache` de l'ancien service). Aucun appelant tant que Tests (Phase 3) n'existe pas ; ajouter un `Ref` dans un `Layer` si le profiling le justifie plus tard.
+   - **Écart assumé** : `validateOrThrow` devient `validateOrFail` — échoue avec un nouveau `ValidationFailed` (`Schema.ErrorClass`, 409→400) au lieu de lancer.
 
-**Done when** : CRUD `/categories`, et la validation d'une définition de schéma se comporte comme l'actuelle (tests de parité).
+**Done when** ✅ : CRUD `/categories` câblé dans `Api.ts`/`main.ts` sur le patron Projects. 28 tests de parité (`SchemaValidation.spec.ts`, repris de `schema-validation.service.spec.ts`) confirment un comportement identique à l'ancien Zod, y compris array/object imbriqués et détection de type. `tsc`/`vitest` (45 tests, tous modules)/`biome lint` propres.
 
 ### Phase 3 — Tests
 **But** : le module le plus riche en logique métier.
@@ -308,6 +310,9 @@ Aucune doc/context7 fiable pour v4 beta au moment de la Phase 0 (trop récent). 
 - `.env` n'est **jamais** chargé automatiquement en dehors de NestJS → `import 'dotenv/config'` requis en tête de tout point d'entrée (`main.ts`, `Seed.ts`, et futurs scripts CLI).
 - `LOG_LEVEL` doit être capitalisé exactement (`Debug`, pas `debug`) — `Config.logLevel` valide contre l'union stricte `LogLevel`, sensible à la casse.
 - **Piège de laziness (indépendant de v4, pur Effect)** : `Effect.andThen(someEffect)` où `someEffect` est déjà une VALEUR construite (`repo.delete(id)`) appelle `repo.delete(id)` **immédiatement**, au moment où la chaîne `.pipe(...)` est construite — pas seulement quand `andThen` décide effectivement d'exécuter ce second effect. Repéré via un test qui vérifiait `expect(deleteFn).not.toHaveBeenCalled()` après un échec du premier effect : le mock AVAIT été appelé (pour construire la valeur Effect), même si l'Effect résultant n'avait jamais tourné. Fix : `Effect.andThen(() => repo.delete(id))` (thunk, appelé paresseusement par `andThen` uniquement si le premier effect réussit). Règle : préférer systématiquement la forme thunk dès qu'un des deux côtés vient d'un service/mock injecté.
+- **Contraintes de `Schema` (Phase 2)** : le style v3 `schema.pipe(Schema.minLength(1))` n'existe plus. En v4, chaque contrainte est un `Filter` nommé `isXxx` (`Schema.isMinLength`, `Schema.isPattern`, `Schema.isGreaterThanOrEqualTo`, `Schema.isGreaterThan`...) posé via `schema.check(Schema.isXxx(...))`, `check` acceptant plusieurs filtres en rest-params. Rien de tout ça n'est documenté (v4 beta) — trouvé en `grep`ant directement `node_modules/effect/src/Schema.ts` (15 500 lignes, sources `.ts` shippées, pas que les `.d.ts`) plutôt qu'en devinant depuis la v3.
+- **Décoder dynamiquement vers un format `{field, message}[]` (Phase 2)** : `Schema.toStandardSchemaV1(schema)['~standard'].validate(data)` renvoie `{value}` ou `{issues: [{path, message}]}` (implémente standardschema.dev) — le moyen le plus direct de retrouver le format d'erreurs par champ qu'avait Zod, sans reconstruire soi-même un formateur depuis `SchemaIssue`.
+- **`Schema.Schema<T>` ne suffit pas pour un schéma composé dynamiquement (Phase 2)** : dans ce design v4, `Schema<T>` n'a qu'UN seul paramètre de type (`T`, le type décodé) — `DecodingServices` (le canal `R`) vient de l'interface `Top` sous-jacente et vaut `unknown` par défaut, jamais `never`. Une fonction qui construit un `Schema` au runtime (ex. depuis un `FieldDefinition[]`) et déclare son retour `Schema.Schema<unknown>` échoue donc contre toute API exigeant `DecodingServices = never` (ex. `toStandardSchemaV1`, `ConstraintDecoder`). Fix : typer le retour en `Schema.Top` (la vue structurelle complète, supporte `.check()`/`.annotate()`/`Struct(...)`) et caster explicitement en `Schema.ConstraintDecoder<unknown>` (via un double cast `as unknown as ...`, TS refusant le cast direct) au point d'appel final — sûr ici puisqu'aucun de nos types de champ n'introduit de vraie dépendance Effect.
 
 ### ⚠️ Point ouvert : connexion DB eager au boot
 

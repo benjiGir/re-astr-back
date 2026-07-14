@@ -1,6 +1,7 @@
 import { PgClient } from '@effect/sql-pg'
-import { Context, Effect, Layer } from 'effect'
+import { EffectDrizzleQueryError } from 'drizzle-orm/effect-core'
 import * as PgDrizzle from 'drizzle-orm/effect-postgres'
+import { Cause, Context, Effect, Layer } from 'effect'
 import { types } from 'pg'
 import { DatabaseConfig } from '@/infra/Config.js'
 
@@ -17,7 +18,9 @@ const TEMPORAL_TYPE_OIDS = new Set([1082, 1083, 1114, 1115, 1182, 1184, 1185, 11
 // wiring would buy here. Add `defineRelations()` when Phase 2+ needs it.
 const dbEffect = PgDrizzle.makeWithDefaults()
 
-export class Database extends Context.Service<Database, Effect.Success<typeof dbEffect>>()('Database') {}
+export class Database extends Context.Service<Database, Effect.Success<typeof dbEffect>>()(
+  'Database',
+) {}
 
 const DatabaseServiceLive = Layer.effect(Database, dbEffect)
 
@@ -32,10 +35,27 @@ export const DatabaseLive = Layer.unwrap(
       url,
       types: {
         getTypeParser: (typeId, format) =>
-          TEMPORAL_TYPE_OIDS.has(typeId) ? (value: unknown) => value : types.getTypeParser(typeId, format),
+          TEMPORAL_TYPE_OIDS.has(typeId)
+            ? (value: unknown) => value
+            : types.getTypeParser(typeId, format),
       },
     })
 
     return DatabaseServiceLive.pipe(Layer.provideMerge(PgClientLive))
   }),
 )
+
+/**
+ * @effect/sql-pg classifies Postgres errors into a tagged `reason` (e.g.
+ * `UniqueViolation`, `ConstraintError`) inside a `SqlError`. Drizzle then
+ * wraps *that* into `EffectDrizzleQueryError.cause`, which is a `Cause<unknown>`
+ * at runtime (`Cause.fail(sqlError)`) even though its schema type is `Unknown`.
+ * `Cause.squash` unwraps the Cause back down to the SqlError so we can read
+ * `.reason._tag` — see docs/EFFECT_MIGRATION.md §9.
+ */
+export const sqlReasonTag = (error: EffectDrizzleQueryError): string | undefined => {
+  const squashed = Cause.squash(error.cause as Cause.Cause<unknown>) as
+    | { reason?: { _tag?: string } }
+    | undefined
+  return squashed?.reason?._tag
+}
