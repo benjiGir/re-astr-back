@@ -23,9 +23,9 @@ export const tests = pgTable('tests', {
   name: text('name').notNull(),
   description: text('description'),
   status: testStatusEnum('status').notNull().default('draft'),
-  commonData: jsonb('common_data').notNull().default(sql`'{}'::jsonb`),
-  customData: jsonb('custom_data').notNull().default(sql`'{}'::jsonb`),
-  metadata: jsonb('metadata').notNull().default(sql`'{}'::jsonb`),
+  commonData: jsonb('common_data').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+  customData: jsonb('custom_data').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
   createdBy: text('created_by')
     .notNull()
     .references(() => users.id, { onDelete: 'restrict' }),

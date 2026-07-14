@@ -4,6 +4,7 @@ import { users } from '@/domain/schema/users.schema.js'
 import { Database } from '@/infra/Database.js'
 import { CategoriesGroup } from '@/modules/categories/CategoriesHttp.js'
 import { ProjectsGroup } from '@/modules/projects/ProjectsHttp.js'
+import { TestsGroup } from '@/modules/tests/TestsHttp.js'
 
 export class ServiceCheck extends Schema.Class<ServiceCheck>('ServiceCheck')({
   status: Schema.Literals(['up', 'down']),
@@ -31,7 +32,7 @@ const HealthGroup = HttpApiGroup.make('health')
   )
 
 // storage (Minio) isn't wired until Phase 4 — readiness only covers the database for now.
-export class Api extends HttpApi.make('re-astr').add(HealthGroup).add(ProjectsGroup).add(CategoriesGroup) {}
+export class Api extends HttpApi.make('re-astr').add(HealthGroup).add(ProjectsGroup).add(CategoriesGroup).add(TestsGroup) {}
 
 export const HealthGroupLive = HttpApiBuilder.group(Api, 'health', (handlers) =>
   handlers

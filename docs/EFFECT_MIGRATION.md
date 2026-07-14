@@ -1,7 +1,7 @@
 # Migration NestJS → Effect
 
 > Plan de réécriture complète du backend RE-ASTR de NestJS (Fastify) vers Effect.
-> Statut : **Phase 2 terminée et vérifiée** — Categories (CRUD complet) + portage de la validation dynamique Zod→`effect/Schema` (`common/validation/SchemaValidation.ts`, tests de parité). Stratégie : tranche verticale, module par module.
+> Statut : **Phase 3 terminée côté tests unitaires** — Tests (CRUD complet, validations dynamiques, dépendances cross-module Projects+Categories). Vérification live contre un Postgres réel pas encore faite (à la différence des Phases 1/2). Stratégie : tranche verticale, module par module.
 >
 > ⚠️ **Pivot en cours de Phase 0** : en plus d'Effect, le projet est passé sur **TypeScript 7** (natif, Go) et **Drizzle ORM v1 RC**. Drizzle v1 RC a une intégration Effect native (`drizzle-orm/effect-postgres`) mais elle exige **Effect v4 beta** (`effect@4.0.0-beta.97`) — toute la stack Effect (`effect`, `@effect/platform-node`, `@effect/sql-pg`, `@effect/opentelemetry`, `@effect/vitest`) est donc sur la ligne v4 beta, pas la v3 stable envisagée initialement. Voir §4 et §9 pour le détail et les risques.
 
@@ -202,14 +202,16 @@ Chaque phase se termine par un livrable **qui tourne** et **testé**. Projects (
 
 **Done when** ✅ : CRUD `/categories` câblé dans `Api.ts`/`main.ts` sur le patron Projects. 28 tests de parité (`SchemaValidation.spec.ts`, repris de `schema-validation.service.spec.ts`) confirment un comportement identique à l'ancien Zod, y compris array/object imbriqués et détection de type. `tsc`/`vitest` (45 tests, tous modules)/`biome lint` propres.
 
-### Phase 3 — Tests
+### Phase 3 — Tests — ✅ TERMINÉE (tests unitaires ; vérification live pas encore faite)
 **But** : le module le plus riche en logique métier.
-1. Module Tests sur le patron.
-2. `TestsService.create` : lookup catégorie (→ 404 si absente), validation `commonData` vs `baseSchema` et `customData` vs `customFieldsSchema` (via Phase 2), auto-stamp `completedAt` sur `status: 'completed'`.
-3. **Corrige** : injecter `ProjectsService` pour valider l'existence de `projectId` → `404 Project not found` propre (au lieu du 500 FK actuel).
-4. Filtre `GET /tests?categoryId=` conservé. (Le filtre `projectId` reste non implémenté — cohérent avec le contrat corrigé ; à ajouter plus tard si besoin.)
+1. Module Tests sur le patron (`Test.ts`, `TestsRepo.ts`, `TestsService.ts`, `TestsHttp.ts`). `PATCH /tests/:id` exige `contributor`, pas `archivist` (contrairement à Projects/Categories) — vérifié sur l'ancien contrôleur, pas supposé par analogie.
+2. `TestsService.create` : lookup projet (→ 404 si absent, faille non numérotée corrigée, cf. point 3) et catégorie (→ 404 si absente), validation `commonData` vs `baseSchema` et `customData` vs `customFieldsSchema` (via Phase 2), auto-stamp `completedAt` sur `status: 'completed'`. `update` revalide categoryId/projectId/commonData/customData uniquement si fournis (parité stricte avec l'ancien service), factorisé dans `validateAgainstCategory` pour rester sous le seuil de complexité Biome.
+3. **Corrige** : injecte `ProjectsService` pour valider l'existence de `projectId` → `404 Project not found` propre (au lieu du 500 FK actuel). Appliqué à `create` et `update`. `remove` n'a pas besoin de l'équivalent `TestHasTests` : `test_files.test_id` est en `onDelete: 'cascade'`, pas `restrict`.
+4. Filtre `GET /tests?categoryId=` conservé via un `query` d'endpoint (cf. §9). Le filtre `projectId` reste non implémenté — cohérent avec le contrat corrigé.
+5. **Écart de lignée** : les commits historiques mentionnant recherche `/tests/search`, filtres `projectId`/`status` et jointure auteur n'appartiennent pas à la lignée migrée — `git merge-base develop experimental/Effect` pointe sur `988e77b`, qui ne les contient pas (branche parallèle jamais mergée). Non portés.
+6. `tests.schema.ts` : ajout de `.$type<Record<string, unknown>>()` sur `commonData`/`customData`/`metadata` (jamais nécessaire avant, ces colonnes n'étaient lues par aucun module précédent).
 
-**Done when** : CRUD `/tests` + validations dynamiques opérationnelles, tests verts.
+**Done when** ✅ (partiel) : CRUD `/tests` + validations dynamiques + câblage cross-module (`Api.ts`/`main.ts`) opérationnels, 10 nouveaux tests verts (55 au total), `tsc`/`biome lint` propres. ⚠️ Pas encore vérifié en live contre un Postgres réel (contrairement aux Phases 1/2) — à faire avant de considérer la phase pleinement close.
 
 ### Phase 4 — Test Files + MinIO
 **But** : upload/download binaire dans Effect.
@@ -313,6 +315,9 @@ Aucune doc/context7 fiable pour v4 beta au moment de la Phase 0 (trop récent). 
 - **Contraintes de `Schema` (Phase 2)** : le style v3 `schema.pipe(Schema.minLength(1))` n'existe plus. En v4, chaque contrainte est un `Filter` nommé `isXxx` (`Schema.isMinLength`, `Schema.isPattern`, `Schema.isGreaterThanOrEqualTo`, `Schema.isGreaterThan`...) posé via `schema.check(Schema.isXxx(...))`, `check` acceptant plusieurs filtres en rest-params. Rien de tout ça n'est documenté (v4 beta) — trouvé en `grep`ant directement `node_modules/effect/src/Schema.ts` (15 500 lignes, sources `.ts` shippées, pas que les `.d.ts`) plutôt qu'en devinant depuis la v3.
 - **Décoder dynamiquement vers un format `{field, message}[]` (Phase 2)** : `Schema.toStandardSchemaV1(schema)['~standard'].validate(data)` renvoie `{value}` ou `{issues: [{path, message}]}` (implémente standardschema.dev) — le moyen le plus direct de retrouver le format d'erreurs par champ qu'avait Zod, sans reconstruire soi-même un formateur depuis `SchemaIssue`.
 - **`Schema.Schema<T>` ne suffit pas pour un schéma composé dynamiquement (Phase 2)** : dans ce design v4, `Schema<T>` n'a qu'UN seul paramètre de type (`T`, le type décodé) — `DecodingServices` (le canal `R`) vient de l'interface `Top` sous-jacente et vaut `unknown` par défaut, jamais `never`. Une fonction qui construit un `Schema` au runtime (ex. depuis un `FieldDefinition[]`) et déclare son retour `Schema.Schema<unknown>` échoue donc contre toute API exigeant `DecodingServices = never` (ex. `toStandardSchemaV1`, `ConstraintDecoder`). Fix : typer le retour en `Schema.Top` (la vue structurelle complète, supporte `.check()`/`.annotate()`/`Struct(...)`) et caster explicitement en `Schema.ConstraintDecoder<unknown>` (via un double cast `as unknown as ...`, TS refusant le cast direct) au point d'appel final — sûr ici puisqu'aucun de nos types de champ n'introduit de vraie dépendance Effect.
+- **`HttpApiEndpoint` : filtre de query string (Phase 3)** : pas de méthode chaînée dédiée — une clé `query` symétrique à `params` dans les options (`{ query: { categoryId: Schema.optional(Schema.String) } }`), reçue par le handler dans le même objet déstructuré (`{ params, query, payload }`).
+- **Dépendance cross-module dans `main.ts` (Phase 3, première fois que ça arrive)** : `TestsServiceLive` a besoin de `ProjectsService` et `CategoriesService` (vérif d'existence de `projectId`/`categoryId`). Les mettre simplement à côté de `TestsInfra` dans le même `Layer.mergeAll(...)` NE suffit PAS — c'est exactement l'avertissement déjà noté plus haut (mergeAll ne laisse pas les siblings se satisfaire entre eux). Il faut `Layer.provideMerge(ProjectsInfra)`/`Layer.provideMerge(CategoriesInfra)` **en plus** de `Database`/`SessionConfig`/`AppConfig`, pour que leur sortie reste visible à la fois pour `TestsInfra` et pour `ProjectsGroupLive`/`CategoriesGroupLive` (qui en ont toujours besoin aussi).
+- **Piège d'`Effect.orDie` mal cadré (Phase 3, trouvé par un test qui a échoué)** : `findOne(id).pipe(Effect.andThen(() => repo.remove(id)), Effect.orDie, ...)` — l'intention était de ne faire mourir que les erreurs de `repo.remove`, mais `Effect.orDie` posé après `andThen` s'applique à **toute la chaîne qui précède**, y compris l'échec attendu `TestNotFound` de `findOne`. Résultat : un test `remove` sur un id manquant plantait (defect) au lieu d'échouer proprement. Fix : cadrer `Effect.orDie` au plus près de l'effet visé — `Effect.andThen(() => repo.remove(id).pipe(Effect.orDie))` — plutôt que de l'ajouter en bout de pipe en pensant qu'il ne visera que le dernier maillon.
 
 ### ⚠️ Point ouvert : connexion DB eager au boot
 
