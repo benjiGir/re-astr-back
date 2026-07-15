@@ -6,11 +6,7 @@ import type { User } from '@/domain/schema/users.schema.js'
 import { CredentialsRepo } from '@/auth/CredentialsRepo.js'
 import { SessionConfig } from '@/infra/Config.js'
 import { sqlReasonTag } from '@/infra/Database.js'
-
-export class EmailAlreadyExists extends Schema.ErrorClass<EmailAlreadyExists>('re-astr/EmailAlreadyExists')(
-  { _tag: Schema.tag('EmailAlreadyExists'), email: Schema.String },
-  { httpApiStatus: 409 },
-) {}
+import { EmailAlreadyExists } from '@/modules/users/User.js'
 
 /** Deliberately generic — never reveals whether the email exists or the password was wrong. */
 export class InvalidCredentials extends Schema.ErrorClass<InvalidCredentials>('re-astr/InvalidCredentials')(

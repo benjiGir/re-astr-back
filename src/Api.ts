@@ -7,6 +7,7 @@ import { CategoriesGroup } from '@/modules/categories/CategoriesHttp.js'
 import { ProjectsGroup } from '@/modules/projects/ProjectsHttp.js'
 import { TestFilesGroup } from '@/modules/test-files/TestFilesHttp.js'
 import { TestsGroup } from '@/modules/tests/TestsHttp.js'
+import { UsersGroup } from '@/modules/users/UsersHttp.js'
 
 export class ServiceCheck extends Schema.Class<ServiceCheck>('ServiceCheck')({
   status: Schema.Literals(['up', 'down']),
@@ -43,7 +44,8 @@ export class Api extends HttpApi.make('re-astr')
   .add(ProjectsGroup)
   .add(CategoriesGroup)
   .add(TestsGroup)
-  .add(TestFilesGroup) {}
+  .add(TestFilesGroup)
+  .add(UsersGroup) {}
 
 export const HealthGroupLive = HttpApiBuilder.group(Api, 'health', (handlers) =>
   handlers

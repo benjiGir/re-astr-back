@@ -1,7 +1,7 @@
 # Migration NestJS → Effect
 
 > Plan de réécriture complète du backend RE-ASTR de NestJS (Fastify) vers Effect.
-> Statut : **Phase 5 terminée côté tests unitaires** — Auth credentials (sign-up/sign-in/sign-out/get-session/forgot-password/reset-password). Vérification live pas encore faite pour les Phases 3, 4 et 5 (à la différence des Phases 1/2). Stratégie : tranche verticale, module par module.
+> Statut : **Toutes les phases de migration (0-6) sont terminées.** Reste la Phase 7 (bascule & nettoyage). Phases 1, 2, 5 et 6 vérifiées en live contre un Postgres (+ MinIO pour la 4) réels ; Phases 3 et 4 encore seulement couvertes par tests unitaires avec mocks — à vérifier en live avant de considérer la migration totalement close. Stratégie : tranche verticale, module par module.
 >
 > ⚠️ **Pivot en cours de Phase 0** : en plus d'Effect, le projet est passé sur **TypeScript 7** (natif, Go) et **Drizzle ORM v1 RC**. Drizzle v1 RC a une intégration Effect native (`drizzle-orm/effect-postgres`) mais elle exige **Effect v4 beta** (`effect@4.0.0-beta.97`) — toute la stack Effect (`effect`, `@effect/platform-node`, `@effect/sql-pg`, `@effect/opentelemetry`, `@effect/vitest`) est donc sur la ligne v4 beta, pas la v3 stable envisagée initialement. Voir §4 et §9 pour le détail et les risques.
 
@@ -226,7 +226,7 @@ Chaque phase se termine par un livrable **qui tourne** et **testé**. Projects (
 
 **Done when** ✅ (partiel) : `tsc`/`biome lint` propres, 10 nouveaux tests unitaires (`TestFilesService.spec.ts`, 65 au total) couvrant upload/checksum, validation testId, et surtout le nouveau comportement `remove` (ligne DB conservée si le storage échoue). ⚠️ Pas encore vérifié en live contre le MinIO du `docker-compose.dev.yml` (conteneur `up`, mais aucun test end-to-end upload→download→presigned-url exécuté) — les mocks unitaires ne testent ni le vrai SDK MinIO ni le vrai parsing multipart.
 
-### Phase 5 — Auth credentials (flux de connexion) — ✅ TERMINÉE (tests unitaires ; vérification live pas encore faite)
+### Phase 5 — Auth credentials (flux de connexion) — ✅ TERMINÉE ET VÉRIFIÉE EN LIVE
 **But** : remplacer les flux Better Auth. L'auth-*lecture* (middleware, `CurrentUser`, RBAC, cookie) existe déjà depuis la Phase 1 ; ici on ajoute la partie *écriture*.
 0. **Préalable bloquant — résolu, pas un problème** : l'ancien code n'utilisait pas le hachage intégré de Better Auth — il était déjà remplacé par `argon2.hash()`/`argon2.verify()` du package `argon2` directement, sans options custom (`auth.service.ts`, historique pré-Phase-0). Le format de hash argon2 (PHC) s'auto-décrit (variante + coûts encodés dans la chaîne stockée), donc `argon2.verify()` retrouve tout seul les bons paramètres — aucun risque de compat du moment que le même package est conservé (déjà le cas, cf. §4).
 1. **Découverte** : `sign-up`/`sign-in`/`forgot-password`/`reset-password` étaient entièrement délégués au handler interne de Better Auth dans l'ancien contrôleur (`this.authService.auth.handler(...)`) — aucune logique applicative portable pour l'intérieur de ces flux. Reconstruits à partir de `docs/API_CONTRACTS.md` (contrat documenté pour le frontend) et du schéma DB existant (`users`/`accounts`/`sessions`/`verifications`, tous conservés).
@@ -235,15 +235,17 @@ Chaque phase se termine par un livrable **qui tourne** et **testé**. Projects (
 4. `CurrentUser` étendu (`emailVerified`/`createdAt`/`updatedAt`/`session: {id, token, expiresAt, ipAddress, userAgent}`) plutôt que de dupliquer la lecture de session ailleurs — `Authorization` sélectionnait déjà ces deux lignes en entier pour chaque requête authentifiée, élargir les colonnes sélectionnées ne coûte rien de plus. `sign-out`/`get-session` vivent dans un second `HttpApiGroup` (`authSession`) avec `.middleware(Authorization)` — `sign-up`/`sign-in`/`forgot`/`reset` n'en ont pas besoin (pas encore de cookie à ce stade).
 5. `AuthHttp.ts` : `sign-up`, `sign-in`, `sign-out`, `get-session`, `forgot-password`, `reset-password` (mêmes paths qu'avant, y compris `/auth/get-session`). Cookie posé via `HttpApiBuilder.securitySetCookie` (sign-up/sign-in) et retiré via `HttpServerResponse.removeCookie` (sign-out) — le descripteur `HttpApiSecurity.apiKey(...)` du cookie est maintenant partagé (`Cookie.ts`) entre `Authorization` (le lit) et `AuthHttp` (le pose/retire) au lieu d'être dupliqué.
 
-**Done when** ✅ (partiel) : `tsc`/`biome lint` propres, 11 nouveaux tests unitaires (`Credentials.spec.ts`, 76 au total) — signUp hache réellement et vérifie le mot de passe (argon2 réel, pas mocké), signIn rejette email inconnu/pas de mot de passe/mauvais mot de passe de façon indiscernable, resetPassword met à jour le mot de passe + supprime le token + tue les sessions. ⚠️ Pas encore vérifié en live (login réel bout-en-bout avec un vrai cookie posé par sign-in, accepté par le middleware Phase 1) — comme Phases 3/4.
+**Done when** ✅ : `tsc`/`biome lint` propres, 11 nouveaux tests unitaires (`Credentials.spec.ts`, 76 au total) — signUp hache réellement et vérifie le mot de passe (argon2 réel, pas mocké), signIn rejette email inconnu/pas de mot de passe/mauvais mot de passe de façon indiscernable, resetPassword met à jour le mot de passe + supprime le token + tue les sessions. **Vérifié en live** contre le serveur réel + DB seedée : sign-up/sign-in posent un cookie accepté par le middleware Phase 1, sign-out invalide vraiment la session (réutiliser l'ancien cookie échoue), forgot→reset-password fonctionne de bout en bout (ancien mot de passe rejeté, token à usage unique). **Un vrai bug trouvé par cette vérification** : le cookie n'avait pas `Path=/`, donc il ne survivait pas à la requête qui le posait — voir §9 et le commit `fix(auth): scope the session cookie to Path=/`. Phases 3/4 restent, elles, non vérifiées en live.
 
-### Phase 6 — Users
+### Phase 6 — Users — ✅ TERMINÉE ET VÉRIFIÉE EN LIVE
 **But** : dernier module, dépend de `CurrentUser`.
-1. Module Users sur le patron.
-2. **Corrige la faille 3** : `PATCH /users/:id` restreint à `self OR master` (via `CurrentUser`). `PATCH /users/:id/role` et `DELETE` restent `master`.
-3. Conflit email → `409` conservé.
+1. Module Users sur le patron (`User.ts`, `UsersRepo.ts`, `UsersService.ts`, `UsersHttp.ts`). Pas de `create` : les utilisateurs naissent via `sign-up` (Phase 5), pas via ce module.
+2. **Corrige la faille 3** : nouveau garde `requireSelfOrRole` dans `Role.ts` (à côté de `requireRole`) — `user.id === targetId || hasRequiredRole(...)`. `PATCH /users/:id` l'utilise ; `PATCH /users/:id/role` et `DELETE` restent `requireRole('master')`.
+3. Conflit email → `409` conservé, mais via le pattern déjà établi (catch `UniqueViolation` sur la vraie contrainte `users.email.unique()`, cf. `sqlReasonTag`) plutôt que la vérification manuelle "chercher par email d'abord" de l'ancien service — évite une fenêtre TOCTOU, cohérent avec `ProjectsService`/`CategoriesService`.
+4. **Ajout non demandé par le plan, cohérent avec la Faille 5 déjà corrigée ailleurs** : `UserHasRecords` (409) sur `remove` — `tests.createdBy` et `test_files.uploadedBy` référencent `users.id` en `onDelete: 'restrict'`, donc supprimer un utilisateur qui a créé des tests ou uploadé des fichiers aurait fini en 500 sans ce traitement, exactement le même trou que Projects/Categories avant leur fix.
+5. **`EmailAlreadyExists` déplacé** de `auth/Credentials.ts` vers `modules/users/User.ts` — c'est fondamentalement une contrainte de la table `users`, pas un concept spécifique à l'auth ; `Credentials.ts` l'importe maintenant depuis là. `UserRole` a eu le même traitement que `FieldType`/`TestStatus` en Phase 2/3 : converti de simple union TS en `Schema.Literals(...)` dans `domain/schema/users.schema.ts` (même nom, un seul import à changer nulle part puisque la substitution est structurellement compatible).
 
-**Done when** : gestion utilisateurs + garde self/master testée.
+**Done when** ✅ : `tsc`/`biome lint` propres, 9 nouveaux tests unitaires (`UsersService.spec.ts`, 85 au total). **Vérifié en live** : un utilisateur `user` peut lister/lire tout le monde et modifier son propre profil (200), mais se prend un 403 en tentant de modifier un autre profil, d'assigner un rôle, ou de supprimer un compte ; `master` peut tout faire ; conflit d'email testé en vrai (409, `alice` ne peut pas prendre l'email de `charlie`).
 
 ### Phase 7 — Bascule & nettoyage
 1. Parité contrat : rejouer les exemples de `docs/API_CONTRACTS.md` contre la nouvelle API (e2e).
@@ -259,7 +261,7 @@ Chaque phase se termine par un livrable **qui tourne** et **testé**. Projects (
 |---|---|---|---|---|
 | 1 | Bypass auth `/projects` (header `x-user-role` spoofable) | Identité via service `CurrentUser` fourni par le middleware, jamais un header | 1 | ✅ vérifié en live (header spoofé → 401) |
 | 2 | `@User()` toujours `undefined` (→ TypeError) | `CurrentUser` garanti par le type du handler | 1 | ✅ (`CurrentUser` typé, plus de `@User()`) |
-| 3 | `PATCH /users/:id` sans garde | Garde `self OR master` via `CurrentUser` | 6 | ⏳ pas encore fait |
+| 3 | `PATCH /users/:id` sans garde | Garde `self OR master` via `CurrentUser` (`requireSelfOrRole`) | 6 | ✅ vérifié en live (`user` sur un autre profil → 403, self et `master` → 200) |
 | 4 | Secret cookie codé en dur | `Config.redacted` échoue si `COOKIE_SECRET` absent | 0 | ✅ testé (`Config.spec.ts`) |
 | 5 | Delete FK `restrict` → 500 | Capture de l'erreur SQL → `409` typé | 1 | ✅ vérifié en live (409 `ProjectHasTests`) |
 

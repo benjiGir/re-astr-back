@@ -5,8 +5,9 @@ import type { Session } from '@/domain/schema/sessions.schema.js'
 import type { User } from '@/domain/schema/users.schema.js'
 import { Authorization } from '@/auth/Authorization.js'
 import { sessionCookieSecurity, sign } from '@/auth/Cookie.js'
-import { Credentials, EmailAlreadyExists, InvalidCredentials, InvalidResetToken } from '@/auth/Credentials.js'
+import { Credentials, InvalidCredentials, InvalidResetToken } from '@/auth/Credentials.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
+import { EmailAlreadyExists } from '@/modules/users/User.js'
 
 const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const Email = Schema.String.check(Schema.isPattern(EMAIL_PATTERN))

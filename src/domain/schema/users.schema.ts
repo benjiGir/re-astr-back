@@ -1,7 +1,11 @@
 import { sql } from 'drizzle-orm'
 import { boolean, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { Schema } from 'effect'
 
 export const userRoleEnum = pgEnum('user_role', ['master', 'archivist', 'contributor', 'user'])
+
+export const UserRole = Schema.Literals(['master', 'archivist', 'contributor', 'user'])
+export type UserRole = typeof UserRole.Type
 
 export const users = pgTable(
   'users',
@@ -23,4 +27,3 @@ export const users = pgTable(
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
-export type UserRole = 'master' | 'archivist' | 'contributor' | 'user'
