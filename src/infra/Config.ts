@@ -30,6 +30,14 @@ export const ServerConfig = {
   port: Config.int('PORT').pipe(Config.withDefault(3000)),
 }
 
+export const MinioConfig = {
+  endPoint: Config.string('MINIO_ENDPOINT').pipe(Config.withDefault('localhost')),
+  port: Config.int('MINIO_PORT').pipe(Config.withDefault(9000)),
+  useSSL: Config.boolean('MINIO_USE_SSL').pipe(Config.withDefault(false)),
+  accessKey: Config.redacted('MINIO_ACCESS_KEY'),
+  secretKey: Config.redacted('MINIO_SECRET_KEY'),
+}
+
 /**
  * No `withDefault` on `cookieSecret`: boot must fail loudly if it's missing,
  * instead of silently falling back to a known hardcoded string (the bug this replaces).

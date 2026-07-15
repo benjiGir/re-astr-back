@@ -18,7 +18,7 @@ export const testFiles = pgTable('test_files', {
   fileSize: bigint('file_size', { mode: 'number' }).notNull(),
   mimeType: text('mime_type').notNull(),
   checksum: text('checksum'), // SHA-256 hash for integrity
-  metadata: jsonb('metadata').notNull().default(sql`'{}'::jsonb`),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
   uploadedBy: text('uploaded_by')
     .notNull()
     .references(() => users.id, { onDelete: 'restrict' }),

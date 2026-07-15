@@ -4,6 +4,7 @@ import { users } from '@/domain/schema/users.schema.js'
 import { Database } from '@/infra/Database.js'
 import { CategoriesGroup } from '@/modules/categories/CategoriesHttp.js'
 import { ProjectsGroup } from '@/modules/projects/ProjectsHttp.js'
+import { TestFilesGroup } from '@/modules/test-files/TestFilesHttp.js'
 import { TestsGroup } from '@/modules/tests/TestsHttp.js'
 
 export class ServiceCheck extends Schema.Class<ServiceCheck>('ServiceCheck')({
@@ -31,8 +32,15 @@ const HealthGroup = HttpApiGroup.make('health')
     }),
   )
 
-// storage (Minio) isn't wired until Phase 4 — readiness only covers the database for now.
-export class Api extends HttpApi.make('re-astr').add(HealthGroup).add(ProjectsGroup).add(CategoriesGroup).add(TestsGroup) {}
+// Storage (Minio) is wired below (Phase 4) but /health/ready still only checks the
+// database — a Minio check would need Minio as a dependency of the health group too;
+// left out deliberately to keep this phase scoped to test-files, not the health system.
+export class Api extends HttpApi.make('re-astr')
+  .add(HealthGroup)
+  .add(ProjectsGroup)
+  .add(CategoriesGroup)
+  .add(TestsGroup)
+  .add(TestFilesGroup) {}
 
 export const HealthGroupLive = HttpApiBuilder.group(Api, 'health', (handlers) =>
   handlers
