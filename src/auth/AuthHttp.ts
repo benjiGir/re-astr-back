@@ -136,6 +136,7 @@ export const AuthGroupLive = HttpApiBuilder.group(AuthAllApi, 'auth', (handlers)
       Effect.gen(function* () {
         const signedCookie = yield* sign(result.session.token)
         yield* HttpApiBuilder.securitySetCookie(sessionCookieSecurity, signedCookie, {
+          path: '/',
           expires: result.session.expiresAt,
         })
         return new AuthResponse({ user: toAuthUser(result.user), session: toAuthSessionInfo(result.session) })
