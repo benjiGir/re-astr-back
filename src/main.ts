@@ -5,7 +5,10 @@ import { Layer } from 'effect'
 import { HttpRouter } from 'effect/unstable/http'
 import { HttpApiBuilder, HttpApiScalar } from 'effect/unstable/httpapi'
 import { Api, HealthGroupLive } from '@/Api.js'
+import { AuthGroupLive, AuthSessionGroupLive } from '@/auth/AuthHttp.js'
 import { AuthorizationLive } from '@/auth/Authorization.js'
+import { CredentialsLive } from '@/auth/Credentials.js'
+import { CredentialsRepoLive } from '@/auth/CredentialsRepo.js'
 import { AppConfig, ServerConfig, SessionConfig } from '@/infra/Config.js'
 import { DatabaseLive } from '@/infra/Database.js'
 import { LoggerLive } from '@/infra/Logger.js'
@@ -26,6 +29,8 @@ import { TestsServiceLive } from '@/modules/tests/TestsService.js'
 
 const AppRoutes = Layer.mergeAll(HttpApiBuilder.layer(Api), HttpApiScalar.layer(Api, { path: '/docs' })).pipe(
   Layer.provide(HealthGroupLive),
+  Layer.provide(AuthGroupLive),
+  Layer.provide(AuthSessionGroupLive),
   Layer.provide(ProjectsGroupLive),
   Layer.provide(CategoriesGroupLive),
   Layer.provide(TestsGroupLive),
@@ -39,6 +44,7 @@ const ProjectsInfra = ProjectsServiceLive.pipe(Layer.provide(ProjectsRepoLive))
 const CategoriesInfra = CategoriesServiceLive.pipe(Layer.provide(CategoriesRepoLive))
 const TestsInfra = TestsServiceLive.pipe(Layer.provide(TestsRepoLive))
 const TestFilesInfra = TestFilesServiceLive.pipe(Layer.provide(TestFilesRepoLive))
+const CredentialsInfra = CredentialsLive.pipe(Layer.provide(CredentialsRepoLive))
 
 // Each provideMerge both satisfies a shared dependency AND keeps it visible in
 // the output, so later provideMerge calls / other siblings needing the same
@@ -47,7 +53,7 @@ const TestFilesInfra = TestFilesServiceLive.pipe(Layer.provide(TestFilesRepoLive
 // growing the same way: TestFilesInfra needs TestsService (test existence
 // checks) and Minio, so TestsInfra moves out to provideMerge too, alongside
 // Projects/CategoriesInfra it already needed.
-const Infra = Layer.mergeAll(LoggerLive, TelemetryLive, AuthorizationLive, TestFilesInfra).pipe(
+const Infra = Layer.mergeAll(LoggerLive, TelemetryLive, AuthorizationLive, CredentialsInfra, TestFilesInfra).pipe(
   Layer.provideMerge(TestsInfra),
   Layer.provideMerge(ProjectsInfra),
   Layer.provideMerge(CategoriesInfra),

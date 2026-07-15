@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm'
 import { Effect, Layer, Redacted } from 'effect'
-import { HttpApiError, HttpApiMiddleware, HttpApiSecurity } from 'effect/unstable/httpapi'
+import { HttpApiError, HttpApiMiddleware } from 'effect/unstable/httpapi'
 import { sessions } from '@/domain/schema/sessions.schema.js'
 import { users } from '@/domain/schema/users.schema.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
-import { verify } from '@/auth/Cookie.js'
+import { sessionCookieSecurity, verify } from '@/auth/Cookie.js'
 import { SessionConfig } from '@/infra/Config.js'
 import { Database } from '@/infra/Database.js'
 
@@ -19,7 +19,7 @@ export class Authorization extends HttpApiMiddleware.Service<Authorization, { pr
   {
     error: HttpApiError.Unauthorized,
     security: {
-      cookie: HttpApiSecurity.apiKey({ key: 'better-auth.session_token', in: 'cookie' }),
+      cookie: sessionCookieSecurity,
     },
   },
 ) {}
@@ -42,7 +42,7 @@ export const AuthorizationLive = Layer.effect(
           )
 
           const [session] = yield* db
-            .select({ userId: sessions.userId, expiresAt: sessions.expiresAt })
+            .select()
             .from(sessions)
             .where(eq(sessions.token, token))
             .limit(1)
@@ -53,7 +53,7 @@ export const AuthorizationLive = Layer.effect(
           }
 
           const [user] = yield* db
-            .select({ id: users.id, email: users.email, name: users.name, role: users.role })
+            .select()
             .from(users)
             .where(eq(users.id, session.userId))
             .limit(1)
@@ -61,7 +61,18 @@ export const AuthorizationLive = Layer.effect(
 
           if (!user) return yield* new HttpApiError.Unauthorized()
 
-          return yield* httpEffect.pipe(Effect.provideService(CurrentUser, user))
+          return yield* httpEffect.pipe(
+            Effect.provideService(CurrentUser, {
+              ...user,
+              session: {
+                id: session.id,
+                token: session.token,
+                expiresAt: session.expiresAt,
+                ipAddress: session.ipAddress,
+                userAgent: session.userAgent,
+              },
+            }),
+          )
         }),
     }
   }),

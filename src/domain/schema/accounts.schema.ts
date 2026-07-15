@@ -26,3 +26,6 @@ export const accounts = pgTable(
   },
   (table) => [index('accounts_user_id_idx').on(table.userId)],
 )
+
+export type Account = typeof accounts.$inferSelect
+export type NewAccount = typeof accounts.$inferInsert

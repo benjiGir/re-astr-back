@@ -1,6 +1,7 @@
 import { Effect, Schema } from 'effect'
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from 'effect/unstable/httpapi'
 import { users } from '@/domain/schema/users.schema.js'
+import { AuthGroup, AuthSessionGroup } from '@/auth/AuthHttp.js'
 import { Database } from '@/infra/Database.js'
 import { CategoriesGroup } from '@/modules/categories/CategoriesHttp.js'
 import { ProjectsGroup } from '@/modules/projects/ProjectsHttp.js'
@@ -37,6 +38,8 @@ const HealthGroup = HttpApiGroup.make('health')
 // left out deliberately to keep this phase scoped to test-files, not the health system.
 export class Api extends HttpApi.make('re-astr')
   .add(HealthGroup)
+  .add(AuthGroup)
+  .add(AuthSessionGroup)
   .add(ProjectsGroup)
   .add(CategoriesGroup)
   .add(TestsGroup)

@@ -23,3 +23,6 @@ export const sessions = pgTable(
     index('sessions_token_idx').on(table.token),
   ],
 )
+
+export type Session = typeof sessions.$inferSelect
+export type NewSession = typeof sessions.$inferInsert

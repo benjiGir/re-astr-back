@@ -1,8 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { Data, Effect, Redacted } from 'effect'
+import { HttpApiSecurity } from 'effect/unstable/httpapi'
 import { SessionConfig } from '@/infra/Config.js'
 
 export class InvalidCookie extends Data.TaggedError('InvalidCookie') {}
+
+/** Shared by Authorization (reads it) and AuthHttp (sets/clears it on sign-in/up/out). */
+export const sessionCookieSecurity = HttpApiSecurity.apiKey({ key: 'better-auth.session_token', in: 'cookie' })
 
 /**
  * Own signing scheme, not compatible with the old Better Auth cookies (see
