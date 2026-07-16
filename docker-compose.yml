@@ -50,15 +50,16 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/re-astr
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-in-production}
-      COOKIE_SECRET: ${COOKIE_SECRET:-change-me-in-production}
-      BASE_URL: http://localhost:3000
+      # No fallback on purpose: infra/Config.ts's SessionConfig has no default
+      # for cookieSecret either, so boot fails loudly if it's missing — a
+      # `:-change-me-in-production` fallback here would silently defeat that
+      # at the compose layer (the original bug this was meant to fix).
+      COOKIE_SECRET: ${COOKIE_SECRET:?COOKIE_SECRET must be set}
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
       MINIO_USE_SSL: "false"
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      MINIO_DEFAULT_BUCKET: uploads
     depends_on:
       postgres:
         condition: service_healthy
