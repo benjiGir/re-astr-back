@@ -1,5 +1,12 @@
 import { Effect, Schema } from 'effect'
-import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from 'effect/unstable/httpapi'
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiError,
+  HttpApiGroup,
+  HttpApiSchema,
+} from 'effect/unstable/httpapi'
 import { Authorization } from '@/auth/Authorization.js'
 import { requireRole } from '@/auth/Role.js'
 import {
@@ -15,7 +22,7 @@ export const CategoriesGroup = HttpApiGroup.make('categories')
   .add(
     HttpApiEndpoint.post('create', '/categories', {
       payload: CreateCategory,
-      success: Category,
+      success: Category.pipe(HttpApiSchema.status(201)),
       error: [HttpApiError.Forbidden],
     }),
   )

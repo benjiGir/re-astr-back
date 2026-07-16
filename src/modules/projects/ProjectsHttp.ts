@@ -5,6 +5,7 @@ import {
   HttpApiEndpoint,
   HttpApiError,
   HttpApiGroup,
+  HttpApiSchema,
 } from 'effect/unstable/httpapi'
 import { Authorization } from '@/auth/Authorization.js'
 import { requireRole } from '@/auth/Role.js'
@@ -22,7 +23,7 @@ export const ProjectsGroup = HttpApiGroup.make('projects')
   .add(
     HttpApiEndpoint.post('create', '/projects', {
       payload: CreateProject,
-      success: Project,
+      success: Project.pipe(HttpApiSchema.status(201)),
       error: [ProjectNameConflict, HttpApiError.Forbidden],
     }),
   )

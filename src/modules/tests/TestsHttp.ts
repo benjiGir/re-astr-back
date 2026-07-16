@@ -1,5 +1,12 @@
 import { Effect, Schema } from 'effect'
-import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from 'effect/unstable/httpapi'
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiError,
+  HttpApiGroup,
+  HttpApiSchema,
+} from 'effect/unstable/httpapi'
 import { Authorization } from '@/auth/Authorization.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
 import { requireRole } from '@/auth/Role.js'
@@ -13,7 +20,7 @@ export const TestsGroup = HttpApiGroup.make('tests')
   .add(
     HttpApiEndpoint.post('create', '/tests', {
       payload: CreateTest,
-      success: Test,
+      success: Test.pipe(HttpApiSchema.status(201)),
       error: [ProjectNotFound, CategoryNotFound, ValidationFailed, HttpApiError.Forbidden],
     }),
   )

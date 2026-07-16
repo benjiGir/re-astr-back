@@ -39,7 +39,7 @@ export const TestFilesGroup = HttpApiGroup.make('test-files')
   .add(
     HttpApiEndpoint.post('upload', '/test-files/upload', {
       payload: UploadTestFile,
-      success: TestFile,
+      success: TestFile.pipe(HttpApiSchema.status(201)),
       error: [TestNotFound, MinioError, HttpApiError.Forbidden],
     }),
   )

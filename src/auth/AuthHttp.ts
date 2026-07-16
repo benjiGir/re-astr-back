@@ -1,6 +1,6 @@
 import { Effect, Schema } from 'effect'
 import { HttpServerResponse } from 'effect/unstable/http'
-import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup } from 'effect/unstable/httpapi'
+import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from 'effect/unstable/httpapi'
 import type { Session } from '@/domain/schema/sessions.schema.js'
 import type { User } from '@/domain/schema/users.schema.js'
 import { Authorization } from '@/auth/Authorization.js'
@@ -94,7 +94,7 @@ export const AuthGroup = HttpApiGroup.make('auth')
   .add(
     HttpApiEndpoint.post('signUp', '/auth/sign-up/email', {
       payload: SignUpBody,
-      success: AuthResponse,
+      success: AuthResponse.pipe(HttpApiSchema.status(201)),
       error: EmailAlreadyExists,
     }),
   )
