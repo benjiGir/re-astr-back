@@ -18,8 +18,9 @@ export interface ValidationResult {
   readonly errors: readonly ValidationError[]
 }
 
-export class ValidationFailed extends Schema.ErrorClass<ValidationFailed>('re-astr/ValidationFailed')(
-  { _tag: Schema.tag('ValidationFailed'), context: Schema.String, errors: Schema.Array(ValidationError) },
+export class ValidationFailed extends Schema.TaggedErrorClass<ValidationFailed>('re-astr/ValidationFailed')(
+  'ValidationFailed',
+  { context: Schema.String, errors: Schema.Array(ValidationError) },
   { httpApiStatus: 400 },
 ) {}
 

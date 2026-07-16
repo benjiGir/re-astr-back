@@ -25,13 +25,15 @@ export class UpdateCategory extends Schema.Class<UpdateCategory>('UpdateCategory
   customFieldsSchema: Schema.optional(CustomFieldsSchema),
 }) {}
 
-export class CategoryNotFound extends Schema.ErrorClass<CategoryNotFound>('re-astr/CategoryNotFound')(
-  { _tag: Schema.tag('CategoryNotFound'), id: Schema.String },
+export class CategoryNotFound extends Schema.TaggedErrorClass<CategoryNotFound>('re-astr/CategoryNotFound')(
+  'CategoryNotFound',
+  { id: Schema.String },
   { httpApiStatus: 404 },
 ) {}
 
 /** Mirrors ProjectHasTests: tests.categoryId also has onDelete: 'restrict'. */
-export class CategoryHasTests extends Schema.ErrorClass<CategoryHasTests>('re-astr/CategoryHasTests')(
-  { _tag: Schema.tag('CategoryHasTests'), id: Schema.String },
+export class CategoryHasTests extends Schema.TaggedErrorClass<CategoryHasTests>('re-astr/CategoryHasTests')(
+  'CategoryHasTests',
+  { id: Schema.String },
   { httpApiStatus: 409 },
 ) {}
