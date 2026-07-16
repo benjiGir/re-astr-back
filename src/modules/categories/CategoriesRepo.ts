@@ -24,46 +24,53 @@ export const CategoriesRepoLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database
 
-    return {
-      // customFieldsSchema is expected to already be fully resolved by
-      // CategoriesService (default applied) — the repo never defaults it.
-      create: (input) =>
-        Effect.map(
-          db
-            .insert(categories)
-            .values({
-              name: input.name,
-              description: input.description ?? null,
-              baseSchema: input.baseSchema,
-              customFieldsSchema: input.customFieldsSchema,
-            })
-            .returning(),
-          ([row]) => row,
-        ),
+    // customFieldsSchema is expected to already be fully resolved by
+    // CategoriesService (default applied) — the repo never defaults it.
+    const create = Effect.fn('CategoriesRepo.create')(function* (input: CreateCategory) {
+      return yield* Effect.map(
+        db
+          .insert(categories)
+          .values({
+            name: input.name,
+            description: input.description ?? null,
+            baseSchema: input.baseSchema,
+            customFieldsSchema: input.customFieldsSchema,
+          })
+          .returning(),
+        ([row]) => row,
+      )
+    })
 
-      findAll: () => db.select().from(categories),
+    const findAll = Effect.fn('CategoriesRepo.findAll')(function* () {
+      return yield* db.select().from(categories)
+    })
 
-      findById: (id) =>
-        Effect.map(db.select().from(categories).where(eq(categories.id, id)).limit(1), ([row]) =>
-          Option.fromNullishOr(row),
-        ),
+    const findById = Effect.fn('CategoriesRepo.findById')(function* (id: string) {
+      return yield* Effect.map(db.select().from(categories).where(eq(categories.id, id)).limit(1), ([row]) =>
+        Option.fromNullishOr(row),
+      )
+    })
 
-      update: (id, input) =>
-        Effect.map(
-          db
-            .update(categories)
-            .set({
-              ...(input.name !== undefined && { name: input.name }),
-              ...(input.description !== undefined && { description: input.description }),
-              ...(input.baseSchema !== undefined && { baseSchema: input.baseSchema }),
-              ...(input.customFieldsSchema !== undefined && { customFieldsSchema: input.customFieldsSchema }),
-            })
-            .where(eq(categories.id, id))
-            .returning(),
-          ([row]) => Option.fromNullishOr(row),
-        ),
+    const update = Effect.fn('CategoriesRepo.update')(function* (id: string, input: UpdateCategory) {
+      return yield* Effect.map(
+        db
+          .update(categories)
+          .set({
+            ...(input.name !== undefined && { name: input.name }),
+            ...(input.description !== undefined && { description: input.description }),
+            ...(input.baseSchema !== undefined && { baseSchema: input.baseSchema }),
+            ...(input.customFieldsSchema !== undefined && { customFieldsSchema: input.customFieldsSchema }),
+          })
+          .where(eq(categories.id, id))
+          .returning(),
+        ([row]) => Option.fromNullishOr(row),
+      )
+    })
 
-      remove: (id) => Effect.asVoid(db.delete(categories).where(eq(categories.id, id))),
-    }
+    const remove = Effect.fn('CategoriesRepo.remove')(function* (id: string) {
+      return yield* Effect.asVoid(db.delete(categories).where(eq(categories.id, id)))
+    })
+
+    return { create, findAll, findById, update, remove }
   }),
 )

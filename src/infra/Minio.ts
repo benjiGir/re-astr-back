@@ -1,11 +1,11 @@
-import type { Readable } from 'node:stream'
 import { NodeStream } from '@effect/platform-node'
 import { Client } from 'minio'
 import { Config, Context, Effect, Layer, Redacted, Schema, Stream } from 'effect'
 import { MinioConfig } from '@/infra/Config.js'
 
-export class MinioError extends Schema.ErrorClass<MinioError>('re-astr/MinioError')(
-  { _tag: Schema.tag('MinioError'), operation: Schema.String, cause: Schema.Unknown },
+export class MinioError extends Schema.TaggedErrorClass<MinioError>('re-astr/MinioError')(
+  'MinioError',
+  { operation: Schema.String, cause: Schema.Unknown },
   { httpApiStatus: 500 },
 ) {}
 
@@ -24,7 +24,8 @@ export class Minio extends Context.Service<
   }
 >()('Minio') {}
 
-export const MinioLive = Layer.unwrap(
+export const MinioLive = Layer.effect(
+  Minio,
   Effect.gen(function* () {
     const config = yield* Config.all(MinioConfig)
 
@@ -36,8 +37,8 @@ export const MinioLive = Layer.unwrap(
       secretKey: Redacted.value(config.secretKey),
     })
 
-    const ensureBucketExists = (bucket: string, operation: string) =>
-      Effect.tryPromise({
+    const ensureBucketExists = Effect.fn('Minio.ensureBucketExists')(function* (bucket: string, operation: string) {
+      yield* Effect.tryPromise({
         try: async () => {
           if (!(await client.bucketExists(bucket))) {
             await client.makeBucket(bucket)
@@ -45,43 +46,51 @@ export const MinioLive = Layer.unwrap(
         },
         catch: (cause) => new MinioError({ operation, cause }),
       })
-
-    return Layer.succeed(Minio, {
-      upload: (bucket, objectKey, filePath, metadata) =>
-        ensureBucketExists(bucket, 'upload').pipe(
-          Effect.andThen(() =>
-            Effect.tryPromise({
-              try: () => client.fPutObject(bucket, objectKey, filePath, metadata),
-              catch: (cause) => new MinioError({ operation: 'upload', cause }),
-            }),
-          ),
-          Effect.map((info) => ({ etag: info.etag })),
-        ),
-
-      download: (bucket, objectKey) =>
-        Effect.tryPromise({
-          try: () => client.getObject(bucket, objectKey),
-          catch: (cause) => new MinioError({ operation: 'download', cause }),
-        }).pipe(
-          Effect.map((readable: Readable) =>
-            NodeStream.fromReadable<Uint8Array, MinioError>({
-              evaluate: () => readable,
-              onError: (cause) => new MinioError({ operation: 'download', cause }),
-            }),
-          ),
-        ),
-
-      presignedUrl: (bucket, objectKey, expirySeconds) =>
-        Effect.tryPromise({
-          try: () => client.presignedGetObject(bucket, objectKey, expirySeconds),
-          catch: (cause) => new MinioError({ operation: 'presignedUrl', cause }),
-        }),
-
-      remove: (bucket, objectKey) =>
-        Effect.tryPromise({
-          try: () => client.removeObject(bucket, objectKey),
-          catch: (cause) => new MinioError({ operation: 'remove', cause }),
-        }),
     })
+
+    const upload = Effect.fn('Minio.upload')(function* (
+      bucket: string,
+      objectKey: string,
+      filePath: string,
+      metadata?: Record<string, string>,
+    ) {
+      yield* ensureBucketExists(bucket, 'upload')
+      const info = yield* Effect.tryPromise({
+        try: () => client.fPutObject(bucket, objectKey, filePath, metadata),
+        catch: (cause) => new MinioError({ operation: 'upload', cause }),
+      })
+      return { etag: info.etag }
+    })
+
+    const download = Effect.fn('Minio.download')(function* (bucket: string, objectKey: string) {
+      const readable = yield* Effect.tryPromise({
+        try: () => client.getObject(bucket, objectKey),
+        catch: (cause) => new MinioError({ operation: 'download', cause }),
+      })
+      return NodeStream.fromReadable<Uint8Array, MinioError>({
+        evaluate: () => readable,
+        onError: (cause) => new MinioError({ operation: 'download', cause }),
+      })
+    })
+
+    const presignedUrl = Effect.fn('Minio.presignedUrl')(function* (
+      bucket: string,
+      objectKey: string,
+      expirySeconds: number,
+    ) {
+      return yield* Effect.tryPromise({
+        try: () => client.presignedGetObject(bucket, objectKey, expirySeconds),
+        catch: (cause) => new MinioError({ operation: 'presignedUrl', cause }),
+      })
+    })
+
+    const remove = Effect.fn('Minio.remove')(function* (bucket: string, objectKey: string) {
+      return yield* Effect.tryPromise({
+        try: () => client.removeObject(bucket, objectKey),
+        catch: (cause) => new MinioError({ operation: 'remove', cause }),
+      })
+    })
+
+    return { upload, download, presignedUrl, remove }
   }),
 )

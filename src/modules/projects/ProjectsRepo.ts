@@ -25,32 +25,41 @@ export const ProjectsRepoLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database
 
-    return {
-      create: (input) =>
-        Effect.map(
-          db.insert(projects).values({ name: input.name, description: input.description ?? null }).returning(),
-          ([row]) => row,
-        ),
+    const create = Effect.fn('ProjectsRepo.create')(function* (input: CreateProject) {
+      return yield* Effect.map(
+        db.insert(projects).values({ name: input.name, description: input.description ?? null }).returning(),
+        ([row]) => row,
+      )
+    })
 
-      findAll: () => db.select().from(projects),
+    const findAll = Effect.fn('ProjectsRepo.findAll')(function* () {
+      return yield* db.select().from(projects)
+    })
 
-      findById: (id) =>
-        Effect.map(
-          db.select().from(projects).where(eq(projects.id, id)).limit(1),
-          ([row]) => Option.fromNullishOr(row),
-        ),
+    const findById = Effect.fn('ProjectsRepo.findById')(function* (id: string) {
+      return yield* Effect.map(db.select().from(projects).where(eq(projects.id, id)).limit(1), ([row]) =>
+        Option.fromNullishOr(row),
+      )
+    })
 
-      update: (id, input) =>
-        Effect.map(
-          db
-            .update(projects)
-            .set({ ...(input.name !== undefined && { name: input.name }), ...(input.description !== undefined && { description: input.description }) })
-            .where(eq(projects.id, id))
-            .returning(),
-          ([row]) => Option.fromNullishOr(row),
-        ),
+    const update = Effect.fn('ProjectsRepo.update')(function* (id: string, input: UpdateProject) {
+      return yield* Effect.map(
+        db
+          .update(projects)
+          .set({
+            ...(input.name !== undefined && { name: input.name }),
+            ...(input.description !== undefined && { description: input.description }),
+          })
+          .where(eq(projects.id, id))
+          .returning(),
+        ([row]) => Option.fromNullishOr(row),
+      )
+    })
 
-      delete: (id) => Effect.asVoid(db.delete(projects).where(eq(projects.id, id))),
-    }
+    const deleteProject = Effect.fn('ProjectsRepo.delete')(function* (id: string) {
+      return yield* Effect.asVoid(db.delete(projects).where(eq(projects.id, id)))
+    })
+
+    return { create, findAll, findById, update, delete: deleteProject }
   }),
 )

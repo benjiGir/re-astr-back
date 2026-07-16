@@ -33,52 +33,54 @@ export const CategoriesServiceLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* CategoriesRepo
 
-    const findOne = (id: string): Effect.Effect<Category, CategoryNotFound> =>
-      repo.findById(id).pipe(
+    const findOne = Effect.fn('CategoriesService.findOne')(function* (id: string) {
+      return yield* repo.findById(id).pipe(
         Effect.orDie,
         Effect.flatMap(
           Option.match({ onNone: () => Effect.fail(new CategoryNotFound({ id })), onSome: Effect.succeed }),
         ),
         Effect.map((row) => new Category(row)),
       )
+    })
 
-    return {
-      create: (input) =>
-        repo
-          .create({ ...input, customFieldsSchema: input.customFieldsSchema ?? DEFAULT_CUSTOM_FIELDS_SCHEMA })
-          .pipe(
-            Effect.orDie,
-            Effect.map((row) => new Category(row)),
-            Effect.tap((category) =>
-              Effect.logInfo('Category created').pipe(
-                Effect.annotateLogs({ id: category.id, name: category.name }),
-              ),
-            ),
-          ),
-
-      findAll: () => Effect.orDie(Effect.map(repo.findAll(), (rows) => rows.map((row) => new Category(row)))),
-
-      findOne,
-
-      update: (id, input) =>
-        findOne(id).pipe(
-          Effect.andThen(() => repo.update(id, input)),
+    const create = Effect.fn('CategoriesService.create')(function* (input: CreateCategory) {
+      return yield* repo
+        .create({ ...input, customFieldsSchema: input.customFieldsSchema ?? DEFAULT_CUSTOM_FIELDS_SCHEMA })
+        .pipe(
           Effect.orDie,
-          Effect.flatMap(
-            Option.match({ onNone: () => Effect.fail(new CategoryNotFound({ id })), onSome: Effect.succeed }),
-          ),
           Effect.map((row) => new Category(row)),
-          Effect.tap(() => Effect.logInfo('Category updated').pipe(Effect.annotateLogs({ id }))),
-        ),
-
-      remove: (id) =>
-        findOne(id).pipe(
-          Effect.andThen(() => repo.remove(id)),
-          Effect.tap(() => Effect.logInfo('Category deleted').pipe(Effect.annotateLogs({ id }))),
-          Effect.catchTag('EffectDrizzleQueryError', (error) =>
-            sqlReasonTag(error) === 'ConstraintError' ? Effect.fail(new CategoryHasTests({ id })) : Effect.die(error),
+          Effect.tap((category) =>
+            Effect.logInfo('Category created').pipe(Effect.annotateLogs({ id: category.id, name: category.name })),
           ),
+        )
+    })
+
+    const findAll = Effect.fn('CategoriesService.findAll')(function* () {
+      return yield* Effect.orDie(Effect.map(repo.findAll(), (rows) => rows.map((row) => new Category(row))))
+    })
+
+    const update = Effect.fn('CategoriesService.update')(function* (id: string, input: UpdateCategory) {
+      return yield* findOne(id).pipe(
+        Effect.andThen(() => repo.update(id, input)),
+        Effect.orDie,
+        Effect.flatMap(
+          Option.match({ onNone: () => Effect.fail(new CategoryNotFound({ id })), onSome: Effect.succeed }),
         ),
-    }
+        Effect.map((row) => new Category(row)),
+        Effect.tap(() => Effect.logInfo('Category updated').pipe(Effect.annotateLogs({ id }))),
+      )
+    })
+
+    const remove = Effect.fn('CategoriesService.remove')(function* (id: string) {
+      return yield* findOne(id).pipe(
+        Effect.andThen(() => repo.remove(id)),
+        Effect.tap(() => Effect.logInfo('Category deleted').pipe(Effect.annotateLogs({ id }))),
+        Effect.catchTag('EffectDrizzleQueryError', (error) =>
+          sqlReasonTag(error) === 'ConstraintError' ? Effect.fail(new CategoryHasTests({ id })) : Effect.die(error),
+        ),
+      )
+    })
+
+    return { create, findAll, findOne, update, remove }
   }),
 )

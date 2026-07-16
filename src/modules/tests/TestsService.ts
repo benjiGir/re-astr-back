@@ -32,100 +32,99 @@ export const TestsServiceLive = Layer.effect(
     const categoriesService = yield* CategoriesService
     const projectsService = yield* ProjectsService
 
-    const findOne = (id: string): Effect.Effect<Test, TestNotFound> =>
-      repo.findById(id).pipe(
+    const findOne = Effect.fn('TestsService.findOne')(function* (id: string) {
+      return yield* repo.findById(id).pipe(
         Effect.orDie,
         Effect.flatMap(Option.match({ onNone: () => Effect.fail(new TestNotFound({ id })), onSome: Effect.succeed })),
         Effect.map((row) => new Test(row)),
       )
+    })
 
     /** update-only: projectId existence (if given) + the resolved category's schemas against commonData/customData (if given). */
-    const validateAgainstCategory = (input: UpdateTest, fallbackCategoryId: string) =>
-      Effect.gen(function* () {
-        if (input.projectId !== undefined) {
-          yield* projectsService.findOne(input.projectId)
-        }
+    const validateAgainstCategory = Effect.fn('TestsService.validateAgainstCategory')(function* (
+      input: UpdateTest,
+      fallbackCategoryId: string,
+    ) {
+      if (input.projectId !== undefined) {
+        yield* projectsService.findOne(input.projectId)
+      }
 
-        const category = yield* categoriesService.findOne(input.categoryId ?? fallbackCategoryId)
+      const category = yield* categoriesService.findOne(input.categoryId ?? fallbackCategoryId)
 
-        if (input.commonData !== undefined) {
-          yield* validateOrFail(validateCommonData(input.commonData, category.baseSchema), 'commonData')
-        }
-        if (input.customData !== undefined) {
-          yield* validateOrFail(validateCustomData(input.customData, category.customFieldsSchema), 'customData')
-        }
-      })
+      if (input.commonData !== undefined) {
+        yield* validateOrFail(validateCommonData(input.commonData, category.baseSchema), 'commonData')
+      }
+      if (input.customData !== undefined) {
+        yield* validateOrFail(validateCustomData(input.customData, category.customFieldsSchema), 'customData')
+      }
+    })
 
-    return {
-      create: (input, userId) =>
-        Effect.gen(function* () {
-          yield* projectsService.findOne(input.projectId)
-          const category = yield* categoriesService.findOne(input.categoryId)
+    const create = Effect.fn('TestsService.create')(function* (input: CreateTest, userId: string) {
+      yield* projectsService.findOne(input.projectId)
+      const category = yield* categoriesService.findOne(input.categoryId)
 
-          yield* validateOrFail(validateCommonData(input.commonData, category.baseSchema), 'commonData')
-          const customData = input.customData ?? {}
-          yield* validateOrFail(validateCustomData(customData, category.customFieldsSchema), 'customData')
+      yield* validateOrFail(validateCommonData(input.commonData, category.baseSchema), 'commonData')
+      const customData = input.customData ?? {}
+      yield* validateOrFail(validateCustomData(customData, category.customFieldsSchema), 'customData')
 
-          const row = yield* repo
-            .create({
-              projectId: input.projectId,
-              categoryId: input.categoryId,
-              name: input.name,
-              description: input.description ?? null,
-              status: input.status ?? 'draft',
-              commonData: input.commonData,
-              customData,
-              metadata: input.metadata ?? {},
-              createdBy: userId,
-              updatedBy: userId,
-            })
-            .pipe(Effect.orDie)
+      const row = yield* repo
+        .create({
+          projectId: input.projectId,
+          categoryId: input.categoryId,
+          name: input.name,
+          description: input.description ?? null,
+          status: input.status ?? 'draft',
+          commonData: input.commonData,
+          customData,
+          metadata: input.metadata ?? {},
+          createdBy: userId,
+          updatedBy: userId,
+        })
+        .pipe(Effect.orDie)
 
-          return new Test(row)
-        }).pipe(
-          Effect.tap((test) =>
-            Effect.logInfo('Test created').pipe(Effect.annotateLogs({ id: test.id, name: test.name })),
-          ),
-        ),
+      const test = new Test(row)
+      yield* Effect.logInfo('Test created').pipe(Effect.annotateLogs({ id: test.id, name: test.name }))
+      return test
+    })
 
-      findAll: (categoryId) =>
-        Effect.orDie(Effect.map(repo.findAll(categoryId), (rows) => rows.map((row) => new Test(row)))),
+    const findAll = Effect.fn('TestsService.findAll')(function* (categoryId?: string) {
+      return yield* Effect.orDie(Effect.map(repo.findAll(categoryId), (rows) => rows.map((row) => new Test(row))))
+    })
 
-      findOne,
+    const update = Effect.fn('TestsService.update')(function* (id: string, input: UpdateTest, userId: string) {
+      const existing = yield* findOne(id)
+      yield* validateAgainstCategory(input, existing.categoryId)
 
-      update: (id, input, userId) =>
-        Effect.gen(function* () {
-          const existing = yield* findOne(id)
-          yield* validateAgainstCategory(input, existing.categoryId)
+      const row = yield* repo
+        .update(id, {
+          ...(input.projectId !== undefined && { projectId: input.projectId }),
+          ...(input.categoryId !== undefined && { categoryId: input.categoryId }),
+          ...(input.name !== undefined && { name: input.name }),
+          ...(input.description !== undefined && { description: input.description }),
+          ...(input.status !== undefined && { status: input.status }),
+          ...(input.commonData !== undefined && { commonData: input.commonData }),
+          ...(input.customData !== undefined && { customData: input.customData }),
+          ...(input.metadata !== undefined && { metadata: input.metadata }),
+          updatedBy: userId,
+          ...(input.status === 'completed' && { completedAt: new Date() }),
+        })
+        .pipe(
+          Effect.orDie,
+          Effect.flatMap(Option.match({ onNone: () => Effect.fail(new TestNotFound({ id })), onSome: Effect.succeed })),
+        )
 
-          const row = yield* repo
-            .update(id, {
-              ...(input.projectId !== undefined && { projectId: input.projectId }),
-              ...(input.categoryId !== undefined && { categoryId: input.categoryId }),
-              ...(input.name !== undefined && { name: input.name }),
-              ...(input.description !== undefined && { description: input.description }),
-              ...(input.status !== undefined && { status: input.status }),
-              ...(input.commonData !== undefined && { commonData: input.commonData }),
-              ...(input.customData !== undefined && { customData: input.customData }),
-              ...(input.metadata !== undefined && { metadata: input.metadata }),
-              updatedBy: userId,
-              ...(input.status === 'completed' && { completedAt: new Date() }),
-            })
-            .pipe(
-              Effect.orDie,
-              Effect.flatMap(
-                Option.match({ onNone: () => Effect.fail(new TestNotFound({ id })), onSome: Effect.succeed }),
-              ),
-            )
+      const test = new Test(row)
+      yield* Effect.logInfo('Test updated').pipe(Effect.annotateLogs({ id }))
+      return test
+    })
 
-          return new Test(row)
-        }).pipe(Effect.tap(() => Effect.logInfo('Test updated').pipe(Effect.annotateLogs({ id })))),
+    const remove = Effect.fn('TestsService.remove')(function* (id: string) {
+      return yield* findOne(id).pipe(
+        Effect.andThen(() => repo.remove(id).pipe(Effect.orDie)),
+        Effect.tap(() => Effect.logInfo('Test deleted').pipe(Effect.annotateLogs({ id }))),
+      )
+    })
 
-      remove: (id) =>
-        findOne(id).pipe(
-          Effect.andThen(() => repo.remove(id).pipe(Effect.orDie)),
-          Effect.tap(() => Effect.logInfo('Test deleted').pipe(Effect.annotateLogs({ id }))),
-        ),
-    }
+    return { create, findAll, findOne, update, remove }
   }),
 )

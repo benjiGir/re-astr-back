@@ -24,37 +24,48 @@ export const TestsRepoLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database
 
-    return {
-      create: (input) => Effect.map(db.insert(tests).values(input).returning(), ([row]) => row),
+    const create = Effect.fn('TestsRepo.create')(function* (input: NewTest) {
+      return yield* Effect.map(db.insert(tests).values(input).returning(), ([row]) => row)
+    })
 
-      findAll: (categoryId) =>
-        categoryId ? db.select().from(tests).where(eq(tests.categoryId, categoryId)) : db.select().from(tests),
+    const findAll = Effect.fn('TestsRepo.findAll')(function* (categoryId?: string) {
+      return yield* (categoryId
+        ? db.select().from(tests).where(eq(tests.categoryId, categoryId))
+        : db.select().from(tests))
+    })
 
-      findById: (id) =>
-        Effect.map(db.select().from(tests).where(eq(tests.id, id)).limit(1), ([row]) => Option.fromNullishOr(row)),
+    const findById = Effect.fn('TestsRepo.findById')(function* (id: string) {
+      return yield* Effect.map(db.select().from(tests).where(eq(tests.id, id)).limit(1), ([row]) =>
+        Option.fromNullishOr(row),
+      )
+    })
 
-      update: (id, input) =>
-        Effect.map(
-          db
-            .update(tests)
-            .set({
-              ...(input.projectId !== undefined && { projectId: input.projectId }),
-              ...(input.categoryId !== undefined && { categoryId: input.categoryId }),
-              ...(input.name !== undefined && { name: input.name }),
-              ...(input.description !== undefined && { description: input.description }),
-              ...(input.status !== undefined && { status: input.status }),
-              ...(input.commonData !== undefined && { commonData: input.commonData }),
-              ...(input.customData !== undefined && { customData: input.customData }),
-              ...(input.metadata !== undefined && { metadata: input.metadata }),
-              ...(input.updatedBy !== undefined && { updatedBy: input.updatedBy }),
-              ...(input.completedAt !== undefined && { completedAt: input.completedAt }),
-            })
-            .where(eq(tests.id, id))
-            .returning(),
-          ([row]) => Option.fromNullishOr(row),
-        ),
+    const update = Effect.fn('TestsRepo.update')(function* (id: string, input: Partial<NewTest>) {
+      return yield* Effect.map(
+        db
+          .update(tests)
+          .set({
+            ...(input.projectId !== undefined && { projectId: input.projectId }),
+            ...(input.categoryId !== undefined && { categoryId: input.categoryId }),
+            ...(input.name !== undefined && { name: input.name }),
+            ...(input.description !== undefined && { description: input.description }),
+            ...(input.status !== undefined && { status: input.status }),
+            ...(input.commonData !== undefined && { commonData: input.commonData }),
+            ...(input.customData !== undefined && { customData: input.customData }),
+            ...(input.metadata !== undefined && { metadata: input.metadata }),
+            ...(input.updatedBy !== undefined && { updatedBy: input.updatedBy }),
+            ...(input.completedAt !== undefined && { completedAt: input.completedAt }),
+          })
+          .where(eq(tests.id, id))
+          .returning(),
+        ([row]) => Option.fromNullishOr(row),
+      )
+    })
 
-      remove: (id) => Effect.asVoid(db.delete(tests).where(eq(tests.id, id))),
-    }
+    const remove = Effect.fn('TestsRepo.remove')(function* (id: string) {
+      return yield* Effect.asVoid(db.delete(tests).where(eq(tests.id, id)))
+    })
+
+    return { create, findAll, findById, update, remove }
   }),
 )

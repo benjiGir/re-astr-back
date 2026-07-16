@@ -54,8 +54,14 @@ export const DatabaseLive = Layer.unwrap(
  * `.reason._tag` — see docs/EFFECT_MIGRATION.md §9.
  */
 export const sqlReasonTag = (error: EffectDrizzleQueryError): string | undefined => {
-  const squashed = Cause.squash(error.cause as Cause.Cause<unknown>) as
-    | { reason?: { _tag?: string } }
-    | undefined
-  return squashed?.reason?._tag
+  if (!Cause.isCause(error.cause)) return undefined
+
+  const squashed = Cause.squash(error.cause)
+  if (typeof squashed !== 'object' || squashed === null || !('reason' in squashed)) return undefined
+
+  const reason = squashed.reason
+  if (typeof reason !== 'object' || reason === null || !('_tag' in reason)) return undefined
+
+  const tag = reason._tag
+  return typeof tag === 'string' ? tag : undefined
 }

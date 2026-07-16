@@ -30,39 +30,76 @@ export const CredentialsRepoLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database
 
+    const findUserByEmail = Effect.fn('CredentialsRepo.findUserByEmail')(function* (email: string) {
+      return yield* Effect.map(db.select().from(users).where(eq(users.email, email)).limit(1), ([row]) =>
+        Option.fromNullishOr(row),
+      )
+    })
+
+    const createUser = Effect.fn('CredentialsRepo.createUser')(function* (input: NewUser) {
+      return yield* Effect.map(db.insert(users).values(input).returning(), ([row]) => row)
+    })
+
+    const createAccount = Effect.fn('CredentialsRepo.createAccount')(function* (input: NewAccount) {
+      return yield* Effect.asVoid(db.insert(accounts).values(input))
+    })
+
+    const findAccountByUserId = Effect.fn('CredentialsRepo.findAccountByUserId')(function* (userId: string) {
+      return yield* Effect.map(db.select().from(accounts).where(eq(accounts.userId, userId)).limit(1), ([row]) =>
+        Option.fromNullishOr(row),
+      )
+    })
+
+    const updateAccountPassword = Effect.fn('CredentialsRepo.updateAccountPassword')(function* (
+      userId: string,
+      password: string,
+    ) {
+      return yield* Effect.asVoid(db.update(accounts).set({ password }).where(eq(accounts.userId, userId)))
+    })
+
+    const createSession = Effect.fn('CredentialsRepo.createSession')(function* (userId: string, expiresAt: Date) {
+      return yield* Effect.map(
+        db.insert(sessions).values({ token: randomUUID(), userId, expiresAt }).returning(),
+        ([row]) => row,
+      )
+    })
+
+    const deleteSession = Effect.fn('CredentialsRepo.deleteSession')(function* (sessionId: string) {
+      return yield* Effect.asVoid(db.delete(sessions).where(eq(sessions.id, sessionId)))
+    })
+
+    const deleteSessionsByUserId = Effect.fn('CredentialsRepo.deleteSessionsByUserId')(function* (userId: string) {
+      return yield* Effect.asVoid(db.delete(sessions).where(eq(sessions.userId, userId)))
+    })
+
+    const createVerification = Effect.fn('CredentialsRepo.createVerification')(function* (input: NewVerification) {
+      return yield* Effect.asVoid(db.insert(verifications).values(input))
+    })
+
+    const findVerificationByToken = Effect.fn('CredentialsRepo.findVerificationByToken')(function* (
+      token: string,
+    ) {
+      return yield* Effect.map(db.select().from(verifications).where(eq(verifications.value, token)).limit(1), ([row]) =>
+        Option.fromNullishOr(row),
+      )
+    })
+
+    const deleteVerification = Effect.fn('CredentialsRepo.deleteVerification')(function* (id: string) {
+      return yield* Effect.asVoid(db.delete(verifications).where(eq(verifications.id, id)))
+    })
+
     return {
-      findUserByEmail: (email) =>
-        Effect.map(db.select().from(users).where(eq(users.email, email)).limit(1), ([row]) =>
-          Option.fromNullishOr(row),
-        ),
-
-      createUser: (input) => Effect.map(db.insert(users).values(input).returning(), ([row]) => row),
-
-      createAccount: (input) => Effect.asVoid(db.insert(accounts).values(input)),
-
-      findAccountByUserId: (userId) =>
-        Effect.map(db.select().from(accounts).where(eq(accounts.userId, userId)).limit(1), ([row]) =>
-          Option.fromNullishOr(row),
-        ),
-
-      updateAccountPassword: (userId, password) =>
-        Effect.asVoid(db.update(accounts).set({ password }).where(eq(accounts.userId, userId))),
-
-      createSession: (userId, expiresAt) =>
-        Effect.map(db.insert(sessions).values({ token: randomUUID(), userId, expiresAt }).returning(), ([row]) => row),
-
-      deleteSession: (sessionId) => Effect.asVoid(db.delete(sessions).where(eq(sessions.id, sessionId))),
-
-      deleteSessionsByUserId: (userId) => Effect.asVoid(db.delete(sessions).where(eq(sessions.userId, userId))),
-
-      createVerification: (input) => Effect.asVoid(db.insert(verifications).values(input)),
-
-      findVerificationByToken: (token) =>
-        Effect.map(db.select().from(verifications).where(eq(verifications.value, token)).limit(1), ([row]) =>
-          Option.fromNullishOr(row),
-        ),
-
-      deleteVerification: (id) => Effect.asVoid(db.delete(verifications).where(eq(verifications.id, id))),
+      findUserByEmail,
+      createUser,
+      createAccount,
+      findAccountByUserId,
+      updateAccountPassword,
+      createSession,
+      deleteSession,
+      deleteSessionsByUserId,
+      createVerification,
+      findVerificationByToken,
+      deleteVerification,
     }
   }),
 )

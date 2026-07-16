@@ -9,13 +9,15 @@ import { sqlReasonTag } from '@/infra/Database.js'
 import { EmailAlreadyExists } from '@/modules/users/User.js'
 
 /** Deliberately generic — never reveals whether the email exists or the password was wrong. */
-export class InvalidCredentials extends Schema.ErrorClass<InvalidCredentials>('re-astr/InvalidCredentials')(
-  { _tag: Schema.tag('InvalidCredentials') },
+export class InvalidCredentials extends Schema.TaggedErrorClass<InvalidCredentials>('re-astr/InvalidCredentials')(
+  'InvalidCredentials',
+  {},
   { httpApiStatus: 401 },
 ) {}
 
-export class InvalidResetToken extends Schema.ErrorClass<InvalidResetToken>('re-astr/InvalidResetToken')(
-  { _tag: Schema.tag('InvalidResetToken') },
+export class InvalidResetToken extends Schema.TaggedErrorClass<InvalidResetToken>('re-astr/InvalidResetToken')(
+  'InvalidResetToken',
+  {},
   { httpApiStatus: 400 },
 ) {}
 
@@ -47,87 +49,82 @@ export const CredentialsLive = Layer.effect(
     const repo = yield* CredentialsRepo
     const sessionConfig = yield* SessionConfig
 
-    const createSession = (userId: string): Effect.Effect<Session> =>
-      repo.createSession(userId, new Date(Date.now() + sessionConfig.expiresIn * 1000)).pipe(Effect.orDie)
+    const createSession = Effect.fn('Credentials.createSession')(function* (userId: string) {
+      return yield* repo.createSession(userId, new Date(Date.now() + sessionConfig.expiresIn * 1000)).pipe(Effect.orDie)
+    })
 
-    return {
-      signUp: (email, password, name) =>
-        Effect.gen(function* () {
-          const passwordHash = yield* Effect.promise(() => argon2.hash(password))
+    const signUp = Effect.fn('Credentials.signUp')(function* (email: string, password: string, name?: string) {
+      const passwordHash = yield* Effect.promise(() => argon2.hash(password))
 
-          const user = yield* repo
-            // Old DTO left `name` optional but the column is NOT NULL — Better
-            // Auth's own fallback for this case isn't visible to us (fully
-            // internal), so this defaults to the email's local part.
-            .createUser({ email, name: name ?? email.split('@')[0] })
-            .pipe(
-              Effect.catchTag('EffectDrizzleQueryError', (error) =>
-                sqlReasonTag(error) === 'UniqueViolation'
-                  ? Effect.fail(new EmailAlreadyExists({ email }))
-                  : Effect.die(error),
-              ),
-            )
+      const user = yield* repo
+        // Old DTO left `name` optional but the column is NOT NULL — Better
+        // Auth's own fallback for this case isn't visible to us (fully
+        // internal), so this defaults to the email's local part.
+        .createUser({ email, name: name ?? email.split('@')[0] })
+        .pipe(
+          Effect.catchTag('EffectDrizzleQueryError', (error) =>
+            sqlReasonTag(error) === 'UniqueViolation' ? Effect.fail(new EmailAlreadyExists({ email })) : Effect.die(error),
+          ),
+        )
 
-          yield* repo
-            .createAccount({ accountId: user.id, providerId: 'credential', userId: user.id, password: passwordHash })
-            .pipe(Effect.orDie)
+      yield* repo
+        .createAccount({ accountId: user.id, providerId: 'credential', userId: user.id, password: passwordHash })
+        .pipe(Effect.orDie)
 
-          const session = yield* createSession(user.id)
-          return { user, session }
-        }).pipe(
-          Effect.tap(({ user }) => Effect.logInfo('User signed up').pipe(Effect.annotateLogs({ userId: user.id }))),
-        ),
+      const session = yield* createSession(user.id)
+      yield* Effect.logInfo('User signed up').pipe(Effect.annotateLogs({ userId: user.id }))
+      return { user, session }
+    })
 
-      signIn: (email, password) =>
-        Effect.gen(function* () {
-          const user = yield* repo.findUserByEmail(email).pipe(Effect.orDie)
-          if (Option.isNone(user)) return yield* Effect.fail(new InvalidCredentials())
+    const signIn = Effect.fn('Credentials.signIn')(function* (email: string, password: string) {
+      const user = yield* repo.findUserByEmail(email).pipe(Effect.orDie)
+      if (Option.isNone(user)) return yield* Effect.fail(new InvalidCredentials())
 
-          const account = yield* repo.findAccountByUserId(user.value.id).pipe(Effect.orDie)
-          if (Option.isNone(account) || !account.value.password) return yield* Effect.fail(new InvalidCredentials())
-          const passwordHash: string = account.value.password
+      const account = yield* repo.findAccountByUserId(user.value.id).pipe(Effect.orDie)
+      if (Option.isNone(account) || !account.value.password) return yield* Effect.fail(new InvalidCredentials())
+      const passwordHash: string = account.value.password
 
-          const valid = yield* Effect.promise(() => argon2.verify(passwordHash, password))
-          if (!valid) return yield* Effect.fail(new InvalidCredentials())
+      const valid = yield* Effect.promise(() => argon2.verify(passwordHash, password))
+      if (!valid) return yield* Effect.fail(new InvalidCredentials())
 
-          const session = yield* createSession(user.value.id)
-          return { user: user.value, session }
-        }).pipe(
-          Effect.tap(({ user }) => Effect.logInfo('User signed in').pipe(Effect.annotateLogs({ userId: user.id }))),
-        ),
+      const session = yield* createSession(user.value.id)
+      yield* Effect.logInfo('User signed in').pipe(Effect.annotateLogs({ userId: user.value.id }))
+      return { user: user.value, session }
+    })
 
-      signOut: (sessionId) => repo.deleteSession(sessionId).pipe(Effect.orDie),
+    const signOut = Effect.fn('Credentials.signOut')(function* (sessionId: string) {
+      return yield* repo.deleteSession(sessionId).pipe(Effect.orDie)
+    })
 
-      requestPasswordReset: (email) =>
-        Effect.gen(function* () {
-          const user = yield* repo.findUserByEmail(email).pipe(Effect.orDie)
-          if (Option.isNone(user)) return // never reveal whether the email exists
+    const requestPasswordReset = Effect.fn('Credentials.requestPasswordReset')(function* (email: string) {
+      const user = yield* repo.findUserByEmail(email).pipe(Effect.orDie)
+      if (Option.isNone(user)) return // never reveal whether the email exists
 
-          const token = randomBytes(32).toString('hex')
-          yield* repo
-            .createVerification({ identifier: email, value: token, expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS) })
-            .pipe(Effect.orDie)
-        }),
+      const token = randomBytes(32).toString('hex')
+      yield* repo
+        .createVerification({ identifier: email, value: token, expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS) })
+        .pipe(Effect.orDie)
+    })
 
-      resetPassword: (token, newPassword) =>
-        Effect.gen(function* () {
-          const verification = yield* repo.findVerificationByToken(token).pipe(Effect.orDie)
+    const resetPassword = Effect.fn('Credentials.resetPassword')(function* (token: string, newPassword: string) {
+      const verification = yield* repo.findVerificationByToken(token).pipe(Effect.orDie)
 
-          if (Option.isNone(verification) || verification.value.expiresAt < new Date()) {
-            return yield* Effect.fail(new InvalidResetToken())
-          }
+      if (Option.isNone(verification) || verification.value.expiresAt < new Date()) {
+        return yield* Effect.fail(new InvalidResetToken())
+      }
 
-          const user = yield* repo.findUserByEmail(verification.value.identifier).pipe(Effect.orDie)
-          if (Option.isNone(user)) return yield* Effect.fail(new InvalidResetToken())
+      const user = yield* repo.findUserByEmail(verification.value.identifier).pipe(Effect.orDie)
+      if (Option.isNone(user)) return yield* Effect.fail(new InvalidResetToken())
 
-          const passwordHash = yield* Effect.promise(() => argon2.hash(newPassword))
+      const passwordHash = yield* Effect.promise(() => argon2.hash(newPassword))
 
-          yield* repo.updateAccountPassword(user.value.id, passwordHash).pipe(Effect.orDie)
-          yield* repo.deleteVerification(verification.value.id).pipe(Effect.orDie)
-          // A reset usually means a compromise concern — kill existing sessions
-          // so a leaked cookie stops working immediately, not just future logins.
-          yield* repo.deleteSessionsByUserId(user.value.id).pipe(Effect.orDie)
-        }),
-    }
+      yield* repo.updateAccountPassword(user.value.id, passwordHash).pipe(Effect.orDie)
+      yield* repo.deleteVerification(verification.value.id).pipe(Effect.orDie)
+      // A reset usually means a compromise concern — kill existing sessions
+      // so a leaked cookie stops working immediately, not just future logins.
+      yield* repo.deleteSessionsByUserId(user.value.id).pipe(Effect.orDie)
+    })
+
+    return { signUp, signIn, signOut, requestPasswordReset, resetPassword }
   }),
 )

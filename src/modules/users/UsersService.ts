@@ -20,51 +20,55 @@ export const UsersServiceLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* UsersRepo
 
-    const findOne = (id: string): Effect.Effect<User, UserNotFound> =>
-      repo.findById(id).pipe(
+    const findOne = Effect.fn('UsersService.findOne')(function* (id: string) {
+      return yield* repo.findById(id).pipe(
         Effect.orDie,
         Effect.flatMap(Option.match({ onNone: () => Effect.fail(new UserNotFound({ id })), onSome: Effect.succeed })),
         Effect.map((row) => new User(row)),
       )
+    })
 
-    return {
-      findAll: () => Effect.orDie(Effect.map(repo.findAll(), (rows) => rows.map((row) => new User(row)))),
+    const findAll = Effect.fn('UsersService.findAll')(function* () {
+      return yield* Effect.orDie(Effect.map(repo.findAll(), (rows) => rows.map((row) => new User(row))))
+    })
 
-      findOne,
-
-      update: (id, input) =>
-        findOne(id).pipe(
-          Effect.andThen(() => repo.update(id, input)),
-          Effect.flatMap(
-            Option.match({ onNone: () => Effect.fail(new UserNotFound({ id })), onSome: Effect.succeed }),
-          ),
-          Effect.map((row) => new User(row)),
-          Effect.tap(() => Effect.logInfo('User updated').pipe(Effect.annotateLogs({ id }))),
-          Effect.catchTag('EffectDrizzleQueryError', (error) =>
-            sqlReasonTag(error) === 'UniqueViolation'
-              ? Effect.fail(new EmailAlreadyExists({ email: input.email ?? '' }))
-              : Effect.die(error),
-          ),
+    const update = Effect.fn('UsersService.update')(function* (id: string, input: UpdateUser) {
+      return yield* findOne(id).pipe(
+        Effect.andThen(() => repo.update(id, input)),
+        Effect.flatMap(
+          Option.match({ onNone: () => Effect.fail(new UserNotFound({ id })), onSome: Effect.succeed }),
         ),
-
-      assignRole: (id, role) =>
-        findOne(id).pipe(
-          Effect.andThen(() => repo.assignRole(id, role).pipe(Effect.orDie)),
-          Effect.flatMap(
-            Option.match({ onNone: () => Effect.fail(new UserNotFound({ id })), onSome: Effect.succeed }),
-          ),
-          Effect.map((row) => new User(row)),
-          Effect.tap(() => Effect.logInfo('User role changed').pipe(Effect.annotateLogs({ id, role }))),
+        Effect.map((row) => new User(row)),
+        Effect.tap(() => Effect.logInfo('User updated').pipe(Effect.annotateLogs({ id }))),
+        Effect.catchTag('EffectDrizzleQueryError', (error) =>
+          sqlReasonTag(error) === 'UniqueViolation'
+            ? Effect.fail(new EmailAlreadyExists({ email: input.email ?? '' }))
+            : Effect.die(error),
         ),
+      )
+    })
 
-      remove: (id) =>
-        findOne(id).pipe(
-          Effect.andThen(() => repo.remove(id)),
-          Effect.tap(() => Effect.logInfo('User deleted').pipe(Effect.annotateLogs({ id }))),
-          Effect.catchTag('EffectDrizzleQueryError', (error) =>
-            sqlReasonTag(error) === 'ConstraintError' ? Effect.fail(new UserHasRecords({ id })) : Effect.die(error),
-          ),
+    const assignRole = Effect.fn('UsersService.assignRole')(function* (id: string, role: UserRole) {
+      return yield* findOne(id).pipe(
+        Effect.andThen(() => repo.assignRole(id, role).pipe(Effect.orDie)),
+        Effect.flatMap(
+          Option.match({ onNone: () => Effect.fail(new UserNotFound({ id })), onSome: Effect.succeed }),
         ),
-    }
+        Effect.map((row) => new User(row)),
+        Effect.tap(() => Effect.logInfo('User role changed').pipe(Effect.annotateLogs({ id, role }))),
+      )
+    })
+
+    const remove = Effect.fn('UsersService.remove')(function* (id: string) {
+      return yield* findOne(id).pipe(
+        Effect.andThen(() => repo.remove(id)),
+        Effect.tap(() => Effect.logInfo('User deleted').pipe(Effect.annotateLogs({ id }))),
+        Effect.catchTag('EffectDrizzleQueryError', (error) =>
+          sqlReasonTag(error) === 'ConstraintError' ? Effect.fail(new UserHasRecords({ id })) : Effect.die(error),
+        ),
+      )
+    })
+
+    return { findAll, findOne, update, assignRole, remove }
   }),
 )

@@ -15,20 +15,22 @@ export const hasRequiredRole = (userRole: UserRole, requiredRole: UserRole): boo
   ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole]
 
 /** Guard clause: `yield* requireRole('archivist')` at the top of a handler. */
-export const requireRole = (requiredRole: UserRole): Effect.Effect<void, HttpApiError.Forbidden, CurrentUser> =>
-  Effect.flatMap(CurrentUser, (user) =>
-    hasRequiredRole(user.role, requiredRole) ? Effect.void : Effect.fail(new HttpApiError.Forbidden()),
-  )
+export const requireRole = Effect.fn('Role.requireRole')(function* (requiredRole: UserRole) {
+  const user = yield* CurrentUser
+  if (!hasRequiredRole(user.role, requiredRole)) return yield* Effect.fail(new HttpApiError.Forbidden())
+})
 
 /**
  * Guard clause for endpoints a user may act on for themselves, or that a
  * high-enough role may act on for anyone (e.g. PATCH /users/:id — Faille #3:
  * the old endpoint had no ownership/role check at all).
  */
-export const requireSelfOrRole = (
+export const requireSelfOrRole = Effect.fn('Role.requireSelfOrRole')(function* (
   targetId: string,
   requiredRole: UserRole,
-): Effect.Effect<void, HttpApiError.Forbidden, CurrentUser> =>
-  Effect.flatMap(CurrentUser, (user) =>
-    user.id === targetId || hasRequiredRole(user.role, requiredRole) ? Effect.void : Effect.fail(new HttpApiError.Forbidden()),
-  )
+) {
+  const user = yield* CurrentUser
+  if (user.id !== targetId && !hasRequiredRole(user.role, requiredRole)) {
+    return yield* Effect.fail(new HttpApiError.Forbidden())
+  }
+})
