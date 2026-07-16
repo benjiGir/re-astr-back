@@ -38,7 +38,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "1.0.0-rc.4",
     "effect": "4.0.0-beta.97",
-    "minio": "^8.0.6",
+    "minio": "8.0.7",
     "pg": "^8.22.0"
   },
   "devDependencies": {
