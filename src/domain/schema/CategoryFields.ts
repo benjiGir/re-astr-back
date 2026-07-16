@@ -12,7 +12,22 @@ export const FieldType = Schema.Literals([
 ])
 export type FieldType = typeof FieldType.Type
 
-export class FieldValidation extends Schema.Class<FieldValidation>('FieldValidation')({
+// Struct, not Class: these are only ever built from plain JSON (jsonb columns,
+// HTTP payloads), never via `new FieldDefinition(...)`. A Class's constructor
+// requires nested Class-typed fields to already be instances of that class —
+// a plain object straight off a DB row (structurally identical) fails with
+// "Expected FieldValidation, got {...}". Struct has no such instance
+// requirement, so plain data works either way. Found live: GET /categories
+// 500ed on every seeded row because of exactly this.
+//
+// The `interface X extends Schema.Struct.Type<typeof XFields>` + separate
+// `Fields` object is needed (not the usual `export type X = typeof X.Type`)
+// because FieldValidation and FieldDefinition are mutually recursive —
+// deriving each type from the other's *value* circularly fails to typecheck
+// ("circularly references itself"). Declaring the type as an independent
+// `interface` breaks the cycle the same way a class's own name would.
+export interface FieldValidation extends Schema.Struct.Type<typeof FieldValidationFields> {}
+const FieldValidationFields = {
   min: Schema.optional(Schema.Number),
   max: Schema.optional(Schema.Number),
   minLength: Schema.optional(Schema.Number),
@@ -28,16 +43,23 @@ export class FieldValidation extends Schema.Class<FieldValidation>('FieldValidat
       Schema.suspend((): Schema.Schema<FieldDefinition> => FieldDefinition),
     ),
   ),
-}) {}
+}
+export const FieldValidation: Schema.Schema<FieldValidation> = Schema.Struct(FieldValidationFields).annotate({
+  identifier: 'FieldValidation',
+})
 
-export class FieldDefinition extends Schema.Class<FieldDefinition>('FieldDefinition')({
+export interface FieldDefinition extends Schema.Struct.Type<typeof FieldDefinitionFields> {}
+const FieldDefinitionFields = {
   key: Schema.String.check(Schema.isMinLength(1)),
   label: Schema.String.check(Schema.isMinLength(1)),
   type: FieldType,
   required: Schema.Boolean,
   validation: Schema.optional(Schema.suspend((): Schema.Schema<FieldValidation> => FieldValidation)),
   defaultValue: Schema.optional(Schema.Unknown),
-}) {}
+}
+export const FieldDefinition: Schema.Schema<FieldDefinition> = Schema.Struct(FieldDefinitionFields).annotate({
+  identifier: 'FieldDefinition',
+})
 
 export const BaseSchema = Schema.Struct({
   fields: Schema.Array(FieldDefinition),
