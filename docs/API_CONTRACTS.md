@@ -26,10 +26,10 @@
 
 ### Architecture
 
-- **Framework**: NestJS avec Fastify
+- **Framework**: Effect (`HttpApi`) sur Node.js
 - **Authentification**: Cookie-based sessions (Better Auth)
 - **Format**: JSON
-- **Validation**: Dynamic schema validation avec Zod
+- **Validation**: Effect Schema — schémas construits dynamiquement au runtime depuis `FieldDefinition[]` (voir [Système de validation dynamique](#système-de-validation-dynamique))
 
 ### Authentification
 
@@ -489,8 +489,6 @@ Project
 
 Supprimer un projet.
 
-⚠️ **BUG CONNU**: la contrainte FK `tests.projectId` est en `ON DELETE RESTRICT`, donc la suppression d'un projet avec des tests associés échoue bien en base — mais le service ne capte pas cette violation. Le frontend recevra une erreur **500 non formatée** (pas un 409 propre). Ne pas coder de gestion spécifique du 409 tant que ce n'est pas corrigé côté backend.
-
 **Auth:** Session requise
 **Roles:** `archivist` ou supérieur
 
@@ -499,7 +497,7 @@ Supprimer un projet.
 **Erreurs:**
 - `403` - Permissions insuffisantes
 - `404` - Projet non trouvé
-- `500` - Le projet a des tests associés (violation FK non gérée, voir bug connu ci-dessus)
+- `409` - Le projet a des tests associés (`ProjectHasTests` — contrainte FK `tests.projectId` en `ON DELETE RESTRICT`, capturée et renvoyée proprement)
 
 ---
 
@@ -657,6 +655,7 @@ Supprimer une catégorie.
 **Erreurs:**
 - `403` - Permissions insuffisantes
 - `404` - Catégorie non trouvée
+- `409` - La catégorie a des tests associés (`CategoryHasTests` — même mécanisme que `DELETE /projects/:id`)
 
 ---
 
@@ -902,8 +901,6 @@ TestFile
 - `403` - Permissions insuffisantes
 - `404` - Test non trouvé
 
-⚠️ **BUG CONNU**: le controller injecte `@User()`, qui lit `request.user` — jamais peuplé par aucun guard/middleware. Cet endpoint lève actuellement une `TypeError` à l'exécution (`user.id` sur `undefined`). À corriger avant d'intégrer côté frontend.
-
 ---
 
 ### GET `/test-files?testId=`
@@ -988,7 +985,10 @@ Supprime le fichier (MinIO + métadonnée).
 
 **Response:** `204 No Content`
 
-⚠️ **BUG CONNU**: si la suppression MinIO échoue, l'erreur n'est que loguée (`console.error`, pas le logger structuré) et la ligne en base est supprimée quand même — l'objet peut rester orphelin sur le storage.
+**Erreurs:**
+- `403` - Permissions insuffisantes
+- `404` - Fichier non trouvé
+- `500` - Échec de la suppression sur le storage (MinIO) — la ligne en base n'est **pas** supprimée dans ce cas, contrairement au comportement précédent ; le retry est sûr.
 
 ---
 
@@ -1058,7 +1058,7 @@ User
 Met à jour le profil d'un utilisateur (`name`, `email`, `image`, `emailVerified`).
 
 **Auth:** Session requise
-**Roles:** Tous (⚠️ **BUG CONNU**: aucune vérification de rôle ni de propriété — un utilisateur `user` peut modifier le profil de n'importe quel autre utilisateur par ID. Ne pas exposer cet endpoint côté frontend sans restreindre à `self OR master` en attendant un correctif backend.)
+**Roles:** L'utilisateur lui-même (`self`), ou `master`
 
 **Response:** `200 OK`
 ```typescript
@@ -1066,6 +1066,7 @@ User
 ```
 
 **Erreurs:**
+- `403` - Ni `self` ni `master`
 - `404` - Utilisateur non trouvé
 - `409` - Email déjà utilisé par un autre utilisateur
 
@@ -1098,58 +1099,70 @@ Supprime un utilisateur.
 
 **Response:** `204 No Content`
 
+**Erreurs:**
+- `403` - Permissions insuffisantes
+- `404` - Utilisateur non trouvé
+- `409` - L'utilisateur a créé des tests ou uploadé des fichiers (`UserHasRecords` — `tests.createdBy`/`test_files.uploadedBy` en `ON DELETE RESTRICT`)
+
 ---
 
 ## Gestion des erreurs
 
 ### Format standard
 
+Pas d'enveloppe générique unique : chaque erreur déclarée par un endpoint est un type `_tag`-discriminé, sérialisé tel quel en JSON, avec le status HTTP fixé individuellement côté backend (annotation `httpApiStatus`). Deux familles :
+
+**Erreurs métier** (spécifiques au domaine — la plupart des `404`/`409`/`400` documentés dans ce fichier) :
 ```typescript
-interface ErrorResponse {
-  statusCode: number
-  message: string | string[]
-  error?: string
+interface DomainErrorResponse {
+  _tag: string             // discriminant, ex. "ProjectNotFound", "ValidationFailed"
+  [key: string]: unknown   // champs propres à l'erreur (id, name, errors, ...)
 }
 ```
+
+**Erreurs génériques du framework** (`HttpApiError.Forbidden` / `Unauthorized` / `NotFound` / `Conflict` / `ServiceUnavailable`, utilisées quand aucune donnée supplémentaire n'est pertinente) : même forme, mais sans autre champ que `_tag` — ex. `{ "_tag": "Forbidden" }`.
+
+**Cas particulier — payload malformé** : si le corps/params/query échoue au décodage de schéma *avant* d'atteindre le handler (champ requis manquant, mauvais type JS...), la réponse est un `400` **à corps vide** (aucun JSON). Ne pas confondre avec `ValidationFailed` ci-dessous, qui est la validation *métier* des champs dynamiques d'une catégorie et renvoie un détail structuré.
 
 ### Codes HTTP courants
 
 | Code | Signification | Exemple |
 |------|---------------|---------|
-| `400` | Bad Request | Données invalides, validation échouée |
-| `401` | Unauthorized | Session expirée ou absente |
-| `403` | Forbidden | Permissions insuffisantes |
-| `404` | Not Found | Ressource introuvable |
-| `409` | Conflict | Email déjà existant (sign-up) |
-| `500` | Internal Server Error | Erreur serveur |
+| `400` | Bad Request | Payload malformé (corps vide) ou `ValidationFailed` (détail structuré) |
+| `401` | Unauthorized | Session expirée ou absente (`{ "_tag": "Unauthorized" }`) |
+| `403` | Forbidden | Permissions insuffisantes (`{ "_tag": "Forbidden" }`) |
+| `404` | Not Found | Ressource introuvable — erreur métier typée (`ProjectNotFound`, ...) |
+| `409` | Conflict | Erreur métier typée (`ProjectNameConflict`, `EmailAlreadyExists`, `ProjectHasTests`, ...) |
+| `500` | Internal Server Error | Erreur serveur non gérée |
 
 ### Exemples de réponses d'erreur
 
-**Validation échouée (400):**
+**Validation métier échouée (400, `ValidationFailed`):**
 ```json
 {
-  "statusCode": 400,
-  "message": "commonData validation failed: temperature: Number must be greater than or equal to -50",
-  "error": "Bad Request"
+  "_tag": "ValidationFailed",
+  "context": "commonData",
+  "errors": [
+    { "field": "temperature", "message": "Number must be greater than or equal to -50" }
+  ]
 }
 ```
 
+**Payload malformé (400):** pas de corps — vérifier uniquement le status.
+
 **Non authentifié (401):**
 ```json
-{
-  "statusCode": 401,
-  "message": "Unauthorized",
-  "error": "Not authenticated"
-}
+{ "_tag": "Unauthorized" }
 ```
 
 **Permissions insuffisantes (403):**
 ```json
-{
-  "statusCode": 403,
-  "message": "Forbidden resource",
-  "error": "Forbidden"
-}
+{ "_tag": "Forbidden" }
+```
+
+**Ressource introuvable, exemple métier (404):**
+```json
+{ "_tag": "ProjectNotFound", "id": "proj-avionics-789" }
 ```
 
 ---
