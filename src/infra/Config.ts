@@ -30,6 +30,11 @@ export const ServerConfig = {
   port: Config.int('PORT').pipe(Config.withDefault(3000)),
 }
 
+/** Vite dev server default — the only trusted origin in the pre-rewrite Better Auth config too. */
+export const CorsConfig = {
+  allowedOrigin: Config.string('CORS_ORIGIN').pipe(Config.withDefault('http://localhost:5173')),
+}
+
 export const MinioConfig = {
   endPoint: Config.string('MINIO_ENDPOINT').pipe(Config.withDefault('localhost')),
   port: Config.int('MINIO_PORT').pipe(Config.withDefault(9000)),

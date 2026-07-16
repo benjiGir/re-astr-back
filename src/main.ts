@@ -1,7 +1,7 @@
 import { createServer } from 'node:http'
 import 'dotenv/config'
 import { NodeHttpServer, NodeRuntime } from '@effect/platform-node'
-import { Layer } from 'effect'
+import { Effect, Layer } from 'effect'
 import { HttpRouter } from 'effect/unstable/http'
 import { HttpApiBuilder, HttpApiScalar } from 'effect/unstable/httpapi'
 import { Api, HealthGroupLive } from '@/Api.js'
@@ -9,7 +9,7 @@ import { AuthGroupLive, AuthSessionGroupLive } from '@/auth/AuthHttp.js'
 import { AuthorizationLive } from '@/auth/Authorization.js'
 import { CredentialsLive } from '@/auth/Credentials.js'
 import { CredentialsRepoLive } from '@/auth/CredentialsRepo.js'
-import { AppConfig, ServerConfig, SessionConfig } from '@/infra/Config.js'
+import { AppConfig, CorsConfig, ServerConfig, SessionConfig } from '@/infra/Config.js'
 import { DatabaseLive } from '@/infra/Database.js'
 import { LoggerLive } from '@/infra/Logger.js'
 import { MinioLive } from '@/infra/Minio.js'
@@ -30,7 +30,16 @@ import { UsersGroupLive } from '@/modules/users/UsersHttp.js'
 import { UsersRepoLive } from '@/modules/users/UsersRepo.js'
 import { UsersServiceLive } from '@/modules/users/UsersService.js'
 
-const AppRoutes = Layer.mergeAll(HttpApiBuilder.layer(Api), HttpApiScalar.layer(Api, { path: '/docs' })).pipe(
+// Router-level global middleware (not an HttpApi security concern) — must be merged into the same
+// appLayer passed to HttpRouter.serve so it registers on the HttpRouter instance serve() creates.
+const CorsLive = Layer.unwrap(
+  Effect.gen(function* () {
+    const allowedOrigin = yield* CorsConfig.allowedOrigin
+    return HttpRouter.cors({ allowedOrigins: [allowedOrigin], credentials: true })
+  }),
+)
+
+const AppRoutes = Layer.mergeAll(HttpApiBuilder.layer(Api), HttpApiScalar.layer(Api, { path: '/docs' }), CorsLive).pipe(
   Layer.provide(HealthGroupLive),
   Layer.provide(AuthGroupLive),
   Layer.provide(AuthSessionGroupLive),
@@ -68,6 +77,20 @@ const Infra = Layer.mergeAll(LoggerLive, TelemetryLive, AuthorizationLive, Crede
   Layer.provideMerge(AppConfig.Live),
 )
 
-const MainLive = HttpLive.pipe(Layer.provide(Infra))
+// Effect v4 beta (.97) type-inference gap, not a real missing dependency: HttpRouter.serve's
+// `HE`/`HR` type params are only inferable from an explicit `middleware` option; we don't pass
+// one, so their conditional-type defaults never resolve and collapse to `unknown`. That `unknown`
+// then poisons RIn through every later Layer.provide, since `Exclude<unknown, X>` can't distribute
+// (unknown isn't a union) and stays `unknown` instead of narrowing to `never`. Infra genuinely
+// provides everything HttpLive still asks for — confirmed by isolating each layer's requirement
+// with a direct `Layer.Layer<any, any, never>` type-check (Infra alone passes; only the
+// HttpRouter.serve-derived branch reports `unknown`), and by booting the server. This cast just
+// restores that to the type checker.
+const MainLiveUntyped = HttpLive.pipe(Layer.provide(Infra))
+const MainLive = MainLiveUntyped as unknown as Layer.Layer<
+  Layer.Success<typeof MainLiveUntyped>,
+  Layer.Error<typeof MainLiveUntyped>,
+  never
+>
 
 NodeRuntime.runMain(Layer.launch(MainLive))
