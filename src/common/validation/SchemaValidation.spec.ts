@@ -11,7 +11,13 @@ import {
 describe('validateCommonData', () => {
   const baseSchema: BaseSchema = {
     fields: [
-      { key: 'temperature', label: 'Température (°C)', type: 'number', required: true, validation: { min: -50, max: 150 } },
+      {
+        key: 'temperature',
+        label: 'Température (°C)',
+        type: 'number',
+        required: true,
+        validation: { min: -50, max: 150 },
+      },
       { key: 'duration', label: 'Durée (heures)', type: 'number', required: true },
       { key: 'comment', label: 'Commentaire', type: 'text', required: false },
     ],
@@ -24,7 +30,10 @@ describe('validateCommonData', () => {
   })
 
   it('validates with optional fields', () => {
-    const result = validateCommonData({ temperature: 25, duration: 2, comment: 'Test passed successfully' }, baseSchema)
+    const result = validateCommonData(
+      { temperature: 25, duration: 2, comment: 'Test passed successfully' },
+      baseSchema,
+    )
     expect(result.valid).toBe(true)
     expect(result.errors).toHaveLength(0)
   })
@@ -56,8 +65,16 @@ describe('validateCommonData', () => {
 
 describe('validateCustomData', () => {
   it('allows custom fields when enabled', () => {
-    const schema: CustomFieldsSchema = { allowCustomFields: true, maxCustomFields: 5, allowedTypes: ['text', 'number', 'boolean'], fields: [] }
-    const result = validateCustomData({ customField1: 'value1', customField2: 42, customField3: true }, schema)
+    const schema: CustomFieldsSchema = {
+      allowCustomFields: true,
+      maxCustomFields: 5,
+      allowedTypes: ['text', 'number', 'boolean'],
+      fields: [],
+    }
+    const result = validateCustomData(
+      { customField1: 'value1', customField2: 42, customField3: true },
+      schema,
+    )
     expect(result.valid).toBe(true)
     expect(result.errors).toHaveLength(0)
   })
@@ -71,14 +88,24 @@ describe('validateCustomData', () => {
 
   it('rejects exceeding max custom fields', () => {
     const schema: CustomFieldsSchema = { allowCustomFields: true, maxCustomFields: 2, fields: [] }
-    const result = validateCustomData({ field1: 'value1', field2: 'value2', field3: 'value3' }, schema)
+    const result = validateCustomData(
+      { field1: 'value1', field2: 'value2', field3: 'value3' },
+      schema,
+    )
     expect(result.valid).toBe(false)
     expect(result.errors[0]?.message).toContain('Maximum 2 custom fields')
   })
 
   it('rejects disallowed types', () => {
-    const schema: CustomFieldsSchema = { allowCustomFields: true, allowedTypes: ['text', 'number'], fields: [] }
-    const result = validateCustomData({ textField: 'valid', numberField: 42, dateField: '2024-01-01' }, schema)
+    const schema: CustomFieldsSchema = {
+      allowCustomFields: true,
+      allowedTypes: ['text', 'number'],
+      fields: [],
+    }
+    const result = validateCustomData(
+      { textField: 'valid', numberField: 42, dateField: '2024-01-01' },
+      schema,
+    )
     expect(result.valid).toBe(false)
     expect(result.errors[0]?.field).toBe('dateField')
   })
@@ -86,7 +113,15 @@ describe('validateCustomData', () => {
   it('validates predefined custom fields', () => {
     const schema: CustomFieldsSchema = {
       allowCustomFields: true,
-      fields: [{ key: 'testEnv', label: 'Test Environment', type: 'text', required: true, validation: { enum: ['dev', 'staging', 'prod'] } }],
+      fields: [
+        {
+          key: 'testEnv',
+          label: 'Test Environment',
+          type: 'text',
+          required: true,
+          validation: { enum: ['dev', 'staging', 'prod'] },
+        },
+      ],
     }
     expect(validateCustomData({ testEnv: 'staging' }, schema).valid).toBe(true)
     expect(validateCustomData({ testEnv: 'invalid' }, schema).valid).toBe(false)
@@ -98,7 +133,10 @@ describe('validateCustomData', () => {
       allowedTypes: ['text', 'number'],
       fields: [{ key: 'operator', label: 'Operator', type: 'text', required: false }],
     }
-    const result = validateCustomData({ operator: 'John Doe', testNumber: 42, notes: 'Some notes' }, schema)
+    const result = validateCustomData(
+      { operator: 'John Doe', testNumber: 42, notes: 'Some notes' },
+      schema,
+    )
     expect(result.valid).toBe(true)
     expect(result.errors).toHaveLength(0)
   })
@@ -129,10 +167,23 @@ describe('validateCustomData', () => {
   })
 
   it('detects array and object types against allowedTypes', () => {
-    expect(validateCustomData({ tags: ['a', 'b'] }, { allowCustomFields: true, allowedTypes: ['array'], fields: [] }).valid).toBe(true)
-    expect(validateCustomData({ metadata: { a: 1 } }, { allowCustomFields: true, allowedTypes: ['object'], fields: [] }).valid).toBe(true)
+    expect(
+      validateCustomData(
+        { tags: ['a', 'b'] },
+        { allowCustomFields: true, allowedTypes: ['array'], fields: [] },
+      ).valid,
+    ).toBe(true)
+    expect(
+      validateCustomData(
+        { metadata: { a: 1 } },
+        { allowCustomFields: true, allowedTypes: ['object'], fields: [] },
+      ).valid,
+    ).toBe(true)
 
-    const rejected = validateCustomData({ tags: ['a', 'b'] }, { allowCustomFields: true, allowedTypes: ['object'], fields: [] })
+    const rejected = validateCustomData(
+      { tags: ['a', 'b'] },
+      { allowCustomFields: true, allowedTypes: ['object'], fields: [] },
+    )
     expect(rejected.valid).toBe(false)
     expect(rejected.errors[0]?.message).toContain("Type 'array' not allowed")
   })
@@ -141,7 +192,15 @@ describe('validateCustomData', () => {
 describe('validateBaseSchema', () => {
   it('accepts a valid baseSchema', () => {
     const result = validateBaseSchema({
-      fields: [{ key: 'temperature', label: 'Temperature', type: 'number', required: true, validation: { min: -50, max: 150 } }],
+      fields: [
+        {
+          key: 'temperature',
+          label: 'Temperature',
+          type: 'number',
+          required: true,
+          validation: { min: -50, max: 150 },
+        },
+      ],
     })
     expect(result.valid).toBe(true)
     expect(result.errors).toHaveLength(0)
@@ -152,19 +211,28 @@ describe('validateBaseSchema', () => {
   })
 
   it('rejects an empty field key', () => {
-    const result = validateBaseSchema({ fields: [{ key: '', label: 'Temperature', type: 'number', required: true }] })
+    const result = validateBaseSchema({
+      fields: [{ key: '', label: 'Temperature', type: 'number', required: true }],
+    })
     expect(result.valid).toBe(false)
   })
 
   it('rejects an invalid field type', () => {
-    const result = validateBaseSchema({ fields: [{ key: 'test', label: 'Test', type: 'invalid_type', required: true }] })
+    const result = validateBaseSchema({
+      fields: [{ key: 'test', label: 'Test', type: 'invalid_type', required: true }],
+    })
     expect(result.valid).toBe(false)
   })
 })
 
 describe('validateCustomFieldsSchema', () => {
   it('accepts a valid customFieldsSchema', () => {
-    const result = validateCustomFieldsSchema({ allowCustomFields: true, maxCustomFields: 10, allowedTypes: ['text', 'number'], fields: [] })
+    const result = validateCustomFieldsSchema({
+      allowCustomFields: true,
+      maxCustomFields: 10,
+      allowedTypes: ['text', 'number'],
+      fields: [],
+    })
     expect(result.valid).toBe(true)
   })
 
@@ -173,27 +241,54 @@ describe('validateCustomFieldsSchema', () => {
   })
 
   it('rejects a negative maxCustomFields', () => {
-    expect(validateCustomFieldsSchema({ allowCustomFields: true, maxCustomFields: -5, fields: [] }).valid).toBe(false)
+    expect(
+      validateCustomFieldsSchema({ allowCustomFields: true, maxCustomFields: -5, fields: [] })
+        .valid,
+    ).toBe(false)
   })
 
   it('rejects an invalid allowedType', () => {
-    expect(validateCustomFieldsSchema({ allowCustomFields: true, allowedTypes: ['text', 'invalid_type'], fields: [] }).valid).toBe(false)
+    expect(
+      validateCustomFieldsSchema({
+        allowCustomFields: true,
+        allowedTypes: ['text', 'invalid_type'],
+        fields: [],
+      }).valid,
+    ).toBe(false)
   })
 })
 
 describe('validateCommonData with array and object field types', () => {
   it('validates array fields with itemType and item bounds', () => {
     const baseSchema: BaseSchema = {
-      fields: [{ key: 'tags', label: 'Tags', type: 'array', required: true, validation: { itemType: 'text', minItems: 1, maxItems: 5 } }],
+      fields: [
+        {
+          key: 'tags',
+          label: 'Tags',
+          type: 'array',
+          required: true,
+          validation: { itemType: 'text', minItems: 1, maxItems: 5 },
+        },
+      ],
     }
     expect(validateCommonData({ tags: ['tag1', 'tag2', 'tag3'] }, baseSchema).valid).toBe(true)
   })
 
   it('rejects an array with too many items', () => {
     const baseSchema: BaseSchema = {
-      fields: [{ key: 'tags', label: 'Tags', type: 'array', required: true, validation: { itemType: 'text', maxItems: 3 } }],
+      fields: [
+        {
+          key: 'tags',
+          label: 'Tags',
+          type: 'array',
+          required: true,
+          validation: { itemType: 'text', maxItems: 3 },
+        },
+      ],
     }
-    expect(validateCommonData({ tags: ['tag1', 'tag2', 'tag3', 'tag4'] }, baseSchema).valid).toBe(false)
+    expect(validateCommonData({ tags: ['tag1', 'tag2', 'tag3', 'tag4'] }, baseSchema).valid).toBe(
+      false,
+    )
   })
 
   it('validates nested object fields', () => {
@@ -213,7 +308,9 @@ describe('validateCommonData with array and object field types', () => {
         },
       ],
     }
-    expect(validateCommonData({ metadata: { author: 'John Doe', version: 1 } }, baseSchema).valid).toBe(true)
+    expect(
+      validateCommonData({ metadata: { author: 'John Doe', version: 1 } }, baseSchema).valid,
+    ).toBe(true)
   })
 
   it('rejects an object missing a required nested field', () => {
@@ -224,7 +321,11 @@ describe('validateCommonData with array and object field types', () => {
           label: 'Metadata',
           type: 'object',
           required: true,
-          validation: { properties: { author: { key: 'author', label: 'Author', type: 'text', required: true } } },
+          validation: {
+            properties: {
+              author: { key: 'author', label: 'Author', type: 'text', required: true },
+            },
+          },
         },
       ],
     }

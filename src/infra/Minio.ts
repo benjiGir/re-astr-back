@@ -18,8 +18,15 @@ export class Minio extends Context.Service<
       filePath: string,
       metadata?: Record<string, string>,
     ) => Effect.Effect<{ readonly etag: string }, MinioError>
-    readonly download: (bucket: string, objectKey: string) => Effect.Effect<Stream.Stream<Uint8Array, MinioError>, MinioError>
-    readonly presignedUrl: (bucket: string, objectKey: string, expirySeconds: number) => Effect.Effect<string, MinioError>
+    readonly download: (
+      bucket: string,
+      objectKey: string,
+    ) => Effect.Effect<Stream.Stream<Uint8Array, MinioError>, MinioError>
+    readonly presignedUrl: (
+      bucket: string,
+      objectKey: string,
+      expirySeconds: number,
+    ) => Effect.Effect<string, MinioError>
     readonly remove: (bucket: string, objectKey: string) => Effect.Effect<void, MinioError>
   }
 >()('Minio') {}
@@ -37,7 +44,10 @@ export const MinioLive = Layer.effect(
       secretKey: Redacted.value(config.secretKey),
     })
 
-    const ensureBucketExists = Effect.fn('Minio.ensureBucketExists')(function* (bucket: string, operation: string) {
+    const ensureBucketExists = Effect.fn('Minio.ensureBucketExists')(function* (
+      bucket: string,
+      operation: string,
+    ) {
       yield* Effect.tryPromise({
         try: async () => {
           if (!(await client.bucketExists(bucket))) {

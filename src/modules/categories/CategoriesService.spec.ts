@@ -36,8 +36,14 @@ const makeMockRepo = (overrides: Partial<typeof CategoriesRepo.Service> = {}) =>
   ...overrides,
 })
 
-const runWithRepo = <A, E>(repo: typeof CategoriesRepo.Service, effect: Effect.Effect<A, E, CategoriesService>) =>
-  Effect.provide(effect, CategoriesServiceLive.pipe(Layer.provide(Layer.succeed(CategoriesRepo, repo))))
+const runWithRepo = <A, E>(
+  repo: typeof CategoriesRepo.Service,
+  effect: Effect.Effect<A, E, CategoriesService>,
+) =>
+  Effect.provide(
+    effect,
+    CategoriesServiceLive.pipe(Layer.provide(Layer.succeed(CategoriesRepo, repo))),
+  )
 
 describe('CategoriesService', () => {
   it.effect('create returns the created category', () =>
@@ -45,7 +51,9 @@ describe('CategoriesService', () => {
       makeMockRepo(),
       Effect.gen(function* () {
         const service = yield* CategoriesService
-        const category = yield* service.create(new CreateCategory({ name: 'Tests de Température', baseSchema }))
+        const category = yield* service.create(
+          new CreateCategory({ name: 'Tests de Température', baseSchema }),
+        )
 
         expect(category.id).toBe('category-1')
         expect(category.name).toBe('Tests de Température')

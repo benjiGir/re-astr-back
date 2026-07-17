@@ -11,7 +11,9 @@ export class ProjectsRepo extends Context.Service<
   {
     readonly create: (input: CreateProject) => Effect.Effect<ProjectRow, EffectDrizzleQueryError>
     readonly findAll: () => Effect.Effect<ProjectRow[], EffectDrizzleQueryError>
-    readonly findById: (id: string) => Effect.Effect<Option.Option<ProjectRow>, EffectDrizzleQueryError>
+    readonly findById: (
+      id: string,
+    ) => Effect.Effect<Option.Option<ProjectRow>, EffectDrizzleQueryError>
     readonly update: (
       id: string,
       input: UpdateProject,
@@ -27,7 +29,10 @@ export const ProjectsRepoLive = Layer.effect(
 
     const create = Effect.fn('ProjectsRepo.create')(function* (input: CreateProject) {
       return yield* Effect.map(
-        db.insert(projects).values({ name: input.name, description: input.description ?? null }).returning(),
+        db
+          .insert(projects)
+          .values({ name: input.name, description: input.description ?? null })
+          .returning(),
         ([row]) => row,
       )
     })
@@ -37,8 +42,9 @@ export const ProjectsRepoLive = Layer.effect(
     })
 
     const findById = Effect.fn('ProjectsRepo.findById')(function* (id: string) {
-      return yield* Effect.map(db.select().from(projects).where(eq(projects.id, id)).limit(1), ([row]) =>
-        Option.fromNullishOr(row),
+      return yield* Effect.map(
+        db.select().from(projects).where(eq(projects.id, id)).limit(1),
+        ([row]) => Option.fromNullishOr(row),
       )
     })
 

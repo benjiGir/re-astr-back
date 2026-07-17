@@ -46,7 +46,9 @@ export const ProjectsServiceLive = Layer.effect(
       return yield* repo.create(input).pipe(
         Effect.map((row) => new Project(row)),
         Effect.tap((project) =>
-          Effect.logInfo('Project created').pipe(Effect.annotateLogs({ id: project.id, name: project.name })),
+          Effect.logInfo('Project created').pipe(
+            Effect.annotateLogs({ id: project.id, name: project.name }),
+          ),
         ),
         Effect.catchTag('EffectDrizzleQueryError', (error) =>
           sqlReasonTag(error) === 'UniqueViolation'
@@ -57,10 +59,15 @@ export const ProjectsServiceLive = Layer.effect(
     })
 
     const findAll = Effect.fn('ProjectsService.findAll')(function* () {
-      return yield* Effect.orDie(Effect.map(repo.findAll(), (rows) => rows.map((row) => new Project(row))))
+      return yield* Effect.orDie(
+        Effect.map(repo.findAll(), (rows) => rows.map((row) => new Project(row))),
+      )
     })
 
-    const update = Effect.fn('ProjectsService.update')(function* (id: string, input: UpdateProject) {
+    const update = Effect.fn('ProjectsService.update')(function* (
+      id: string,
+      input: UpdateProject,
+    ) {
       return yield* findOne(id).pipe(
         Effect.andThen(() => repo.update(id, input)),
         Effect.flatMap(
@@ -84,7 +91,9 @@ export const ProjectsServiceLive = Layer.effect(
         Effect.andThen(() => repo.delete(id)),
         Effect.tap(() => Effect.logInfo('Project deleted').pipe(Effect.annotateLogs({ id }))),
         Effect.catchTag('EffectDrizzleQueryError', (error) =>
-          sqlReasonTag(error) === 'ConstraintError' ? Effect.fail(new ProjectHasTests({ id })) : Effect.die(error),
+          sqlReasonTag(error) === 'ConstraintError'
+            ? Effect.fail(new ProjectHasTests({ id }))
+            : Effect.die(error),
         ),
       )
     })

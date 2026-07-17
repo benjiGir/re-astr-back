@@ -9,17 +9,13 @@ import { sqlReasonTag } from '@/infra/Database.js'
 import { EmailAlreadyExists } from '@/modules/users/User.js'
 
 /** Deliberately generic — never reveals whether the email exists or the password was wrong. */
-export class InvalidCredentials extends Schema.TaggedErrorClass<InvalidCredentials>('re-astr/InvalidCredentials')(
-  'InvalidCredentials',
-  {},
-  { httpApiStatus: 401 },
-) {}
+export class InvalidCredentials extends Schema.TaggedErrorClass<InvalidCredentials>(
+  're-astr/InvalidCredentials',
+)('InvalidCredentials', {}, { httpApiStatus: 401 }) {}
 
-export class InvalidResetToken extends Schema.TaggedErrorClass<InvalidResetToken>('re-astr/InvalidResetToken')(
-  'InvalidResetToken',
-  {},
-  { httpApiStatus: 400 },
-) {}
+export class InvalidResetToken extends Schema.TaggedErrorClass<InvalidResetToken>(
+  're-astr/InvalidResetToken',
+)('InvalidResetToken', {}, { httpApiStatus: 400 }) {}
 
 export interface AuthSession {
   readonly user: User
@@ -35,11 +31,21 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000
 export class Credentials extends Context.Service<
   Credentials,
   {
-    readonly signUp: (email: string, password: string, name?: string) => Effect.Effect<AuthSession, EmailAlreadyExists>
-    readonly signIn: (email: string, password: string) => Effect.Effect<AuthSession, InvalidCredentials>
+    readonly signUp: (
+      email: string,
+      password: string,
+      name?: string,
+    ) => Effect.Effect<AuthSession, EmailAlreadyExists>
+    readonly signIn: (
+      email: string,
+      password: string,
+    ) => Effect.Effect<AuthSession, InvalidCredentials>
     readonly signOut: (sessionId: string) => Effect.Effect<void>
     readonly requestPasswordReset: (email: string) => Effect.Effect<void>
-    readonly resetPassword: (token: string, newPassword: string) => Effect.Effect<void, InvalidResetToken>
+    readonly resetPassword: (
+      token: string,
+      newPassword: string,
+    ) => Effect.Effect<void, InvalidResetToken>
   }
 >()('Credentials') {}
 
@@ -50,10 +56,16 @@ export const CredentialsLive = Layer.effect(
     const sessionConfig = yield* SessionConfig
 
     const createSession = Effect.fn('Credentials.createSession')(function* (userId: string) {
-      return yield* repo.createSession(userId, new Date(Date.now() + sessionConfig.expiresIn * 1000)).pipe(Effect.orDie)
+      return yield* repo
+        .createSession(userId, new Date(Date.now() + sessionConfig.expiresIn * 1000))
+        .pipe(Effect.orDie)
     })
 
-    const signUp = Effect.fn('Credentials.signUp')(function* (email: string, password: string, name?: string) {
+    const signUp = Effect.fn('Credentials.signUp')(function* (
+      email: string,
+      password: string,
+      name?: string,
+    ) {
       const passwordHash = yield* Effect.promise(() => argon2.hash(password))
 
       const user = yield* repo
@@ -63,12 +75,19 @@ export const CredentialsLive = Layer.effect(
         .createUser({ email, name: name ?? email.split('@')[0] })
         .pipe(
           Effect.catchTag('EffectDrizzleQueryError', (error) =>
-            sqlReasonTag(error) === 'UniqueViolation' ? Effect.fail(new EmailAlreadyExists({ email })) : Effect.die(error),
+            sqlReasonTag(error) === 'UniqueViolation'
+              ? Effect.fail(new EmailAlreadyExists({ email }))
+              : Effect.die(error),
           ),
         )
 
       yield* repo
-        .createAccount({ accountId: user.id, providerId: 'credential', userId: user.id, password: passwordHash })
+        .createAccount({
+          accountId: user.id,
+          providerId: 'credential',
+          userId: user.id,
+          password: passwordHash,
+        })
         .pipe(Effect.orDie)
 
       const session = yield* createSession(user.id)
@@ -81,7 +100,8 @@ export const CredentialsLive = Layer.effect(
       if (Option.isNone(user)) return yield* Effect.fail(new InvalidCredentials())
 
       const account = yield* repo.findAccountByUserId(user.value.id).pipe(Effect.orDie)
-      if (Option.isNone(account) || !account.value.password) return yield* Effect.fail(new InvalidCredentials())
+      if (Option.isNone(account) || !account.value.password)
+        return yield* Effect.fail(new InvalidCredentials())
       const passwordHash: string = account.value.password
 
       const valid = yield* Effect.promise(() => argon2.verify(passwordHash, password))
@@ -96,17 +116,26 @@ export const CredentialsLive = Layer.effect(
       return yield* repo.deleteSession(sessionId).pipe(Effect.orDie)
     })
 
-    const requestPasswordReset = Effect.fn('Credentials.requestPasswordReset')(function* (email: string) {
+    const requestPasswordReset = Effect.fn('Credentials.requestPasswordReset')(function* (
+      email: string,
+    ) {
       const user = yield* repo.findUserByEmail(email).pipe(Effect.orDie)
       if (Option.isNone(user)) return // never reveal whether the email exists
 
       const token = randomBytes(32).toString('hex')
       yield* repo
-        .createVerification({ identifier: email, value: token, expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS) })
+        .createVerification({
+          identifier: email,
+          value: token,
+          expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+        })
         .pipe(Effect.orDie)
     })
 
-    const resetPassword = Effect.fn('Credentials.resetPassword')(function* (token: string, newPassword: string) {
+    const resetPassword = Effect.fn('Credentials.resetPassword')(function* (
+      token: string,
+      newPassword: string,
+    ) {
       const verification = yield* repo.findVerificationByToken(token).pipe(Effect.orDie)
 
       if (Option.isNone(verification) || verification.value.expiresAt < new Date()) {

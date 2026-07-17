@@ -6,14 +6,18 @@ import { SessionConfig } from '@/infra/Config.js'
 export class InvalidCookie extends Data.TaggedError('InvalidCookie') {}
 
 /** Shared by Authorization (reads it) and AuthHttp (sets/clears it on sign-in/up/out). */
-export const sessionCookieSecurity = HttpApiSecurity.apiKey({ key: 'better-auth.session_token', in: 'cookie' })
+export const sessionCookieSecurity = HttpApiSecurity.apiKey({
+  key: 'better-auth.session_token',
+  in: 'cookie',
+})
 
 /**
  * Own signing scheme, not compatible with the old Better Auth cookies (see
  * docs/EFFECT_MIGRATION.md §5/§7 — active sessions get invalidated at cutover).
  * Value shape: `${token}.${hmac(token)}`, base64url-encoded signature.
  */
-const signature = (secret: string, token: string): string => createHmac('sha256', secret).update(token).digest('base64url')
+const signature = (secret: string, token: string): string =>
+  createHmac('sha256', secret).update(token).digest('base64url')
 
 export const sign = Effect.fn('Cookie.sign')(function* (token: string) {
   const { cookieSecret } = yield* SessionConfig

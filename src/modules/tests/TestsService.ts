@@ -1,5 +1,10 @@
 import { Context, Effect, Layer, Option } from 'effect'
-import { validateCommonData, validateCustomData, validateOrFail, type ValidationFailed } from '@/common/validation/SchemaValidation.js'
+import {
+  validateCommonData,
+  validateCustomData,
+  validateOrFail,
+  type ValidationFailed,
+} from '@/common/validation/SchemaValidation.js'
 import type { CategoryNotFound } from '@/modules/categories/Categories.js'
 import { CategoriesService } from '@/modules/categories/CategoriesService.js'
 import type { ProjectNotFound } from '@/modules/projects/Project.js'
@@ -35,7 +40,12 @@ export const TestsServiceLive = Layer.effect(
     const findOne = Effect.fn('TestsService.findOne')(function* (id: string) {
       return yield* repo.findById(id).pipe(
         Effect.orDie,
-        Effect.flatMap(Option.match({ onNone: () => Effect.fail(new TestNotFound({ id })), onSome: Effect.succeed })),
+        Effect.flatMap(
+          Option.match({
+            onNone: () => Effect.fail(new TestNotFound({ id })),
+            onSome: Effect.succeed,
+          }),
+        ),
         Effect.map((row) => new Test(row)),
       )
     })
@@ -52,10 +62,16 @@ export const TestsServiceLive = Layer.effect(
       const category = yield* categoriesService.findOne(input.categoryId ?? fallbackCategoryId)
 
       if (input.commonData !== undefined) {
-        yield* validateOrFail(validateCommonData(input.commonData, category.baseSchema), 'commonData')
+        yield* validateOrFail(
+          validateCommonData(input.commonData, category.baseSchema),
+          'commonData',
+        )
       }
       if (input.customData !== undefined) {
-        yield* validateOrFail(validateCustomData(input.customData, category.customFieldsSchema), 'customData')
+        yield* validateOrFail(
+          validateCustomData(input.customData, category.customFieldsSchema),
+          'customData',
+        )
       }
     })
 
@@ -65,7 +81,10 @@ export const TestsServiceLive = Layer.effect(
 
       yield* validateOrFail(validateCommonData(input.commonData, category.baseSchema), 'commonData')
       const customData = input.customData ?? {}
-      yield* validateOrFail(validateCustomData(customData, category.customFieldsSchema), 'customData')
+      yield* validateOrFail(
+        validateCustomData(customData, category.customFieldsSchema),
+        'customData',
+      )
 
       const row = yield* repo
         .create({
@@ -83,15 +102,23 @@ export const TestsServiceLive = Layer.effect(
         .pipe(Effect.orDie)
 
       const test = new Test(row)
-      yield* Effect.logInfo('Test created').pipe(Effect.annotateLogs({ id: test.id, name: test.name }))
+      yield* Effect.logInfo('Test created').pipe(
+        Effect.annotateLogs({ id: test.id, name: test.name }),
+      )
       return test
     })
 
     const findAll = Effect.fn('TestsService.findAll')(function* (categoryId?: string) {
-      return yield* Effect.orDie(Effect.map(repo.findAll(categoryId), (rows) => rows.map((row) => new Test(row))))
+      return yield* Effect.orDie(
+        Effect.map(repo.findAll(categoryId), (rows) => rows.map((row) => new Test(row))),
+      )
     })
 
-    const update = Effect.fn('TestsService.update')(function* (id: string, input: UpdateTest, userId: string) {
+    const update = Effect.fn('TestsService.update')(function* (
+      id: string,
+      input: UpdateTest,
+      userId: string,
+    ) {
       const existing = yield* findOne(id)
       yield* validateAgainstCategory(input, existing.categoryId)
 
@@ -110,7 +137,12 @@ export const TestsServiceLive = Layer.effect(
         })
         .pipe(
           Effect.orDie,
-          Effect.flatMap(Option.match({ onNone: () => Effect.fail(new TestNotFound({ id })), onSome: Effect.succeed })),
+          Effect.flatMap(
+            Option.match({
+              onNone: () => Effect.fail(new TestNotFound({ id })),
+              onSome: Effect.succeed,
+            }),
+          ),
         )
 
       const test = new Test(row)

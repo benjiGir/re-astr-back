@@ -10,7 +10,9 @@ export class TestsRepo extends Context.Service<
   {
     readonly create: (input: NewTest) => Effect.Effect<TestRow, EffectDrizzleQueryError>
     readonly findAll: (categoryId?: string) => Effect.Effect<TestRow[], EffectDrizzleQueryError>
-    readonly findById: (id: string) => Effect.Effect<Option.Option<TestRow>, EffectDrizzleQueryError>
+    readonly findById: (
+      id: string,
+    ) => Effect.Effect<Option.Option<TestRow>, EffectDrizzleQueryError>
     readonly update: (
       id: string,
       input: Partial<NewTest>,
@@ -29,9 +31,9 @@ export const TestsRepoLive = Layer.effect(
     })
 
     const findAll = Effect.fn('TestsRepo.findAll')(function* (categoryId?: string) {
-      return yield* (categoryId
+      return yield* categoryId
         ? db.select().from(tests).where(eq(tests.categoryId, categoryId))
-        : db.select().from(tests))
+        : db.select().from(tests)
     })
 
     const findById = Effect.fn('TestsRepo.findById')(function* (id: string) {

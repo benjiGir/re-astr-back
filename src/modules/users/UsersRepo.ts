@@ -9,12 +9,17 @@ export class UsersRepo extends Context.Service<
   UsersRepo,
   {
     readonly findAll: () => Effect.Effect<UserRow[], EffectDrizzleQueryError>
-    readonly findById: (id: string) => Effect.Effect<Option.Option<UserRow>, EffectDrizzleQueryError>
+    readonly findById: (
+      id: string,
+    ) => Effect.Effect<Option.Option<UserRow>, EffectDrizzleQueryError>
     readonly update: (
       id: string,
       input: Partial<NewUser>,
     ) => Effect.Effect<Option.Option<UserRow>, EffectDrizzleQueryError>
-    readonly assignRole: (id: string, role: UserRole) => Effect.Effect<Option.Option<UserRow>, EffectDrizzleQueryError>
+    readonly assignRole: (
+      id: string,
+      role: UserRole,
+    ) => Effect.Effect<Option.Option<UserRow>, EffectDrizzleQueryError>
     readonly remove: (id: string) => Effect.Effect<void, EffectDrizzleQueryError>
   }
 >()('UsersRepo') {}
@@ -51,8 +56,9 @@ export const UsersRepoLive = Layer.effect(
     })
 
     const assignRole = Effect.fn('UsersRepo.assignRole')(function* (id: string, role: UserRole) {
-      return yield* Effect.map(db.update(users).set({ role }).where(eq(users.id, id)).returning(), ([row]) =>
-        Option.fromNullishOr(row),
+      return yield* Effect.map(
+        db.update(users).set({ role }).where(eq(users.id, id)).returning(),
+        ([row]) => Option.fromNullishOr(row),
       )
     })
 

@@ -44,7 +44,9 @@ const FieldValidationFields = {
     ),
   ),
 }
-export const FieldValidation: Schema.Schema<FieldValidation> = Schema.Struct(FieldValidationFields).annotate({
+export const FieldValidation: Schema.Schema<FieldValidation> = Schema.Struct(
+  FieldValidationFields,
+).annotate({
   identifier: 'FieldValidation',
 })
 
@@ -54,10 +56,14 @@ const FieldDefinitionFields = {
   label: Schema.String.check(Schema.isMinLength(1)),
   type: FieldType,
   required: Schema.Boolean,
-  validation: Schema.optional(Schema.suspend((): Schema.Schema<FieldValidation> => FieldValidation)),
+  validation: Schema.optional(
+    Schema.suspend((): Schema.Schema<FieldValidation> => FieldValidation),
+  ),
   defaultValue: Schema.optional(Schema.Unknown),
 }
-export const FieldDefinition: Schema.Schema<FieldDefinition> = Schema.Struct(FieldDefinitionFields).annotate({
+export const FieldDefinition: Schema.Schema<FieldDefinition> = Schema.Struct(
+  FieldDefinitionFields,
+).annotate({
   identifier: 'FieldDefinition',
 })
 

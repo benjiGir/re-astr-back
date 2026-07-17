@@ -12,7 +12,12 @@ import { Authorization } from '@/auth/Authorization.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
 import { requireRole } from '@/auth/Role.js'
 import { MinioError } from '@/infra/Minio.js'
-import { TestFile, TestFileNotFound, TestFileType, UpdateTestFile } from '@/modules/test-files/TestFile.js'
+import {
+  TestFile,
+  TestFileNotFound,
+  TestFileType,
+  UpdateTestFile,
+} from '@/modules/test-files/TestFile.js'
 import { TestFilesService } from '@/modules/test-files/TestFilesService.js'
 import { TestNotFound } from '@/modules/tests/Test.js'
 
@@ -29,9 +34,13 @@ const UploadTestFileFields = Schema.Struct({
   file: Multipart.SingleFileSchema,
 })
 
-export const UploadTestFile = UploadTestFileFields.pipe(HttpApiSchema.asMultipart({ maxFileSize: MAX_UPLOAD_BYTES }))
+export const UploadTestFile = UploadTestFileFields.pipe(
+  HttpApiSchema.asMultipart({ maxFileSize: MAX_UPLOAD_BYTES }),
+)
 
-export class PresignedUrlResponse extends Schema.Class<PresignedUrlResponse>('PresignedUrlResponse')({
+export class PresignedUrlResponse extends Schema.Class<PresignedUrlResponse>(
+  'PresignedUrlResponse',
+)({
   url: Schema.String,
 }) {}
 
@@ -133,7 +142,10 @@ export const TestFilesGroupLive = HttpApiBuilder.group(TestFilesApi, 'test-files
         }),
       )
       .handle('presignedUrl', ({ params, query }) =>
-        Effect.map(service.presignedUrl(params.id, query.expirySeconds ?? 3600), (url) => new PresignedUrlResponse({ url })),
+        Effect.map(
+          service.presignedUrl(params.id, query.expirySeconds ?? 3600),
+          (url) => new PresignedUrlResponse({ url }),
+        ),
       )
       .handle('remove', ({ params }) =>
         requireRole('archivist').pipe(Effect.andThen(() => service.remove(params.id))),

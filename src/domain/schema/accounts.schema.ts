@@ -5,7 +5,9 @@ import { users } from './users.schema.js'
 export const accounts = pgTable(
   'accounts',
   {
-    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: text('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     accountId: text('account_id').notNull(),
     providerId: text('provider_id').notNull(),
     userId: text('user_id')

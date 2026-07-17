@@ -24,7 +24,10 @@ const makeMockRepo = (overrides: Partial<typeof ProjectsRepo.Service> = {}) => (
   ...overrides,
 })
 
-const runWithRepo = <A, E>(repo: typeof ProjectsRepo.Service, effect: Effect.Effect<A, E, ProjectsService>) =>
+const runWithRepo = <A, E>(
+  repo: typeof ProjectsRepo.Service,
+  effect: Effect.Effect<A, E, ProjectsService>,
+) =>
   Effect.provide(effect, ProjectsServiceLive.pipe(Layer.provide(Layer.succeed(ProjectsRepo, repo))))
 
 describe('ProjectsService', () => {
@@ -33,7 +36,9 @@ describe('ProjectsService', () => {
       makeMockRepo(),
       Effect.gen(function* () {
         const service = yield* ProjectsService
-        const project = yield* service.create(new CreateProject({ name: 'Avionics System Validation' }))
+        const project = yield* service.create(
+          new CreateProject({ name: 'Avionics System Validation' }),
+        )
 
         expect(project.id).toBe('project-1')
         expect(project.name).toBe('Avionics System Validation')

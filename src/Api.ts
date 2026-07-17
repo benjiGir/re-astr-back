@@ -1,5 +1,11 @@
 import { Effect, Schema } from 'effect'
-import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from 'effect/unstable/httpapi'
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiError,
+  HttpApiGroup,
+} from 'effect/unstable/httpapi'
 import { users } from '@/domain/schema/users.schema.js'
 import { AuthGroup, AuthSessionGroup } from '@/auth/AuthHttp.js'
 import { Database } from '@/infra/Database.js'
@@ -69,7 +75,9 @@ export const HealthGroupLive = HttpApiBuilder.group(Api, 'health', (handlers) =>
           .limit(1)
           .pipe(
             Effect.as({ status: 'up' as const, responseTimeMs: Date.now() - start }),
-            Effect.catchCause(() => Effect.succeed({ status: 'down' as const, responseTimeMs: Date.now() - start })),
+            Effect.catchCause(() =>
+              Effect.succeed({ status: 'down' as const, responseTimeMs: Date.now() - start }),
+            ),
           )
 
         if (database.status === 'down') {

@@ -31,7 +31,7 @@ Backend server for the RE-ASTR application (Automotive Software Testing Results)
 - **Language**: TypeScript 5.9
 - **Package Manager**: pnpm
 - **Testing**: Jest
-- **Code Quality**: ESLint, Prettier, Biome
+- **Code Quality**: oxlint, oxfmt
 
 ## 📦 Prerequisites
 
@@ -320,8 +320,8 @@ pnpm run test:e2e      # End-to-end tests
 ### Code Quality
 
 ```bash
-pnpm run lint          # Lint with ESLint (auto-fix)
-pnpm run format        # Format with Prettier
+pnpm run lint          # Lint with oxlint (auto-fix)
+pnpm run format        # Format with oxfmt
 ```
 
 ## 🧪 Testing

@@ -1,8 +1,21 @@
 import { Effect, Schema } from 'effect'
-import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup } from 'effect/unstable/httpapi'
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiError,
+  HttpApiGroup,
+} from 'effect/unstable/httpapi'
 import { Authorization } from '@/auth/Authorization.js'
 import { requireRole, requireSelfOrRole } from '@/auth/Role.js'
-import { AssignRole, EmailAlreadyExists, User, UserHasRecords, UserNotFound, UpdateUser } from '@/modules/users/User.js'
+import {
+  AssignRole,
+  EmailAlreadyExists,
+  User,
+  UserHasRecords,
+  UserNotFound,
+  UpdateUser,
+} from '@/modules/users/User.js'
 import { UsersService } from '@/modules/users/UsersService.js'
 
 export const UsersGroup = HttpApiGroup.make('users')
@@ -50,10 +63,14 @@ export const UsersGroupLive = HttpApiBuilder.group(UsersApi, 'users', (handlers)
       .handle('findAll', () => service.findAll())
       .handle('findById', ({ params }) => service.findOne(params.id))
       .handle('update', ({ params, payload }) =>
-        requireSelfOrRole(params.id, 'master').pipe(Effect.andThen(() => service.update(params.id, payload))),
+        requireSelfOrRole(params.id, 'master').pipe(
+          Effect.andThen(() => service.update(params.id, payload)),
+        ),
       )
       .handle('assignRole', ({ params, payload }) =>
-        requireRole('master').pipe(Effect.andThen(() => service.assignRole(params.id, payload.role))),
+        requireRole('master').pipe(
+          Effect.andThen(() => service.assignRole(params.id, payload.role)),
+        ),
       )
       .handle('remove', ({ params }) =>
         requireRole('master').pipe(Effect.andThen(() => service.remove(params.id))),

@@ -27,8 +27,10 @@ const makeMockRepo = (overrides: Partial<typeof UsersRepo.Service> = {}) => ({
   ...overrides,
 })
 
-const runWithRepo = <A, E>(repo: typeof UsersRepo.Service, effect: Effect.Effect<A, E, UsersService>) =>
-  Effect.provide(effect, UsersServiceLive.pipe(Layer.provide(Layer.succeed(UsersRepo, repo))))
+const runWithRepo = <A, E>(
+  repo: typeof UsersRepo.Service,
+  effect: Effect.Effect<A, E, UsersService>,
+) => Effect.provide(effect, UsersServiceLive.pipe(Layer.provide(Layer.succeed(UsersRepo, repo))))
 
 describe('UsersService', () => {
   it.effect('findAll returns all users', () =>
@@ -81,7 +83,9 @@ describe('UsersService', () => {
 
   it.effect('update succeeds when the user exists', () =>
     runWithRepo(
-      makeMockRepo({ update: vi.fn(() => Effect.succeed(Option.some({ ...mockRow, name: 'New Name' }))) }),
+      makeMockRepo({
+        update: vi.fn(() => Effect.succeed(Option.some({ ...mockRow, name: 'New Name' }))),
+      }),
       Effect.gen(function* () {
         const service = yield* UsersService
         const user = yield* service.update('user-1', { name: 'New Name' })
@@ -105,7 +109,10 @@ describe('UsersService', () => {
     const assignRoleFn = vi.fn(() => Effect.succeed(Option.some(mockRow)))
 
     return runWithRepo(
-      makeMockRepo({ findById: vi.fn(() => Effect.succeed(Option.none())), assignRole: assignRoleFn }),
+      makeMockRepo({
+        findById: vi.fn(() => Effect.succeed(Option.none())),
+        assignRole: assignRoleFn,
+      }),
       Effect.gen(function* () {
         const service = yield* UsersService
         const error = yield* Effect.flip(service.assignRole('missing-id', 'master'))

@@ -14,15 +14,15 @@ import { Database } from '@/infra/Database.js'
  * `security`) reading the session token, verified against our own HMAC
  * (Cookie.verify), then resolved against `sessions`/`users`.
  */
-export class Authorization extends HttpApiMiddleware.Service<Authorization, { provides: CurrentUser }>()(
-  'Authorization',
-  {
-    error: HttpApiError.Unauthorized,
-    security: {
-      cookie: sessionCookieSecurity,
-    },
+export class Authorization extends HttpApiMiddleware.Service<
+  Authorization,
+  { provides: CurrentUser }
+>()('Authorization', {
+  error: HttpApiError.Unauthorized,
+  security: {
+    cookie: sessionCookieSecurity,
   },
-) {}
+}) {}
 
 export const AuthorizationLive = Layer.effect(
   Authorization,

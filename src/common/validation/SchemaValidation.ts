@@ -18,14 +18,19 @@ export interface ValidationResult {
   readonly errors: readonly ValidationError[]
 }
 
-export class ValidationFailed extends Schema.TaggedErrorClass<ValidationFailed>('re-astr/ValidationFailed')(
+export class ValidationFailed extends Schema.TaggedErrorClass<ValidationFailed>(
+  're-astr/ValidationFailed',
+)(
   'ValidationFailed',
   { context: Schema.String, errors: Schema.Array(ValidationError) },
   { httpApiStatus: 400 },
 ) {}
 
 /** Effect-land equivalent of the old service's validateOrThrow — fails instead of throwing. */
-export const validateOrFail = (result: ValidationResult, context: string): Effect.Effect<void, ValidationFailed> =>
+export const validateOrFail = (
+  result: ValidationResult,
+  context: string,
+): Effect.Effect<void, ValidationFailed> =>
   result.valid ? Effect.void : Effect.fail(new ValidationFailed({ context, errors: result.errors }))
 
 // toStandardSchemaV1's `validate` can return a Promise for schemas with async
@@ -50,14 +55,17 @@ const runValidation = (schema: Schema.Top, data: unknown): ValidationResult => {
   return {
     valid: false,
     errors: result.issues.map(
-      (issue) => new ValidationError({ field: (issue.path ?? []).join('.'), message: issue.message }),
+      (issue) =>
+        new ValidationError({ field: (issue.path ?? []).join('.'), message: issue.message }),
     ),
   }
 }
 
-export const validateBaseSchema = (input: unknown): ValidationResult => runValidation(BaseSchema, input)
+export const validateBaseSchema = (input: unknown): ValidationResult =>
+  runValidation(BaseSchema, input)
 
-export const validateCustomFieldsSchema = (input: unknown): ValidationResult => runValidation(CustomFieldsSchema, input)
+export const validateCustomFieldsSchema = (input: unknown): ValidationResult =>
+  runValidation(CustomFieldsSchema, input)
 
 const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
@@ -77,24 +85,31 @@ const textFieldSchema = (validation: FieldValidation | undefined): Schema.Top =>
   if (validation?.enum) return Schema.Literals(validation.enum as [string, ...string[]])
 
   let schema: Schema.Schema<string> = Schema.String
-  if (validation?.minLength !== undefined) schema = schema.check(Schema.isMinLength(validation.minLength))
-  if (validation?.maxLength !== undefined) schema = schema.check(Schema.isMaxLength(validation.maxLength))
-  if (validation?.pattern !== undefined) schema = schema.check(Schema.isPattern(new RegExp(validation.pattern)))
+  if (validation?.minLength !== undefined)
+    schema = schema.check(Schema.isMinLength(validation.minLength))
+  if (validation?.maxLength !== undefined)
+    schema = schema.check(Schema.isMaxLength(validation.maxLength))
+  if (validation?.pattern !== undefined)
+    schema = schema.check(Schema.isPattern(new RegExp(validation.pattern)))
   return schema
 }
 
 const numberFieldSchema = (validation: FieldValidation | undefined): Schema.Top => {
   let schema: Schema.Schema<number> = Schema.Number
-  if (validation?.min !== undefined) schema = schema.check(Schema.isGreaterThanOrEqualTo(validation.min))
-  if (validation?.max !== undefined) schema = schema.check(Schema.isLessThanOrEqualTo(validation.max))
+  if (validation?.min !== undefined)
+    schema = schema.check(Schema.isGreaterThanOrEqualTo(validation.min))
+  if (validation?.max !== undefined)
+    schema = schema.check(Schema.isLessThanOrEqualTo(validation.max))
   return schema
 }
 
 const arrayFieldSchema = (validation: FieldValidation | undefined): Schema.Top => {
   const itemSchema = validation?.itemType ? schemaForType(validation.itemType) : Schema.Unknown
   let schema = Schema.Array(itemSchema)
-  if (validation?.minItems !== undefined) schema = schema.check(Schema.isMinLength(validation.minItems))
-  if (validation?.maxItems !== undefined) schema = schema.check(Schema.isMaxLength(validation.maxItems))
+  if (validation?.minItems !== undefined)
+    schema = schema.check(Schema.isMinLength(validation.minItems))
+  if (validation?.maxItems !== undefined)
+    schema = schema.check(Schema.isMaxLength(validation.maxItems))
   return schema
 }
 
@@ -134,8 +149,10 @@ const fieldsToShape = (fields: readonly FieldDefinition[]): Record<string, Schem
   return shape
 }
 
-export const validateCommonData = (data: Record<string, unknown>, baseSchema: BaseSchema): ValidationResult =>
-  runValidation(Schema.Struct(fieldsToShape(baseSchema.fields)), data)
+export const validateCommonData = (
+  data: Record<string, unknown>,
+  baseSchema: BaseSchema,
+): ValidationResult => runValidation(Schema.Struct(fieldsToShape(baseSchema.fields)), data)
 
 const ISO_8601_PATTERN = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})?)?$/
 
@@ -170,11 +187,19 @@ const validateAllowCustomFields = (data: Record<string, unknown>): ValidationRes
   Object.keys(data).length > 0
     ? {
         valid: false,
-        errors: [new ValidationError({ field: 'customData', message: 'Custom fields are not allowed for this category' })],
+        errors: [
+          new ValidationError({
+            field: 'customData',
+            message: 'Custom fields are not allowed for this category',
+          }),
+        ],
       }
     : { valid: true, errors: [] }
 
-const validateMaxCustomFields = (data: Record<string, unknown>, maxCustomFields: number): ValidationResult => {
+const validateMaxCustomFields = (
+  data: Record<string, unknown>,
+  maxCustomFields: number,
+): ValidationResult => {
   const count = Object.keys(data).length
   return count > maxCustomFields
     ? {

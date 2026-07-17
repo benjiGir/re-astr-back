@@ -42,7 +42,12 @@ describe('Cookie', () => {
     Effect.gen(function* () {
       const signed = yield* sign('my-token').pipe(withTestConfig)
       const exit = yield* Effect.exit(
-        verify(signed).pipe(Effect.provideService(SessionConfig, { ...TestSessionConfig, cookieSecret: Redacted.make('other-secret') })),
+        verify(signed).pipe(
+          Effect.provideService(SessionConfig, {
+            ...TestSessionConfig,
+            cookieSecret: Redacted.make('other-secret'),
+          }),
+        ),
       )
 
       expect(Exit.isFailure(exit)).toBe(true)

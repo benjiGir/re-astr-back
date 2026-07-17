@@ -30,15 +30,11 @@ export class UserNotFound extends Schema.TaggedErrorClass<UserNotFound>('re-astr
 ) {}
 
 /** Shared with auth/Credentials.ts (sign-up hits the same users.email unique constraint). */
-export class EmailAlreadyExists extends Schema.TaggedErrorClass<EmailAlreadyExists>('re-astr/EmailAlreadyExists')(
-  'EmailAlreadyExists',
-  { email: Schema.String },
-  { httpApiStatus: 409 },
-) {}
+export class EmailAlreadyExists extends Schema.TaggedErrorClass<EmailAlreadyExists>(
+  're-astr/EmailAlreadyExists',
+)('EmailAlreadyExists', { email: Schema.String }, { httpApiStatus: 409 }) {}
 
 /** Mirrors ProjectHasTests/CategoryHasTests: tests.createdBy and test_files.uploadedBy are both onDelete: 'restrict'. */
-export class UserHasRecords extends Schema.TaggedErrorClass<UserHasRecords>('re-astr/UserHasRecords')(
-  'UserHasRecords',
-  { id: Schema.String },
-  { httpApiStatus: 409 },
-) {}
+export class UserHasRecords extends Schema.TaggedErrorClass<UserHasRecords>(
+  're-astr/UserHasRecords',
+)('UserHasRecords', { id: Schema.String }, { httpApiStatus: 409 }) {}

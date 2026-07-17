@@ -1,0 +1,46 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "env": {
+    "builtin": true
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "complexity": "warn",
+    "no-loss-of-precision": "error",
+    "no-unused-vars": "error",
+    "typescript/ban-types": "error",
+    "typescript/no-unnecessary-type-constraint": "error",
+    "typescript/no-namespace": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/array-type": "error",
+    "typescript/prefer-for-of": "warn",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-extra-non-null-assertion": "error",
+    "typescript/no-unsafe-declaration-merging": "error",
+    "typescript/require-await": "warn",
+    "unicorn/filename-case": [
+      "warn",
+      {
+        "cases": {
+          "kebabCase": true,
+          "camelCase": true,
+          "pascalCase": true
+        }
+      }
+    ],
+    "unicorn/prefer-node-protocol": "error",
+    "unicorn/prefer-number-properties": "error",
+    "oxc/no-accumulating-spread": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["*.test.ts", "*.spec.ts", "*.e2e-spec.ts", "test/**/*"],
+      "rules": {
+        "typescript/no-explicit-any": "off"
+      }
+    }
+  ]
+}

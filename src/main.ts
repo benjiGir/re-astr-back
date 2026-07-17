@@ -39,7 +39,11 @@ const CorsLive = Layer.unwrap(
   }),
 )
 
-const AppRoutes = Layer.mergeAll(HttpApiBuilder.layer(Api), HttpApiScalar.layer(Api, { path: '/docs' }), CorsLive).pipe(
+const AppRoutes = Layer.mergeAll(
+  HttpApiBuilder.layer(Api),
+  HttpApiScalar.layer(Api, { path: '/docs' }),
+  CorsLive,
+).pipe(
   Layer.provide(HealthGroupLive),
   Layer.provide(AuthGroupLive),
   Layer.provide(AuthSessionGroupLive),
@@ -51,7 +55,9 @@ const AppRoutes = Layer.mergeAll(HttpApiBuilder.layer(Api), HttpApiScalar.layer(
 )
 
 // HttpRouter.serve wires the base router + request-logging middleware in by default.
-const HttpLive = HttpRouter.serve(AppRoutes).pipe(Layer.provide(NodeHttpServer.layerConfig(createServer, ServerConfig)))
+const HttpLive = HttpRouter.serve(AppRoutes).pipe(
+  Layer.provide(NodeHttpServer.layerConfig(createServer, ServerConfig)),
+)
 
 const ProjectsInfra = ProjectsServiceLive.pipe(Layer.provide(ProjectsRepoLive))
 const CategoriesInfra = CategoriesServiceLive.pipe(Layer.provide(CategoriesRepoLive))
@@ -67,7 +73,14 @@ const UsersInfra = UsersServiceLive.pipe(Layer.provide(UsersRepoLive))
 // growing the same way: TestFilesInfra needs TestsService (test existence
 // checks) and Minio, so TestsInfra moves out to provideMerge too, alongside
 // Projects/CategoriesInfra it already needed.
-const Infra = Layer.mergeAll(LoggerLive, TelemetryLive, AuthorizationLive, CredentialsInfra, TestFilesInfra, UsersInfra).pipe(
+const Infra = Layer.mergeAll(
+  LoggerLive,
+  TelemetryLive,
+  AuthorizationLive,
+  CredentialsInfra,
+  TestFilesInfra,
+  UsersInfra,
+).pipe(
   Layer.provideMerge(TestsInfra),
   Layer.provideMerge(ProjectsInfra),
   Layer.provideMerge(CategoriesInfra),

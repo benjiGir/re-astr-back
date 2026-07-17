@@ -12,7 +12,13 @@ import { TestsService, TestsServiceLive } from '@/modules/tests/TestsService.js'
 
 const now = new Date('2026-01-01T00:00:00.000Z')
 
-const mockProject = new Project({ id: 'project-1', name: 'Avionics', description: null, createdAt: now, updatedAt: now })
+const mockProject = new Project({
+  id: 'project-1',
+  name: 'Avionics',
+  description: null,
+  createdAt: now,
+  updatedAt: now,
+})
 
 const mockCategory = new Category({
   id: 'category-1',
@@ -85,7 +91,12 @@ const runWithMocks = <A, E>(
     ),
   )
 
-const validCreate = new CreateTest({ projectId: 'project-1', categoryId: 'category-1', name: 'Thermal cycling run 1', commonData: { temperature: 25 } })
+const validCreate = new CreateTest({
+  projectId: 'project-1',
+  categoryId: 'category-1',
+  name: 'Thermal cycling run 1',
+  commonData: { temperature: 25 },
+})
 
 describe('TestsService', () => {
   it.effect('create returns the created test and stamps createdBy/updatedBy', () => {
@@ -98,7 +109,9 @@ describe('TestsService', () => {
         const test = yield* service.create(validCreate, 'user-1')
 
         expect(test.id).toBe('test-1')
-        expect(createFn).toHaveBeenCalledWith(expect.objectContaining({ createdBy: 'user-1', updatedBy: 'user-1', status: 'draft' }))
+        expect(createFn).toHaveBeenCalledWith(
+          expect.objectContaining({ createdBy: 'user-1', updatedBy: 'user-1', status: 'draft' }),
+        )
       }),
     )
   })
@@ -116,7 +129,11 @@ describe('TestsService', () => {
 
   it.effect('create fails with CategoryNotFound when the category does not exist', () =>
     runWithMocks(
-      { categories: { findOne: vi.fn(() => Effect.fail(new CategoryNotFound({ id: 'category-1' }))) } },
+      {
+        categories: {
+          findOne: vi.fn(() => Effect.fail(new CategoryNotFound({ id: 'category-1' }))),
+        },
+      },
       Effect.gen(function* () {
         const service = yield* TestsService
         const error = yield* Effect.flip(service.create(validCreate, 'user-1'))
@@ -125,22 +142,24 @@ describe('TestsService', () => {
     ),
   )
 
-  it.effect('create fails with ValidationFailed when commonData does not match the category baseSchema', () =>
-    runWithMocks(
-      {},
-      Effect.gen(function* () {
-        const service = yield* TestsService
-        const invalid = new CreateTest({
-          projectId: 'project-1',
-          categoryId: 'category-1',
-          name: 'Bad test',
-          commonData: { temperature: 'hot' },
-        })
-        const error = yield* Effect.flip(service.create(invalid, 'user-1'))
-        expect(error).toBeInstanceOf(ValidationFailed)
-        if (error instanceof ValidationFailed) expect(error.context).toBe('commonData')
-      }),
-    ),
+  it.effect(
+    'create fails with ValidationFailed when commonData does not match the category baseSchema',
+    () =>
+      runWithMocks(
+        {},
+        Effect.gen(function* () {
+          const service = yield* TestsService
+          const invalid = new CreateTest({
+            projectId: 'project-1',
+            categoryId: 'category-1',
+            name: 'Bad test',
+            commonData: { temperature: 'hot' },
+          })
+          const error = yield* Effect.flip(service.create(invalid, 'user-1'))
+          expect(error).toBeInstanceOf(ValidationFailed)
+          if (error instanceof ValidationFailed) expect(error.context).toBe('commonData')
+        }),
+      ),
   )
 
   it.effect('findOne fails with TestNotFound when the repo returns none', () =>
@@ -166,7 +185,9 @@ describe('TestsService', () => {
   )
 
   it.effect('update stamps completedAt when status transitions to completed', () => {
-    const updateFn = vi.fn(() => Effect.succeed(Option.some({ ...mockRow, status: 'completed' as const, completedAt: now })))
+    const updateFn = vi.fn(() =>
+      Effect.succeed(Option.some({ ...mockRow, status: 'completed' as const, completedAt: now })),
+    )
 
     return runWithMocks(
       { repo: { update: updateFn } },
@@ -176,24 +197,41 @@ describe('TestsService', () => {
 
         expect(updateFn).toHaveBeenCalledWith(
           'test-1',
-          expect.objectContaining({ status: 'completed', updatedBy: 'user-1', completedAt: expect.any(Date) }),
+          expect.objectContaining({
+            status: 'completed',
+            updatedBy: 'user-1',
+            completedAt: expect.any(Date),
+          }),
         )
       }),
     )
   })
 
-  it.effect('update fails with ValidationFailed when customData is not allowed by the category', () =>
-    runWithMocks(
-      { categories: { findOne: vi.fn(() => Effect.succeed(new Category({ ...mockCategory, customFieldsSchema: { allowCustomFields: false, fields: [] } }))) } },
-      Effect.gen(function* () {
-        const service = yield* TestsService
-        const error = yield* Effect.flip(
-          service.update('test-1', new UpdateTest({ customData: { extra: 'nope' } }), 'user-1'),
-        )
-        expect(error).toBeInstanceOf(ValidationFailed)
-        if (error instanceof ValidationFailed) expect(error.context).toBe('customData')
-      }),
-    ),
+  it.effect(
+    'update fails with ValidationFailed when customData is not allowed by the category',
+    () =>
+      runWithMocks(
+        {
+          categories: {
+            findOne: vi.fn(() =>
+              Effect.succeed(
+                new Category({
+                  ...mockCategory,
+                  customFieldsSchema: { allowCustomFields: false, fields: [] },
+                }),
+              ),
+            ),
+          },
+        },
+        Effect.gen(function* () {
+          const service = yield* TestsService
+          const error = yield* Effect.flip(
+            service.update('test-1', new UpdateTest({ customData: { extra: 'nope' } }), 'user-1'),
+          )
+          expect(error).toBeInstanceOf(ValidationFailed)
+          if (error instanceof ValidationFailed) expect(error.context).toBe('customData')
+        }),
+      ),
   )
 
   it.effect('remove fails with TestNotFound and never calls repo.remove', () => {

@@ -6,7 +6,12 @@ import type { Session } from '@/domain/schema/sessions.schema.js'
 import type { User } from '@/domain/schema/users.schema.js'
 import type { Verification } from '@/domain/schema/verifications.schema.js'
 import { CredentialsRepo } from '@/auth/CredentialsRepo.js'
-import { Credentials, CredentialsLive, InvalidCredentials, InvalidResetToken } from '@/auth/Credentials.js'
+import {
+  Credentials,
+  CredentialsLive,
+  InvalidCredentials,
+  InvalidResetToken,
+} from '@/auth/Credentials.js'
 import { SessionConfig } from '@/infra/Config.js'
 
 const now = new Date('2026-01-01T00:00:00.000Z')
@@ -87,7 +92,10 @@ const mockSessionConfig: typeof SessionConfig.Service = {
   updateAge: 86_400,
 }
 
-const runWithRepo = <A, E>(repo: typeof CredentialsRepo.Service, effect: Effect.Effect<A, E, Credentials>) =>
+const runWithRepo = <A, E>(
+  repo: typeof CredentialsRepo.Service,
+  effect: Effect.Effect<A, E, Credentials>,
+) =>
   Effect.provide(
     effect,
     CredentialsLive.pipe(
@@ -113,12 +121,18 @@ describe('Credentials', () => {
         makeMockRepo({ createAccount: createAccountFn }),
         Effect.gen(function* () {
           const credentials = yield* Credentials
-          const result = yield* credentials.signUp('jane@example.com', 'correct-password', 'Jane Doe')
+          const result = yield* credentials.signUp(
+            'jane@example.com',
+            'correct-password',
+            'Jane Doe',
+          )
 
           expect(result.user.id).toBe('user-1')
           expect(result.session.id).toBe('session-1')
 
-          const verified = yield* Effect.promise(() => argon2.verify(capturedAccount?.password ?? '', 'correct-password'))
+          const verified = yield* Effect.promise(() =>
+            argon2.verify(capturedAccount?.password ?? '', 'correct-password'),
+          )
           expect(verified).toBe(true)
         }),
       )
@@ -137,15 +151,17 @@ describe('Credentials', () => {
       ),
     )
 
-    it.effect('fails with InvalidCredentials when the account has no password (e.g. OAuth-only)', () =>
-      runWithRepo(
-        makeMockRepo({ findAccountByUserId: vi.fn(() => Effect.succeed(Option.none())) }),
-        Effect.gen(function* () {
-          const credentials = yield* Credentials
-          const error = yield* Effect.flip(credentials.signIn('jane@example.com', 'whatever'))
-          expect(error).toBeInstanceOf(InvalidCredentials)
-        }),
-      ),
+    it.effect(
+      'fails with InvalidCredentials when the account has no password (e.g. OAuth-only)',
+      () =>
+        runWithRepo(
+          makeMockRepo({ findAccountByUserId: vi.fn(() => Effect.succeed(Option.none())) }),
+          Effect.gen(function* () {
+            const credentials = yield* Credentials
+            const error = yield* Effect.flip(credentials.signIn('jane@example.com', 'whatever'))
+            expect(error).toBeInstanceOf(InvalidCredentials)
+          }),
+        ),
     )
 
     it.effect('fails with InvalidCredentials when the password is wrong', () =>
@@ -203,18 +219,24 @@ describe('Credentials', () => {
       )
     })
 
-    it.effect('does nothing (but still succeeds) when the email is unknown — no enumeration', () => {
-      const createVerificationFn = vi.fn(() => Effect.void)
+    it.effect(
+      'does nothing (but still succeeds) when the email is unknown — no enumeration',
+      () => {
+        const createVerificationFn = vi.fn(() => Effect.void)
 
-      return runWithRepo(
-        makeMockRepo({ findUserByEmail: vi.fn(() => Effect.succeed(Option.none())), createVerification: createVerificationFn }),
-        Effect.gen(function* () {
-          const credentials = yield* Credentials
-          yield* credentials.requestPasswordReset('unknown@example.com')
-          expect(createVerificationFn).not.toHaveBeenCalled()
-        }),
-      )
-    })
+        return runWithRepo(
+          makeMockRepo({
+            findUserByEmail: vi.fn(() => Effect.succeed(Option.none())),
+            createVerification: createVerificationFn,
+          }),
+          Effect.gen(function* () {
+            const credentials = yield* Credentials
+            yield* credentials.requestPasswordReset('unknown@example.com')
+            expect(createVerificationFn).not.toHaveBeenCalled()
+          }),
+        )
+      },
+    )
   })
 
   describe('resetPassword', () => {
@@ -233,12 +255,16 @@ describe('Credentials', () => {
       runWithRepo(
         makeMockRepo({
           findVerificationByToken: vi.fn(() =>
-            Effect.succeed(Option.some({ ...mockVerification, expiresAt: new Date(Date.now() - 1000) })),
+            Effect.succeed(
+              Option.some({ ...mockVerification, expiresAt: new Date(Date.now() - 1000) }),
+            ),
           ),
         }),
         Effect.gen(function* () {
           const credentials = yield* Credentials
-          const error = yield* Effect.flip(credentials.resetPassword('reset-token', 'newpassword123'))
+          const error = yield* Effect.flip(
+            credentials.resetPassword('reset-token', 'newpassword123'),
+          )
           expect(error).toBeInstanceOf(InvalidResetToken)
         }),
       ),
@@ -266,7 +292,9 @@ describe('Credentials', () => {
           yield* credentials.resetPassword('reset-token', 'newpassword123')
 
           expect(capturedUserId).toBe('user-1')
-          const verified = yield* Effect.promise(() => argon2.verify(capturedHash ?? '', 'newpassword123'))
+          const verified = yield* Effect.promise(() =>
+            argon2.verify(capturedHash ?? '', 'newpassword123'),
+          )
           expect(verified).toBe(true)
           expect(deleteVerificationFn).toHaveBeenCalledWith('verification-1')
           expect(deleteSessionsFn).toHaveBeenCalledWith('user-1')

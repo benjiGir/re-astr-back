@@ -47,7 +47,8 @@ const makePretty = () =>
     const annotationsObj = redact(fiber.getRef(CurrentLogAnnotations))
 
     let line = `${color}[${time}] ${logLevel}${RESET} ${formatMessage(message)}`
-    if (Object.keys(annotationsObj).length > 0) line += ` ${inspect(annotationsObj, { colors: false, depth: 4 })}`
+    if (Object.keys(annotationsObj).length > 0)
+      line += ` ${inspect(annotationsObj, { colors: false, depth: 4 })}`
     if (!isCauseEmpty(cause)) line += `\n${Cause.pretty(cause)}`
 
     globalThis.console.log(line)

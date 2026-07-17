@@ -28,15 +28,30 @@ const seed = Effect.gen(function* () {
 
   const [master] = yield* db
     .insert(users)
-    .values({ name: 'Alice Master', email: 'alice@re-astr.com', emailVerified: true, role: 'master' })
+    .values({
+      name: 'Alice Master',
+      email: 'alice@re-astr.com',
+      emailVerified: true,
+      role: 'master',
+    })
     .returning()
   const [archivist] = yield* db
     .insert(users)
-    .values({ name: 'Bob Archivist', email: 'bob@re-astr.com', emailVerified: true, role: 'archivist' })
+    .values({
+      name: 'Bob Archivist',
+      email: 'bob@re-astr.com',
+      emailVerified: true,
+      role: 'archivist',
+    })
     .returning()
   const [contributor] = yield* db
     .insert(users)
-    .values({ name: 'Charlie Contributor', email: 'charlie@re-astr.com', emailVerified: true, role: 'contributor' })
+    .values({
+      name: 'Charlie Contributor',
+      email: 'charlie@re-astr.com',
+      emailVerified: true,
+      role: 'contributor',
+    })
     .returning()
   const [regularUser] = yield* db
     .insert(users)
@@ -47,7 +62,9 @@ const seed = Effect.gen(function* () {
 
   console.log('🔐 Creating user accounts...')
   for (const user of [master, archivist, contributor, regularUser]) {
-    yield* db.insert(accounts).values({ accountId: user.id, providerId: 'credential', userId: user.id, password })
+    yield* db
+      .insert(accounts)
+      .values({ accountId: user.id, providerId: 'credential', userId: user.id, password })
   }
   console.log('✅ Created accounts for all users\n')
 
@@ -102,7 +119,12 @@ const seed = Effect.gen(function* () {
           },
         ],
       },
-      customFieldsSchema: { allowCustomFields: true, maxCustomFields: 3, allowedTypes: ['text', 'number'], fields: [] },
+      customFieldsSchema: {
+        allowCustomFields: true,
+        maxCustomFields: 3,
+        allowedTypes: ['text', 'number'],
+        fields: [],
+      },
     })
     .returning()
 
@@ -192,7 +214,12 @@ const seed = Effect.gen(function* () {
       name: 'Thermal Cycling - Power Supply Unit',
       description: 'Cycling between -20°C and +70°C',
       status: 'in_progress',
-      commonData: { component: 'PSU-24V-5A', temperature: 70, duration: 72, result: 'Inconclusive' },
+      commonData: {
+        component: 'PSU-24V-5A',
+        temperature: 70,
+        duration: 72,
+        result: 'Inconclusive',
+      },
       customData: { cycles: 15, currentCycle: 8 },
       metadata: { equipment: 'Thermal Cycler TC-500' },
       createdBy: contributor.id,
@@ -206,7 +233,13 @@ const seed = Effect.gen(function* () {
       name: 'Random Vibration Test - Connector Assembly',
       description: 'Testing connector durability under random vibration',
       status: 'completed',
-      commonData: { component: 'CONN-25PIN-DSUB', frequency: 50, amplitude: 2.5, duration: 120, result: 'Pass' },
+      commonData: {
+        component: 'CONN-25PIN-DSUB',
+        frequency: 50,
+        amplitude: 2.5,
+        duration: 120,
+        result: 'Pass',
+      },
       customData: { axes: 'XYZ', peakAcceleration: 5 },
       metadata: { equipment: 'Vibration Table VT-3000', operator: 'Mike Johnson' },
       createdBy: contributor.id,
@@ -218,7 +251,13 @@ const seed = Effect.gen(function* () {
       name: 'Sine Vibration - PCB Assembly',
       description: 'Sinusoidal vibration testing of complete PCB',
       status: 'failed',
-      commonData: { component: 'PCB-MAIN-2024', frequency: 100, amplitude: 1.5, duration: 60, result: 'Fail' },
+      commonData: {
+        component: 'PCB-MAIN-2024',
+        frequency: 100,
+        amplitude: 1.5,
+        duration: 60,
+        result: 'Fail',
+      },
       customData: { failureMode: 'Solder joint failure', failureTime: 45 },
       metadata: { equipment: 'Vibration Table VT-3000', operator: 'Sarah Lee' },
       createdBy: contributor.id,
@@ -235,7 +274,11 @@ const seed = Effect.gen(function* () {
       status: 'completed',
       commonData: { component: 'MCU-STM32F4', fieldStrength: 10, frequency: 900, result: 'Pass' },
       customData: {},
-      metadata: { equipment: 'RF Chamber RC-2000', operator: 'Tom Wilson', standard: 'IEC 61000-4-3' },
+      metadata: {
+        equipment: 'RF Chamber RC-2000',
+        operator: 'Tom Wilson',
+        standard: 'IEC 61000-4-3',
+      },
       createdBy: contributor.id,
       completedAt: new Date('2024-02-10'),
     },
@@ -245,7 +288,12 @@ const seed = Effect.gen(function* () {
       name: 'EMS Test - Power Supply',
       description: 'Testing power supply under electromagnetic stress',
       status: 'draft',
-      commonData: { component: 'PSU-12V-10A', fieldStrength: 20, frequency: 1800, result: 'Degraded Performance' },
+      commonData: {
+        component: 'PSU-12V-10A',
+        fieldStrength: 20,
+        frequency: 1800,
+        result: 'Degraded Performance',
+      },
       customData: {},
       metadata: { standard: 'IEC 61000-4-3' },
       createdBy: regularUser.id,

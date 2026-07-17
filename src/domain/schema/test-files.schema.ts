@@ -6,7 +6,9 @@ import { users } from './users.schema.js'
 export const fileTypeEnum = pgEnum('file_type', ['screenshot', 'report', 'documentation', 'other'])
 
 export const testFiles = pgTable('test_files', {
-  id: text().primaryKey().default(sql`gen_random_uuid()`),
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   testId: text('test_id')
     .notNull()
     .references(() => tests.id, { onDelete: 'cascade' }),
@@ -18,7 +20,10 @@ export const testFiles = pgTable('test_files', {
   fileSize: bigint('file_size', { mode: 'number' }).notNull(),
   mimeType: text('mime_type').notNull(),
   checksum: text('checksum'), // SHA-256 hash for integrity
-  metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+  metadata: jsonb('metadata')
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   uploadedBy: text('uploaded_by')
     .notNull()
     .references(() => users.id, { onDelete: 'restrict' }),

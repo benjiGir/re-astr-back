@@ -2,7 +2,9 @@ import { sql } from 'drizzle-orm'
 import { pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const projects = pgTable('projects', {
-  id: text().primaryKey().default(sql`gen_random_uuid()`),
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull().unique(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -10,9 +10,10 @@ export class AppConfig extends Context.Service<
   static readonly Live = Layer.effect(
     AppConfig,
     Effect.gen(function* () {
-      const nodeEnv = yield* Config.literals(['development', 'production', 'test'], 'NODE_ENV').pipe(
-        Config.withDefault('development' as const),
-      )
+      const nodeEnv = yield* Config.literals(
+        ['development', 'production', 'test'],
+        'NODE_ENV',
+      ).pipe(Config.withDefault('development' as const))
       const logLevel = yield* Config.logLevel('LOG_LEVEL').pipe(
         Config.withDefault(nodeEnv === 'production' ? 'Info' : 'Debug'),
       )

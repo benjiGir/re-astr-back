@@ -42,7 +42,13 @@ export const TestsGroup = HttpApiGroup.make('tests')
       params: { id: Schema.String },
       payload: UpdateTest,
       success: Test,
-      error: [TestNotFound, ProjectNotFound, CategoryNotFound, ValidationFailed, HttpApiError.Forbidden],
+      error: [
+        TestNotFound,
+        ProjectNotFound,
+        CategoryNotFound,
+        ValidationFailed,
+        HttpApiError.Forbidden,
+      ],
     }),
   )
   .add(

@@ -107,15 +107,30 @@ describe('TestFilesService', () => {
           {
             testId: 'test-1',
             fileType: 'report',
-            file: { _tag: 'PersistedFile', key: 'file', name: 'report.pdf', contentType: 'application/pdf', path: tempFilePath } as never,
+            file: {
+              _tag: 'PersistedFile',
+              key: 'file',
+              name: 'report.pdf',
+              contentType: 'application/pdf',
+              path: tempFilePath,
+            } as never,
           },
           'user-1',
         )
 
         expect(testFile.id).toBe('file-1')
-        expect(uploadFn).toHaveBeenCalledWith('test-archives', expect.stringMatching(/^tests\/\d{4}\/\d{2}\/.+\.pdf$/), tempFilePath, expect.any(Object))
+        expect(uploadFn).toHaveBeenCalledWith(
+          'test-archives',
+          expect.stringMatching(/^tests\/\d{4}\/\d{2}\/.+\.pdf$/),
+          tempFilePath,
+          expect.any(Object),
+        )
         expect(createFn).toHaveBeenCalledWith(
-          expect.objectContaining({ uploadedBy: 'user-1', originalFilename: 'report.pdf', fileSize: 16 }),
+          expect.objectContaining({
+            uploadedBy: 'user-1',
+            originalFilename: 'report.pdf',
+            fileSize: 16,
+          }),
         )
       }),
     )
@@ -131,7 +146,13 @@ describe('TestFilesService', () => {
             {
               testId: 'test-1',
               fileType: 'report',
-              file: { _tag: 'PersistedFile', key: 'file', name: 'report.pdf', contentType: 'application/pdf', path: tempFilePath } as never,
+              file: {
+                _tag: 'PersistedFile',
+                key: 'file',
+                name: 'report.pdf',
+                contentType: 'application/pdf',
+                path: tempFilePath,
+              } as never,
             },
             'user-1',
           ),
@@ -168,7 +189,9 @@ describe('TestFilesService', () => {
       { tests: { findOne: vi.fn(() => Effect.fail(new TestNotFound({ id: 'other-test' }))) } },
       Effect.gen(function* () {
         const service = yield* TestFilesService
-        const error = yield* Effect.flip(service.update('file-1', new UpdateTestFile({ testId: 'other-test' })))
+        const error = yield* Effect.flip(
+          service.update('file-1', new UpdateTestFile({ testId: 'other-test' })),
+        )
         expect(error).toBeInstanceOf(TestNotFound)
       }),
     ),
@@ -195,7 +218,11 @@ describe('TestFilesService', () => {
         const url = yield* service.presignedUrl('file-1', 3600)
 
         expect(url).toBe('https://minio.local/presigned')
-        expect(presignedUrlFn).toHaveBeenCalledWith('test-archives', 'tests/2026/01/123-abcdef.pdf', 3600)
+        expect(presignedUrlFn).toHaveBeenCalledWith(
+          'test-archives',
+          'tests/2026/01/123-abcdef.pdf',
+          3600,
+        )
       }),
     )
   })
@@ -220,7 +247,14 @@ describe('TestFilesService', () => {
     const repoRemoveFn = vi.fn(() => Effect.void)
 
     return runWithMocks(
-      { minio: { remove: vi.fn(() => Effect.fail(new MinioError({ operation: 'remove', cause: 'network error' }))) }, repo: { remove: repoRemoveFn } },
+      {
+        minio: {
+          remove: vi.fn(() =>
+            Effect.fail(new MinioError({ operation: 'remove', cause: 'network error' })),
+          ),
+        },
+        repo: { remove: repoRemoveFn },
+      },
       Effect.gen(function* () {
         const service = yield* TestFilesService
         const error = yield* Effect.flip(service.remove('file-1'))
@@ -235,7 +269,10 @@ describe('TestFilesService', () => {
     const minioRemoveFn = vi.fn(() => Effect.void)
 
     return runWithMocks(
-      { repo: { findById: vi.fn(() => Effect.succeed(Option.none())) }, minio: { remove: minioRemoveFn } },
+      {
+        repo: { findById: vi.fn(() => Effect.succeed(Option.none())) },
+        minio: { remove: minioRemoveFn },
+      },
       Effect.gen(function* () {
         const service = yield* TestFilesService
         const error = yield* Effect.flip(service.remove('missing-id'))

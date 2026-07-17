@@ -33,8 +33,6 @@ export class UpdateTestFile extends Schema.Class<UpdateTestFile>('UpdateTestFile
   expiresAt: Schema.optional(Schema.String),
 }) {}
 
-export class TestFileNotFound extends Schema.TaggedErrorClass<TestFileNotFound>('re-astr/TestFileNotFound')(
-  'TestFileNotFound',
-  { id: Schema.String },
-  { httpApiStatus: 404 },
-) {}
+export class TestFileNotFound extends Schema.TaggedErrorClass<TestFileNotFound>(
+  're-astr/TestFileNotFound',
+)('TestFileNotFound', { id: Schema.String }, { httpApiStatus: 404 }) {}

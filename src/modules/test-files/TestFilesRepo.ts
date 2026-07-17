@@ -10,7 +10,9 @@ export class TestFilesRepo extends Context.Service<
   {
     readonly create: (input: NewTestFile) => Effect.Effect<TestFileRow, EffectDrizzleQueryError>
     readonly findAll: (testId?: string) => Effect.Effect<TestFileRow[], EffectDrizzleQueryError>
-    readonly findById: (id: string) => Effect.Effect<Option.Option<TestFileRow>, EffectDrizzleQueryError>
+    readonly findById: (
+      id: string,
+    ) => Effect.Effect<Option.Option<TestFileRow>, EffectDrizzleQueryError>
     readonly update: (
       id: string,
       input: Partial<NewTestFile>,
@@ -29,18 +31,22 @@ export const TestFilesRepoLive = Layer.effect(
     })
 
     const findAll = Effect.fn('TestFilesRepo.findAll')(function* (testId?: string) {
-      return yield* (testId
+      return yield* testId
         ? db.select().from(testFiles).where(eq(testFiles.testId, testId))
-        : db.select().from(testFiles))
+        : db.select().from(testFiles)
     })
 
     const findById = Effect.fn('TestFilesRepo.findById')(function* (id: string) {
-      return yield* Effect.map(db.select().from(testFiles).where(eq(testFiles.id, id)).limit(1), ([row]) =>
-        Option.fromNullishOr(row),
+      return yield* Effect.map(
+        db.select().from(testFiles).where(eq(testFiles.id, id)).limit(1),
+        ([row]) => Option.fromNullishOr(row),
       )
     })
 
-    const update = Effect.fn('TestFilesRepo.update')(function* (id: string, input: Partial<NewTestFile>) {
+    const update = Effect.fn('TestFilesRepo.update')(function* (
+      id: string,
+      input: Partial<NewTestFile>,
+    ) {
       return yield* Effect.map(
         db
           .update(testFiles)

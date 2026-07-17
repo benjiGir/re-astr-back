@@ -10,7 +10,9 @@ export class CategoriesRepo extends Context.Service<
   {
     readonly create: (input: CreateCategory) => Effect.Effect<CategoryRow, EffectDrizzleQueryError>
     readonly findAll: () => Effect.Effect<CategoryRow[], EffectDrizzleQueryError>
-    readonly findById: (id: string) => Effect.Effect<Option.Option<CategoryRow>, EffectDrizzleQueryError>
+    readonly findById: (
+      id: string,
+    ) => Effect.Effect<Option.Option<CategoryRow>, EffectDrizzleQueryError>
     readonly update: (
       id: string,
       input: UpdateCategory,
@@ -46,12 +48,16 @@ export const CategoriesRepoLive = Layer.effect(
     })
 
     const findById = Effect.fn('CategoriesRepo.findById')(function* (id: string) {
-      return yield* Effect.map(db.select().from(categories).where(eq(categories.id, id)).limit(1), ([row]) =>
-        Option.fromNullishOr(row),
+      return yield* Effect.map(
+        db.select().from(categories).where(eq(categories.id, id)).limit(1),
+        ([row]) => Option.fromNullishOr(row),
       )
     })
 
-    const update = Effect.fn('CategoriesRepo.update')(function* (id: string, input: UpdateCategory) {
+    const update = Effect.fn('CategoriesRepo.update')(function* (
+      id: string,
+      input: UpdateCategory,
+    ) {
       return yield* Effect.map(
         db
           .update(categories)
@@ -59,7 +65,9 @@ export const CategoriesRepoLive = Layer.effect(
             ...(input.name !== undefined && { name: input.name }),
             ...(input.description !== undefined && { description: input.description }),
             ...(input.baseSchema !== undefined && { baseSchema: input.baseSchema }),
-            ...(input.customFieldsSchema !== undefined && { customFieldsSchema: input.customFieldsSchema }),
+            ...(input.customFieldsSchema !== undefined && {
+              customFieldsSchema: input.customFieldsSchema,
+            }),
           })
           .where(eq(categories.id, id))
           .returning(),

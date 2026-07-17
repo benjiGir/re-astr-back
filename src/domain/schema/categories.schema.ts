@@ -3,7 +3,9 @@ import { jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import type { BaseSchema, CustomFieldsSchema } from './CategoryFields.js'
 
 export const categories = pgTable('categories', {
-  id: text().primaryKey().default(sql`gen_random_uuid()`),
+  id: text()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
   baseSchema: jsonb('base_schema')

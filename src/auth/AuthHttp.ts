@@ -1,6 +1,12 @@
 import { Effect, Schema } from 'effect'
 import { HttpServerResponse } from 'effect/unstable/http'
-import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from 'effect/unstable/httpapi'
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiGroup,
+  HttpApiSchema,
+} from 'effect/unstable/httpapi'
 import type { Session } from '@/domain/schema/sessions.schema.js'
 import type { User } from '@/domain/schema/users.schema.js'
 import { Authorization } from '@/auth/Authorization.js'
@@ -66,7 +72,10 @@ export class MessageResponse extends Schema.Class<MessageResponse>('MessageRespo
 // Pick, not the full User/Session row — so this also accepts CurrentUser's
 // shape (a superset of these fields, plus session data of its own) for
 // getSession, not just the full rows Credentials.signUp/signIn return.
-type AuthUserFields = Pick<User, 'id' | 'email' | 'name' | 'emailVerified' | 'role' | 'createdAt' | 'updatedAt'>
+type AuthUserFields = Pick<
+  User,
+  'id' | 'email' | 'name' | 'emailVerified' | 'role' | 'createdAt' | 'updatedAt'
+>
 type AuthSessionFields = Pick<Session, 'id' | 'expiresAt' | 'token' | 'ipAddress' | 'userAgent'>
 
 const toAuthUser = (user: AuthUserFields): AuthUser =>
@@ -142,12 +151,18 @@ export const AuthGroupLive = HttpApiBuilder.group(AuthAllApi, 'auth', (handlers)
         path: '/',
         expires: result.session.expiresAt,
       })
-      return new AuthResponse({ user: toAuthUser(result.user), session: toAuthSessionInfo(result.session) })
+      return new AuthResponse({
+        user: toAuthUser(result.user),
+        session: toAuthSessionInfo(result.session),
+      })
     })
 
     return handlers
       .handle('signUp', ({ payload }) =>
-        Effect.andThen(credentials.signUp(payload.email, payload.password, payload.name), respondWithSession),
+        Effect.andThen(
+          credentials.signUp(payload.email, payload.password, payload.name),
+          respondWithSession,
+        ),
       )
       .handle('signIn', ({ payload }) =>
         Effect.andThen(credentials.signIn(payload.email, payload.password), respondWithSession),
@@ -191,7 +206,8 @@ export const AuthSessionGroupLive = HttpApiBuilder.group(AuthAllApi, 'authSessio
       .handle('getSession', () =>
         Effect.map(
           CurrentUser,
-          (user) => new AuthResponse({ user: toAuthUser(user), session: toAuthSessionInfo(user.session) }),
+          (user) =>
+            new AuthResponse({ user: toAuthUser(user), session: toAuthSessionInfo(user.session) }),
         ),
       )
   }),
