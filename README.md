@@ -7,7 +7,7 @@ Backend server for the RE-ASTR application (Automotive Software Testing Results)
 - [Tech Stack](#-tech-stack)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
-- [Configuration](#-configuration)
+- [Configuration](#️-configuration)
 - [Database](#️-database)
 - [Getting Started](#-getting-started)
 - [Project Structure](#-project-structure)
@@ -15,32 +15,32 @@ Backend server for the RE-ASTR application (Automotive Software Testing Results)
 - [Testing](#-testing)
 - [Logging](#-logging)
 - [API Documentation](#-api-documentation)
-- [Modules](#-modules)
+- [Modules](#️-modules)
 
 ## 🚀 Tech Stack
 
-- **Framework**: [NestJS](https://nestjs.com/) v11
-- **HTTP Adapter**: [Fastify](https://fastify.dev/) v5 (instead of Express for better performance)
+- **Runtime framework**: [Effect](https://effect.website/) v4 (beta) — services, layers, typed errors, and the `effect/unstable/http` `HttpApi` module for routing (no Express/Fastify/NestJS)
+- **HTTP server**: Node's built-in `http` server via `@effect/platform-node`
 - **Database**: PostgreSQL
-- **ORM**: [Drizzle ORM](https://orm.drizzle.team/) v0.44
-- **Authentication**: [Better Auth](https://www.better-auth.com/) v1.3
-- **Validation**: class-validator + class-transformer + Zod
-- **Logging**: [Pino](https://getpino.io/) v10 (high-performance JSON logger)
-- **API Documentation**: Swagger/OpenAPI
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team/) (via `@effect/sql-pg` + `drizzle-orm/effect-postgres`)
+- **Authentication**: custom cookie-based session auth (argon2 password hashing) — not Better Auth, despite the legacy cookie name kept for continuity
+- **Validation**: Effect `Schema`
+- **Logging**: custom Effect `Logger` (pretty console in dev, JSON in prod)
+- **API Documentation**: OpenAPI, rendered with Scalar
 - **File Storage**: MinIO (S3-compatible)
-- **Language**: TypeScript 5.9
+- **Language**: TypeScript
 - **Package Manager**: pnpm
-- **Testing**: Jest
+- **Testing**: Vitest + `@effect/vitest`
 - **Code Quality**: oxlint, oxfmt
 
 ## 📦 Prerequisites
 
 Before you begin, ensure you have installed:
 
-- **Node.js** >= 22.0.0
-- **pnpm** >= 8.0.0 (package manager)
+- **Node.js** >= 24.0.0
+- **pnpm**
 - **PostgreSQL** >= 14 (or Docker to use it via docker-compose)
-- **Docker** (optional, for MinIO)
+- **Docker** (optional, for MinIO and/or the full stack)
 
 ### Installing pnpm
 
@@ -83,40 +83,23 @@ cp .env.example .env
 
 ### 2. Configure environment variables
 
-Edit the `.env` file with your values:
+| Variable | Default | Notes |
+|---|---|---|
+| `DATABASE_URL` | — (required) | PostgreSQL connection string |
+| `COOKIE_SECRET` | — (required) | HMAC key signing the session cookie; boot fails loudly if missing, by design |
+| `AUTH_SESSION_EXPIRES` | `604800` (7d, seconds) | |
+| `AUTH_SESSION_UPDATE_AGE` | `86400` (1d, seconds) | reserved for a session-refresh feature, not yet wired into the auth flow |
+| `NODE_ENV` | `development` | `development` \| `production` \| `test` |
+| `LOG_LEVEL` | `Info` (prod) / `Debug` (else) | `All`\|`Fatal`\|`Error`\|`Warn`\|`Info`\|`Debug`\|`Trace`\|`None` (case-sensitive) |
+| `PORT` | `3000` | HTTP server port |
+| `CORS_ORIGIN` | `http://localhost:5173` | not present in `.env.example`, override if your frontend runs elsewhere |
+| `MINIO_ENDPOINT` | `localhost` | |
+| `MINIO_PORT` | `9000` | |
+| `MINIO_USE_SSL` | `false` | |
+| `MINIO_ACCESS_KEY` | — (required) | |
+| `MINIO_SECRET_KEY` | — (required) | |
 
-```env
-# PostgreSQL Database
-DATABASE_URL="postgresql://username:password@localhost:5432/re-astr"
-
-# Better Auth - Secrets for authentication
-BETTER_AUTH_SECRET="your-secret-key-here-replace-in-production"
-COOKIE_SECRET="your-cookie-secret-key-here"
-
-# Session Configuration (optional - default values available)
-AUTH_SESSION_EXPIRES="604800"    # 7 days in seconds
-AUTH_SESSION_UPDATE_AGE="86400"  # 1 day in seconds
-
-# Email/Password Auth (optional - enabled by default)
-AUTH_EMAIL_PASSWORD_ENABLED="true"
-AUTH_REQUIRE_EMAIL_VERIFICATION="false"
-
-# CORS (optional)
-AUTH_CORS_ORIGIN="true"
-AUTH_CORS_CREDENTIALS="true"
-
-# Application
-BASE_URL="http://localhost:3000"
-NODE_ENV="development"
-
-# MinIO Storage (S3-compatible)
-MINIO_ENDPOINT="localhost"
-MINIO_PORT="9000"
-MINIO_USE_SSL="false"
-MINIO_ACCESS_KEY="minioadmin"
-MINIO_SECRET_KEY="minioadmin"
-MINIO_DEFAULT_BUCKET="uploads"
-```
+`MINIO_DEFAULT_BUCKET` also appears in `.env.example` but isn't read by any code path — bucket names are set per file record instead (see [Modules](#️-modules)).
 
 ### 3. Create PostgreSQL database
 
@@ -149,11 +132,11 @@ MinIO will be accessible at:
 
 ## 🗄️ Database
 
-The project uses **Drizzle ORM** with automatic migrations.
+The project uses **Drizzle ORM** with SQL migrations tracked in `/drizzle`.
 
 ### Generate migrations
 
-After modifying schemas in `/src/database/schema/`:
+After modifying schemas in `/src/domain/schema/`:
 
 ```bash
 pnpm run db:generate
@@ -185,6 +168,12 @@ pnpm run db:studio
 
 Drizzle Studio will be accessible at: http://localhost:4983
 
+### Seed data
+
+```bash
+pnpm run db:seed
+```
+
 ## 🚀 Getting Started
 
 ### Option 1: Docker (Recommended for quick start)
@@ -215,12 +204,10 @@ docker-compose up -d
 
 Access:
 - **API**: http://localhost:3000
-- **Swagger**: http://localhost:3000/docs
+- **API docs**: http://localhost:3000/docs
 - **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
 
 ### Option 2: Local Development
-
-### Development mode (recommended)
 
 Start the server with automatic reload (watch mode):
 
@@ -240,45 +227,35 @@ pnpm run build
 pnpm run start:prod
 ```
 
-### Debug mode
-
-To debug with the Node.js debugger:
-
-```bash
-pnpm run start:debug
-```
-
 ## 📁 Project Structure
 
 ```
 re-astr/
 ├── src/
-│   ├── modules/           # Feature modules
-│   │   ├── projects/      # Projects management (container for tests)
-│   │   ├── categories/    # Test categories management
-│   │   ├── tests/         # Tests management
-│   │   │   └── test-files/# Test file uploads (MinIO-backed)
-│   │   └── users/         # Users management
-│   ├── auth/              # Authentication module (Better Auth)
-│   ├── health/            # Liveness/readiness checks
-│   ├── storage/minio/     # MinIO (S3-compatible) file storage
-│   ├── database/          # Drizzle ORM configuration
-│   │   └── schema/        # Database schemas
-│   ├── common/            # Shared utilities (logger, validation, decorators)
-│   ├── config/            # Application configuration
-│   ├── utils/             # Utility functions
-│   ├── app.module.ts      # Root module
-│   └── main.ts            # Entry point (Fastify setup)
-├── test/                  # E2E tests
-├── drizzle/               # Generated migrations
-├── dist/                  # Production build
-├── .env                   # Environment variables (not versioned)
-├── .env.example           # Configuration template
-├── docker-compose.yml     # Docker configuration (MinIO)
-├── drizzle.config.ts      # Drizzle configuration
-├── jest.config.ts         # Jest configuration
-├── tsconfig.json          # TypeScript configuration
-└── package.json           # Dependencies and scripts
+│   ├── modules/            # Feature modules
+│   │   ├── categories/     # Test categories management
+│   │   ├── projects/       # Projects management (container for tests)
+│   │   ├── test-files/     # Test file uploads (MinIO-backed)
+│   │   ├── tests/          # Tests management
+│   │   └── users/          # Users management
+│   ├── auth/               # Cookie-based session auth, roles, guards
+│   ├── domain/schema/      # Drizzle table definitions
+│   ├── infra/              # Config, Database, Logger, Minio layers
+│   ├── common/             # Shared utilities (schema validation, etc.)
+│   ├── Api.ts              # Assembles all HttpApiGroups + the health group
+│   ├── main.ts             # Entry point (HTTP server bootstrap)
+│   └── Seed.ts             # Database seed script
+├── drizzle/                # Generated SQL migrations
+├── dist/                   # Production build
+├── .env                    # Environment variables (not versioned)
+├── .env.example            # Configuration template
+├── docker-compose.yml      # Full stack (app + Postgres + MinIO)
+├── docker-compose.dev.yml  # Dependencies only (Postgres + MinIO)
+├── docker-helper.sh        # Wrapper around the compose files above
+├── drizzle.config.ts       # Drizzle-kit configuration
+├── vitest.config.ts        # Vitest configuration
+├── tsconfig.json           # TypeScript configuration
+└── package.json            # Dependencies and scripts
 ```
 
 ## 📜 Available Scripts
@@ -287,9 +264,7 @@ re-astr/
 
 ```bash
 pnpm run start:dev     # Start in watch mode (automatic reload)
-pnpm run start         # Start normally
-pnpm run start:debug   # Start with debugger
-pnpm run start:prod    # Start in production
+pnpm run start:prod    # Start in production (runs dist/main.js)
 ```
 
 ### Build
@@ -305,28 +280,31 @@ pnpm run db:generate   # Generate Drizzle migrations
 pnpm run db:migrate    # Apply migrations
 pnpm run db:push       # Direct schema push (dev only)
 pnpm run db:studio     # Open Drizzle Studio (GUI)
+pnpm run db:seed       # Seed the database
 ```
 
 ### Testing
 
 ```bash
-pnpm run test          # Run unit tests
+pnpm run test          # Run all tests
 pnpm run test:watch    # Tests in watch mode
 pnpm run test:cov      # Tests with code coverage
-pnpm run test:debug    # Tests with debugger
-pnpm run test:e2e      # End-to-end tests
 ```
 
 ### Code Quality
 
 ```bash
 pnpm run lint          # Lint with oxlint (auto-fix)
+pnpm run lint:check    # Lint with oxlint (no fix, CI mode)
 pnpm run format        # Format with oxfmt
+pnpm run format:check  # Format check (no write, CI mode)
+pnpm run check         # format + lint --fix
+pnpm run check:ci      # format:check + lint:check
 ```
 
 ## 🧪 Testing
 
-The project uses **Jest** for unit and E2E tests.
+The project uses **Vitest** with **`@effect/vitest`** for unit tests.
 
 ### Run all tests
 
@@ -348,55 +326,56 @@ pnpm test:cov
 
 The coverage report will be generated in `/coverage/`.
 
-### E2E Tests
-
-```bash
-pnpm test:e2e
-```
-
 ### Naming conventions
 
-- Unit tests: `*.spec.ts` (next to the tested file)
-- E2E tests: in the `/test/` folder
-- Mock data: `*.mock.ts`
+- Tests: `*.spec.ts`, colocated next to the tested file (`vitest.config.ts` includes `src/**/*.spec.ts`)
+- There is no separate `test/`/`e2e/` folder — everything currently lives as colocated specs
+
+### Effect test pattern
+
+Import `describe`/`expect`/`it` from `@effect/vitest` instead of `vitest`, and run the test body as an Effect via `it.effect`:
+
+```typescript
+import { describe, expect, it } from '@effect/vitest'
+import { Effect } from 'effect'
+
+describe('CategoriesService', () => {
+  it.effect('creates a category', () =>
+    Effect.gen(function* () {
+      const service = yield* CategoriesService
+      const category = yield* service.create(/* ... */)
+      expect(category.id).toBeDefined()
+    }),
+  )
+})
+```
+
+Dependencies are satisfied with `Effect.provideService`/test layers rather than mocking frameworks.
 
 ## 📊 Logging
 
-The application uses **Pino**, a high-performance JSON logger optimized for Node.js and Fastify.
+The application uses a small custom `Logger` (`src/infra/Logger.ts`) built on Effect's `Logger` API — there is no Pino/nestjs-pino dependency.
 
 ### Features
 
-- **Ultra-fast performance** - Asynchronous logging with minimal overhead
-- **Structured JSON logs** - Easy to parse and analyze in production
-- **Pretty-printing in development** - Colorized, human-readable output
-- **Automatic HTTP request logging** - All requests are logged with context
-- **Sensitive data redaction** - Passwords, tokens, and cookies are automatically redacted
-- **Context-aware** - Each log includes service name, request ID, and user ID
+- **Two formats**: colorized single-line output in development, structured JSON (one line per entry) in production — picked automatically from `NODE_ENV`
+- **Sensitive data redaction** — `authorization`, `cookie`, `set-cookie`, `password`, and related annotation keys are redacted before printing
+- **Annotation-based context** — attach structured data with `Effect.annotateLogs` instead of a logger instance per class
 
 ### Quick Start
 
-Inject `PinoLogger` into your service:
-
 ```typescript
-import { Injectable } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
+import { Effect } from 'effect'
 
-@Injectable()
-export class MyService {
-  constructor(private readonly logger: PinoLogger) {
-    this.logger.setContext(MyService.name);
-  }
+const program = Effect.gen(function* () {
+  // Structured logging via annotations
+  yield* Effect.logInfo('User created item').pipe(Effect.annotateLogs({ userId: '123' }))
 
-  async doSomething() {
-    // Structured logging (recommended)
-    this.logger.info({ userId: '123', action: 'create' }, 'User created item');
-
-    // Different log levels
-    this.logger.debug('Detailed debug information');
-    this.logger.warn({ threshold: 90 }, 'Approaching rate limit');
-    this.logger.error({ error: err.message }, 'Operation failed');
-  }
-}
+  // Different log levels
+  yield* Effect.logDebug('Detailed debug information')
+  yield* Effect.logWarning('Approaching rate limit').pipe(Effect.annotateLogs({ threshold: 90 }))
+  yield* Effect.logError('Operation failed')
+})
 ```
 
 ### Configuration
@@ -405,97 +384,86 @@ Log level can be controlled via environment variable:
 
 ```bash
 # Set in .env
-LOG_LEVEL=debug  # trace, debug, info, warn, error, fatal
+LOG_LEVEL=Debug  # All, Fatal, Error, Warn, Info, Debug, Trace, None
 ```
 
-- **Development**: Logs are pretty-printed in color
+- **Development**: Logs are pretty-printed in color (`[HH:MM:SS.mmm] Level message {annotations}`)
 - **Production**: Logs are output as JSON (one line per entry)
-
-### Complete Documentation
-
-For detailed logging guidelines, best practices, and examples, see [LOGGER.md](.claude/LOGGER.md).
 
 ## 📚 API Documentation
 
-The interactive API documentation is automatically generated with **Swagger/OpenAPI**.
+The interactive API documentation is generated from the `HttpApi` definition (`src/Api.ts`) and rendered with **Scalar**.
 
 Once the server is started, access:
 
 **http://localhost:3000/docs**
 
-You'll find:
-- Complete list of endpoints
-- Request/response schemas
-- Ability to test APIs directly
-
 ## 🏗️ Modules
 
-The project is organized into NestJS modules:
+Each feature module under `src/modules/<name>/` follows the same four-file layering:
+
+- `<Entity>.ts` — domain layer: Effect `Schema.Class` DTOs and `Schema.TaggedErrorClass` domain errors, independent of Drizzle/HTTP
+- `<Module>Repo.ts` — `Context.Service` wrapping raw Drizzle queries against the table
+- `<Module>Service.ts` — business logic: calls the repo, maps DB constraint errors to domain errors, logs via `Effect.logInfo`
+- `<Module>Http.ts` — `HttpApiGroup` route declarations and handlers, calling the service
+
+All routes below are behind the `Authorization` middleware (must be signed in); required roles are noted where a route enforces one on top of that. Role hierarchy, low to high: `user` < `contributor` < `archivist` < `master`.
+
+### `auth` - Authentication
+
+Cookie-based session auth with argon2 password hashing (`src/auth/`).
+
+- `POST /auth/sign-up/email` — register (no session required)
+- `POST /auth/sign-in/email` — log in (no session required)
+- `POST /auth/forgot-password` — request a password-reset token (no session required)
+- `POST /auth/reset-password` — consume a reset token (no session required)
+- `POST /auth/sign-out` — invalidate the current session
+- `GET /auth/get-session` — return the current session/user
+
+### `health` - Health Checks
+
+Defined directly in `src/Api.ts`, not under `modules/`.
+
+- `GET /health` — liveness, always 200
+- `GET /health/ready` — readiness, checks the database connection
 
 ### `projects` - Projects Management
 
 Top-level container that tests belong to (`tests.projectId` is a required FK).
 
-**Main endpoints**:
-- `GET /projects` - List all projects
-- `GET /projects/:id` - Get a project
-- `POST /projects` - Create a project
-- `PATCH /projects/:id` - Update a project
-- `DELETE /projects/:id` - Delete a project
+- `GET /projects` / `GET /projects/:id`
+- `POST /projects` — requires role `contributor`
+- `PATCH /projects/:id` / `DELETE /projects/:id` — require role `archivist`
 
 ### `categories` - Categories Management
 
-Management of test categories with custom validation schemas (Zod).
+Categories carry a JSON schema (`baseSchema`/`customFieldsSchema`) used to validate a test's `commonData`/`customData`.
 
-**Main endpoints**:
-- `GET /categories` - List all categories
-- `GET /categories/:id` - Get a category
-- `POST /categories` - Create a category
-- `PATCH /categories/:id` - Update a category
-- `DELETE /categories/:id` - Delete a category
+- `GET /categories` / `GET /categories/:id`
+- `POST /categories` — requires role `contributor`
+- `PATCH /categories/:id` / `DELETE /categories/:id` — require role `archivist`
 
 ### `tests` - Tests Management
 
-Management of tests with relationships to categories and files.
-
-**Main endpoints**:
-- `GET /tests` - List all tests
-- `GET /tests/:id` - Get a test
-- `POST /tests` - Create a test
-- `PATCH /tests/:id` - Update a test
-- `DELETE /tests/:id` - Delete a test
+- `GET /tests` (optional `?categoryId=`) / `GET /tests/:id`
+- `POST /tests` — requires role `contributor`
+- `PATCH /tests/:id` — requires role `contributor`
+- `DELETE /tests/:id` — requires role `archivist`
 
 ### `test-files` - Test File Management
 
-File uploads attached to a test (screenshots, reports, docs), backed by MinIO (S3-compatible storage).
+File uploads attached to a test (screenshots, reports, docs), backed by MinIO.
 
-**Main endpoints**:
-- `POST /test-files/upload` - Upload a file (multipart)
-- `GET /test-files?testId=` - List files for a test
-- `GET /test-files/:id/download` - Download a file
-- `GET /test-files/:id/presigned-url` - Get a temporary direct-access URL
-- `DELETE /test-files/:id` - Delete a file
+- `GET /test-files` (optional `?testId=`) / `GET /test-files/:id`
+- `POST /test-files/upload` — multipart upload, max 50MB, requires role `contributor`
+- `PATCH /test-files/:id` — requires role `contributor`
+- `GET /test-files/:id/download` — streams the file
+- `GET /test-files/:id/presigned-url` (optional `?expirySeconds=`, default 3600)
+- `DELETE /test-files/:id` — requires role `archivist`
 
 ### `users` - Users Management
 
-User management with role-based system (RBAC).
-
-**Main endpoints**:
-- `GET /users` - List all users
-- `GET /users/:id` - Get a user
-- `PATCH /users/:id` - Update a user
-- `DELETE /users/:id` - Delete a user
-
-### `auth` - Authentication
-
-Authentication module based on **Better Auth** with:
-- Email/password registration and login
-- Session management
-- Route protection via guards
-- Role system (Admin, User, Viewer)
-
-**Main endpoints**:
-- `POST /api/auth/sign-up` - Registration
-- `POST /api/auth/sign-in` - Login
-- `POST /api/auth/sign-out` - Logout
-- `GET /api/auth/session` - Current session
+- `GET /users` / `GET /users/:id`
+- `PATCH /users/:id` — self, or role `master`
+- `PATCH /users/:id/role` — requires role `master`
+- `DELETE /users/:id` — requires role `master`
