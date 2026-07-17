@@ -40,8 +40,8 @@ const HealthGroup = HttpApiGroup.make('health')
     }),
   )
 
-// Storage (Minio) is wired below (Phase 4) but /health/ready still only checks the
-// database — a Minio check would need Minio as a dependency of the health group too;
+// Storage is wired below (Phase 4) but /health/ready still only checks the
+// database — a Storage check would need Storage as a dependency of the health group too;
 // left out deliberately to keep this phase scoped to test-files, not the health system.
 export class Api extends HttpApi.make('re-astr')
   .add(HealthGroup)

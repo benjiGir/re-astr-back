@@ -36,12 +36,12 @@ export const CorsConfig = {
   allowedOrigin: Config.string('CORS_ORIGIN').pipe(Config.withDefault('http://localhost:5173')),
 }
 
-export const MinioConfig = {
-  endPoint: Config.string('MINIO_ENDPOINT').pipe(Config.withDefault('localhost')),
-  port: Config.int('MINIO_PORT').pipe(Config.withDefault(9000)),
-  useSSL: Config.boolean('MINIO_USE_SSL').pipe(Config.withDefault(false)),
-  accessKey: Config.redacted('MINIO_ACCESS_KEY'),
-  secretKey: Config.redacted('MINIO_SECRET_KEY'),
+/** Garage (or any S3-compatible backend) has no real region — value is required by the SDK but unused. */
+export const StorageConfig = {
+  endpoint: Config.string('STORAGE_ENDPOINT').pipe(Config.withDefault('http://localhost:3900')),
+  region: Config.string('STORAGE_REGION').pipe(Config.withDefault('garage')),
+  accessKeyId: Config.redacted('STORAGE_ACCESS_KEY_ID'),
+  secretAccessKey: Config.redacted('STORAGE_SECRET_ACCESS_KEY'),
 }
 
 /**

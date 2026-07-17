@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, it, vi } from '@effect/vitest'
 import { Effect, Layer, Option, Stream } from 'effect'
 import type { TestFile as TestFileRow } from '@/domain/schema/test-files.schema.js'
-import { Minio, MinioError } from '@/infra/Minio.js'
+import { Storage, StorageError } from '@/infra/Storage.js'
 import { TestFileNotFound, UpdateTestFile } from '@/modules/test-files/TestFile.js'
 import { TestFilesRepo } from '@/modules/test-files/TestFilesRepo.js'
 import { TestFilesService, TestFilesServiceLive } from '@/modules/test-files/TestFilesService.js'
@@ -69,10 +69,10 @@ const makeMockTestsService = (overrides: Partial<typeof TestsService.Service> = 
   ...overrides,
 })
 
-const makeMockMinio = (overrides: Partial<typeof Minio.Service> = {}) => ({
+const makeMockStorage = (overrides: Partial<typeof Storage.Service> = {}) => ({
   upload: vi.fn(() => Effect.succeed({ etag: 'etag-1' })),
   download: vi.fn(() => Effect.succeed(Stream.make(new Uint8Array([1, 2, 3])))),
-  presignedUrl: vi.fn(() => Effect.succeed('https://minio.local/presigned')),
+  presignedUrl: vi.fn(() => Effect.succeed('https://storage.local/presigned')),
   remove: vi.fn(() => Effect.void),
   ...overrides,
 })
@@ -81,7 +81,7 @@ const runWithMocks = <A, E>(
   mocks: {
     repo?: Partial<typeof TestFilesRepo.Service>
     tests?: Partial<typeof TestsService.Service>
-    minio?: Partial<typeof Minio.Service>
+    storage?: Partial<typeof Storage.Service>
   },
   effect: Effect.Effect<A, E, TestFilesService>,
 ) =>
@@ -90,17 +90,17 @@ const runWithMocks = <A, E>(
     TestFilesServiceLive.pipe(
       Layer.provide(Layer.succeed(TestFilesRepo, makeMockRepo(mocks.repo))),
       Layer.provide(Layer.succeed(TestsService, makeMockTestsService(mocks.tests))),
-      Layer.provide(Layer.succeed(Minio, makeMockMinio(mocks.minio))),
+      Layer.provide(Layer.succeed(Storage, makeMockStorage(mocks.storage))),
     ),
   )
 
 describe('TestFilesService', () => {
-  it.effect('upload computes the checksum, uploads to MinIO, and stamps uploadedBy', () => {
+  it.effect('upload computes the checksum, uploads to storage, and stamps uploadedBy', () => {
     const uploadFn = vi.fn(() => Effect.succeed({ etag: 'etag-1' }))
     const createFn = vi.fn(() => Effect.succeed(mockRow))
 
     return runWithMocks(
-      { minio: { upload: uploadFn }, repo: { create: createFn } },
+      { storage: { upload: uploadFn }, repo: { create: createFn } },
       Effect.gen(function* () {
         const service = yield* TestFilesService
         const testFile = yield* service.upload(
@@ -208,16 +208,16 @@ describe('TestFilesService', () => {
     ),
   )
 
-  it.effect('presignedUrl delegates to Minio with the stored bucket/objectKey', () => {
-    const presignedUrlFn = vi.fn(() => Effect.succeed('https://minio.local/presigned'))
+  it.effect('presignedUrl delegates to storage with the stored bucket/objectKey', () => {
+    const presignedUrlFn = vi.fn(() => Effect.succeed('https://storage.local/presigned'))
 
     return runWithMocks(
-      { minio: { presignedUrl: presignedUrlFn } },
+      { storage: { presignedUrl: presignedUrlFn } },
       Effect.gen(function* () {
         const service = yield* TestFilesService
         const url = yield* service.presignedUrl('file-1', 3600)
 
-        expect(url).toBe('https://minio.local/presigned')
+        expect(url).toBe('https://storage.local/presigned')
         expect(presignedUrlFn).toHaveBeenCalledWith(
           'test-archives',
           'tests/2026/01/123-abcdef.pdf',
@@ -228,16 +228,19 @@ describe('TestFilesService', () => {
   })
 
   it.effect('remove deletes from storage then the DB row', () => {
-    const minioRemoveFn = vi.fn(() => Effect.void)
+    const storageRemoveFn = vi.fn(() => Effect.void)
     const repoRemoveFn = vi.fn(() => Effect.void)
 
     return runWithMocks(
-      { minio: { remove: minioRemoveFn }, repo: { remove: repoRemoveFn } },
+      { storage: { remove: storageRemoveFn }, repo: { remove: repoRemoveFn } },
       Effect.gen(function* () {
         const service = yield* TestFilesService
         yield* service.remove('file-1')
 
-        expect(minioRemoveFn).toHaveBeenCalledWith('test-archives', 'tests/2026/01/123-abcdef.pdf')
+        expect(storageRemoveFn).toHaveBeenCalledWith(
+          'test-archives',
+          'tests/2026/01/123-abcdef.pdf',
+        )
         expect(repoRemoveFn).toHaveBeenCalledWith('file-1')
       }),
     )
@@ -248,9 +251,9 @@ describe('TestFilesService', () => {
 
     return runWithMocks(
       {
-        minio: {
+        storage: {
           remove: vi.fn(() =>
-            Effect.fail(new MinioError({ operation: 'remove', cause: 'network error' })),
+            Effect.fail(new StorageError({ operation: 'remove', cause: 'network error' })),
           ),
         },
         repo: { remove: repoRemoveFn },
@@ -259,26 +262,26 @@ describe('TestFilesService', () => {
         const service = yield* TestFilesService
         const error = yield* Effect.flip(service.remove('file-1'))
 
-        expect(error).toBeInstanceOf(MinioError)
+        expect(error).toBeInstanceOf(StorageError)
         expect(repoRemoveFn).not.toHaveBeenCalled()
       }),
     )
   })
 
   it.effect('remove fails with TestFileNotFound and never touches storage', () => {
-    const minioRemoveFn = vi.fn(() => Effect.void)
+    const storageRemoveFn = vi.fn(() => Effect.void)
 
     return runWithMocks(
       {
         repo: { findById: vi.fn(() => Effect.succeed(Option.none())) },
-        minio: { remove: minioRemoveFn },
+        storage: { remove: storageRemoveFn },
       },
       Effect.gen(function* () {
         const service = yield* TestFilesService
         const error = yield* Effect.flip(service.remove('missing-id'))
 
         expect(error).toBeInstanceOf(TestFileNotFound)
-        expect(minioRemoveFn).not.toHaveBeenCalled()
+        expect(storageRemoveFn).not.toHaveBeenCalled()
       }),
     )
   })

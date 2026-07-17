@@ -11,7 +11,7 @@ import {
 import { Authorization } from '@/auth/Authorization.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
 import { requireRole } from '@/auth/Role.js'
-import { MinioError } from '@/infra/Minio.js'
+import { StorageError } from '@/infra/Storage.js'
 import {
   TestFile,
   TestFileNotFound,
@@ -49,7 +49,7 @@ export const TestFilesGroup = HttpApiGroup.make('test-files')
     HttpApiEndpoint.post('upload', '/test-files/upload', {
       payload: UploadTestFile,
       success: TestFile.pipe(HttpApiSchema.status(201)),
-      error: [TestNotFound, MinioError, HttpApiError.Forbidden],
+      error: [TestNotFound, StorageError, HttpApiError.Forbidden],
     }),
   )
   .add(
@@ -78,7 +78,7 @@ export const TestFilesGroup = HttpApiGroup.make('test-files')
     HttpApiEndpoint.get('download', '/test-files/:id/download', {
       params: { id: Schema.String },
       success: HttpApiSchema.StreamUint8Array(),
-      error: [TestFileNotFound, MinioError],
+      error: [TestFileNotFound, StorageError],
     }),
   )
   .add(
@@ -86,13 +86,13 @@ export const TestFilesGroup = HttpApiGroup.make('test-files')
       params: { id: Schema.String },
       query: { expirySeconds: Schema.optional(Schema.NumberFromString) },
       success: PresignedUrlResponse,
-      error: [TestFileNotFound, MinioError],
+      error: [TestFileNotFound, StorageError],
     }),
   )
   .add(
     HttpApiEndpoint.delete('remove', '/test-files/:id', {
       params: { id: Schema.String },
-      error: [TestFileNotFound, MinioError, HttpApiError.Forbidden],
+      error: [TestFileNotFound, StorageError, HttpApiError.Forbidden],
     }),
   )
   .middleware(Authorization)

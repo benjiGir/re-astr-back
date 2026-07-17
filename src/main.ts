@@ -12,7 +12,7 @@ import { CredentialsRepoLive } from '@/auth/CredentialsRepo.js'
 import { AppConfig, CorsConfig, ServerConfig, SessionConfig } from '@/infra/Config.js'
 import { DatabaseLive } from '@/infra/Database.js'
 import { LoggerLive } from '@/infra/Logger.js'
-import { MinioLive } from '@/infra/Minio.js'
+import { StorageLive } from '@/infra/Storage.js'
 import { TelemetryLive } from '@/infra/Telemetry.js'
 import { CategoriesGroupLive } from '@/modules/categories/CategoriesHttp.js'
 import { CategoriesRepoLive } from '@/modules/categories/CategoriesRepo.js'
@@ -71,7 +71,7 @@ const UsersInfra = UsersServiceLive.pipe(Layer.provide(UsersRepoLive))
 // service still find it (see docs/EFFECT_MIGRATION.md §9 — mergeAll alone
 // does NOT let siblings satisfy each other's requirements). Chain keeps
 // growing the same way: TestFilesInfra needs TestsService (test existence
-// checks) and Minio, so TestsInfra moves out to provideMerge too, alongside
+// checks) and Storage, so TestsInfra moves out to provideMerge too, alongside
 // Projects/CategoriesInfra it already needed.
 const Infra = Layer.mergeAll(
   LoggerLive,
@@ -84,7 +84,7 @@ const Infra = Layer.mergeAll(
   Layer.provideMerge(TestsInfra),
   Layer.provideMerge(ProjectsInfra),
   Layer.provideMerge(CategoriesInfra),
-  Layer.provideMerge(MinioLive),
+  Layer.provideMerge(StorageLive),
   Layer.provideMerge(DatabaseLive),
   Layer.provideMerge(SessionConfig.Live),
   Layer.provideMerge(AppConfig.Live),

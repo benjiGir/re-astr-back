@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { Context, Effect, Layer, Option, Stream } from 'effect'
 import type { Multipart } from 'effect/unstable/http'
-import { Minio, MinioError } from '@/infra/Minio.js'
+import { Storage, StorageError } from '@/infra/Storage.js'
 import {
   TestFile,
   TestFileNotFound,
@@ -29,7 +29,7 @@ export class TestFilesService extends Context.Service<
     readonly upload: (
       input: UploadTestFileInput,
       userId: string,
-    ) => Effect.Effect<TestFile, TestNotFound | MinioError>
+    ) => Effect.Effect<TestFile, TestNotFound | StorageError>
     readonly findAll: (testId?: string) => Effect.Effect<TestFile[], TestNotFound>
     readonly findOne: (id: string) => Effect.Effect<TestFile, TestFileNotFound>
     readonly update: (
@@ -39,14 +39,14 @@ export class TestFilesService extends Context.Service<
     readonly download: (
       id: string,
     ) => Effect.Effect<
-      { readonly stream: Stream.Stream<Uint8Array, MinioError>; readonly testFile: TestFile },
-      TestFileNotFound | MinioError
+      { readonly stream: Stream.Stream<Uint8Array, StorageError>; readonly testFile: TestFile },
+      TestFileNotFound | StorageError
     >
     readonly presignedUrl: (
       id: string,
       expirySeconds: number,
-    ) => Effect.Effect<string, TestFileNotFound | MinioError>
-    readonly remove: (id: string) => Effect.Effect<void, TestFileNotFound | MinioError>
+    ) => Effect.Effect<string, TestFileNotFound | StorageError>
+    readonly remove: (id: string) => Effect.Effect<void, TestFileNotFound | StorageError>
   }
 >()('TestFilesService') {}
 
@@ -55,7 +55,7 @@ export const TestFilesServiceLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* TestFilesRepo
     const testsService = yield* TestsService
-    const minio = yield* Minio
+    const storage = yield* Storage
 
     const findOne = Effect.fn('TestFilesService.findOne')(function* (id: string) {
       return yield* repo.findById(id).pipe(
@@ -87,7 +87,7 @@ export const TestFilesServiceLive = Layer.effect(
       const month = String(now.getMonth() + 1).padStart(2, '0')
       const objectKey = `tests/${now.getFullYear()}/${month}/${storedFilename}`
 
-      yield* minio.upload(BUCKET, objectKey, input.file.path, {
+      yield* storage.upload(BUCKET, objectKey, input.file.path, {
         'content-type': input.file.contentType,
         'original-filename': input.file.name,
       })
@@ -162,7 +162,7 @@ export const TestFilesServiceLive = Layer.effect(
 
     const download = Effect.fn('TestFilesService.download')(function* (id: string) {
       const testFile = yield* findOne(id)
-      const stream = yield* minio.download(testFile.bucketName, testFile.objectKey)
+      const stream = yield* storage.download(testFile.bucketName, testFile.objectKey)
       return { stream, testFile }
     })
 
@@ -171,18 +171,18 @@ export const TestFilesServiceLive = Layer.effect(
       expirySeconds: number,
     ) {
       const testFile = yield* findOne(id)
-      return yield* minio.presignedUrl(testFile.bucketName, testFile.objectKey, expirySeconds)
+      return yield* storage.presignedUrl(testFile.bucketName, testFile.objectKey, expirySeconds)
     })
 
     // Storage delete runs before the DB row does, and its failure is NOT
-    // swallowed: if MinIO can't delete the object, the row stays so the API
+    // swallowed: if storage can't delete the object, the row stays so the API
     // still reflects reality and the delete can be retried. The old service
     // deleted the row regardless, console.error-ing storage failures —
-    // silently orphaning objects in MinIO with nothing left pointing at them.
+    // silently orphaning objects in storage with nothing left pointing at them.
     const remove = Effect.fn('TestFilesService.remove')(function* (id: string) {
       const testFile = yield* findOne(id)
 
-      yield* minio
+      yield* storage
         .remove(testFile.bucketName, testFile.objectKey)
         .pipe(
           Effect.tapError((error) =>

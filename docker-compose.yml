@@ -20,25 +20,21 @@ services:
     networks:
       - re-astr-network
 
-  minio:
-    image: minio/minio:latest
-    container_name: re-astr-minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+  garage:
+    image: dxflrs/garage:v2.3.0
+    container_name: re-astr-garage
     volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - garage_meta:/data/meta
+      - garage_data:/data/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - re-astr-network
+    restart: unless-stopped
 
   app:
     build:
@@ -55,15 +51,14 @@ services:
       # `:-change-me-in-production` fallback here would silently defeat that
       # at the compose layer (the original bug this was meant to fix).
       COOKIE_SECRET: ${COOKIE_SECRET:?COOKIE_SECRET must be set}
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: 9000
-      MINIO_USE_SSL: "false"
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      STORAGE_ENDPOINT: http://garage:3900
+      STORAGE_REGION: garage
+      STORAGE_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID must be set}
+      STORAGE_SECRET_ACCESS_KEY: ${STORAGE_SECRET_ACCESS_KEY:?STORAGE_SECRET_ACCESS_KEY must be set}
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
+      garage:
         condition: service_healthy
     networks:
       - re-astr-network
