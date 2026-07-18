@@ -36,6 +36,13 @@ export const CorsConfig = {
   allowedOrigin: Config.string('CORS_ORIGIN').pipe(Config.withDefault('http://localhost:5173')),
 }
 
+/** Full OTLP traces path, not just a host — the exporter sends the url as-is, it doesn't append `/v1/traces` itself. */
+export const TelemetryConfig = {
+  otlpEndpoint: Config.string('TELEMETRY_OTLP_ENDPOINT').pipe(
+    Config.withDefault('http://localhost:4318/v1/traces'),
+  ),
+}
+
 /** Garage (or any S3-compatible backend) has no real region — value is required by the SDK but unused. */
 export const StorageConfig = {
   endpoint: Config.string('STORAGE_ENDPOINT').pipe(Config.withDefault('http://localhost:3900')),

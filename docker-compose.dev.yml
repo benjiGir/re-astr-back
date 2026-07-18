@@ -38,12 +38,44 @@ services:
     networks:
       - re-astr-network-dev
 
+  # jaegertracing/all-in-one runs as uid 10001 (gid 0), but a fresh named
+  # volume is created root:root — this one-shot init chowns it first so
+  # Badger can create /badger/data and /badger/key on startup.
+  jaeger-volume-init:
+    image: busybox
+    container_name: re-astr-jaeger-volume-init-dev
+    command: ["sh", "-c", "mkdir -p /badger/data /badger/key && chown -R 10001:0 /badger"]
+    volumes:
+      - jaeger_data_dev:/badger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: re-astr-jaeger-dev
+    depends_on:
+      jaeger-volume-init:
+        condition: service_completed_successfully
+    ports:
+      - "16686:16686" # Web UI
+      - "4318:4318" # OTLP HTTP receiver
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      SPAN_STORAGE_TYPE: badger
+      BADGER_EPHEMERAL: "false"
+      BADGER_DIRECTORY_VALUE: /badger/data
+      BADGER_DIRECTORY_KEY: /badger/key
+    volumes:
+      - jaeger_data_dev:/badger
+    networks:
+      - re-astr-network-dev
+
 volumes:
   postgres_data_dev:
     driver: local
   garage_meta_dev:
     driver: local
   garage_data_dev:
+    driver: local
+  jaeger_data_dev:
     driver: local
 
 networks:

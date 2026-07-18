@@ -31,6 +31,7 @@
     "@effect/opentelemetry": "4.0.0-beta.97",
     "@effect/platform-node": "4.0.0-beta.97",
     "@effect/sql-pg": "4.0.0-beta.97",
+    "@opentelemetry/exporter-trace-otlp-http": "0.220.0",
     "@opentelemetry/sdk-node": "^0.220.0",
     "@opentelemetry/sdk-trace-base": "^2.9.0",
     "argon2": "0.44.0",

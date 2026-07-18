@@ -1,12 +1,16 @@
 import { NodeSdk } from '@effect/opentelemetry'
-import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
+import { Config, Effect } from 'effect'
+import { TelemetryConfig } from '@/infra/Config.js'
 
-/**
- * Console exporter for now (spans printed to stdout — pedagogical, shows the
- * HTTP -> service -> DB span tree). Swap for an OTLP exporter in production
- * once a collector exists; not wired yet (see docs/EFFECT_MIGRATION.md §8).
- */
-export const TelemetryLive = NodeSdk.layer(() => ({
-  resource: { serviceName: 're-astr' },
-  spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter()),
-}))
+export const TelemetryLive = NodeSdk.layer(
+  Effect.gen(function* () {
+    const { otlpEndpoint } = yield* Config.all(TelemetryConfig)
+
+    return {
+      resource: { serviceName: 're-astr' },
+      spanProcessor: new BatchSpanProcessor(new OTLPTraceExporter({ url: otlpEndpoint })),
+    }
+  }),
+)
