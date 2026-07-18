@@ -192,15 +192,22 @@ export const AuthSessionGroupLive = HttpApiBuilder.group(AuthAllApi, 'authSessio
           const user = yield* CurrentUser
           yield* credentials.signOut(user.session.id)
 
-          // Encoding a hardcoded literal object as JSON cannot realistically fail —
-          // orDie turns HttpBodyError into a defect so it doesn't leak into this
+          // Encoding a hardcoded literal object as JSON, or expiring a cookie with a
+          // hardcoded name/path, cannot realistically fail — orDie turns
+          // HttpBodyError/CookiesError into a defect so neither leaks into this
           // endpoint's declared (error-free) success contract.
           const response = yield* HttpServerResponse.json({
             message: 'Successfully signed out',
             success: true,
           }).pipe(Effect.orDie)
 
-          return response.pipe(HttpServerResponse.removeCookie(sessionCookieSecurity.key))
+          // removeCookie only edits this response's own (empty) cookie record, so it
+          // never emits a Set-Cookie deletion instruction — expireCookie is the one
+          // that actually tells the browser to drop the cookie (path must match the
+          // one it was set with, see securitySetCookie above).
+          return yield* HttpServerResponse.expireCookie(response, sessionCookieSecurity.key, {
+            path: '/',
+          }).pipe(Effect.orDie)
         }),
       )
       .handle('getSession', () =>
