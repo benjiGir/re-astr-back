@@ -81,6 +81,17 @@ describe('UsersService', () => {
     )
   })
 
+  it.effect('update fails with UserNotFound when the repo update itself returns none', () =>
+    runWithRepo(
+      makeMockRepo({ update: vi.fn(() => Effect.succeed(Option.none())) }),
+      Effect.gen(function* () {
+        const service = yield* UsersService
+        const error = yield* Effect.flip(service.update('user-1', { name: 'New Name' }))
+        expect(error).toBeInstanceOf(UserNotFound)
+      }),
+    ),
+  )
+
   it.effect('update succeeds when the user exists', () =>
     runWithRepo(
       makeMockRepo({
@@ -101,6 +112,17 @@ describe('UsersService', () => {
         const service = yield* UsersService
         const user = yield* service.assignRole('user-1', 'master')
         expect(user.role).toBe('master')
+      }),
+    ),
+  )
+
+  it.effect('assignRole fails with UserNotFound when the repo assignRole itself returns none', () =>
+    runWithRepo(
+      makeMockRepo({ assignRole: vi.fn(() => Effect.succeed(Option.none())) }),
+      Effect.gen(function* () {
+        const service = yield* UsersService
+        const error = yield* Effect.flip(service.assignRole('user-1', 'master'))
+        expect(error).toBeInstanceOf(UserNotFound)
       }),
     ),
   )

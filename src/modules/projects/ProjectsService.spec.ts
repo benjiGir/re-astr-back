@@ -71,6 +71,28 @@ describe('ProjectsService', () => {
     ),
   )
 
+  it.effect('update returns the updated project', () =>
+    runWithRepo(
+      makeMockRepo({ update: vi.fn(() => Effect.succeed(Option.some(mockRow))) }),
+      Effect.gen(function* () {
+        const service = yield* ProjectsService
+        const project = yield* service.update('project-1', { name: 'Renamed' })
+        expect(project.id).toBe('project-1')
+      }),
+    ),
+  )
+
+  it.effect('update fails with ProjectNotFound when the repo update returns none', () =>
+    runWithRepo(
+      makeMockRepo({ update: vi.fn(() => Effect.succeed(Option.none())) }),
+      Effect.gen(function* () {
+        const service = yield* ProjectsService
+        const error = yield* Effect.flip(service.update('project-1', { name: 'Renamed' }))
+        expect(error).toBeInstanceOf(ProjectNotFound)
+      }),
+    ),
+  )
+
   it.effect('remove fails with ProjectNotFound and never calls repo.delete', () => {
     const deleteFn = vi.fn(() => Effect.void)
 

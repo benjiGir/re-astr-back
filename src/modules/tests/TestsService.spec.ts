@@ -207,6 +207,43 @@ describe('TestsService', () => {
     )
   })
 
+  it.effect('update fails with ProjectNotFound when the new projectId does not exist', () =>
+    runWithMocks(
+      {
+        projects: {
+          findOne: vi.fn(() => Effect.fail(new ProjectNotFound({ id: 'other-project' }))),
+        },
+      },
+      Effect.gen(function* () {
+        const service = yield* TestsService
+        const error = yield* Effect.flip(
+          service.update('test-1', new UpdateTest({ projectId: 'other-project' }), 'user-1'),
+        )
+        expect(error).toBeInstanceOf(ProjectNotFound)
+      }),
+    ),
+  )
+
+  it.effect(
+    'update fails with ValidationFailed when commonData does not match the category baseSchema',
+    () =>
+      runWithMocks(
+        {},
+        Effect.gen(function* () {
+          const service = yield* TestsService
+          const error = yield* Effect.flip(
+            service.update(
+              'test-1',
+              new UpdateTest({ commonData: { temperature: 'hot' } }),
+              'user-1',
+            ),
+          )
+          expect(error).toBeInstanceOf(ValidationFailed)
+          if (error instanceof ValidationFailed) expect(error.context).toBe('commonData')
+        }),
+      ),
+  )
+
   it.effect(
     'update fails with ValidationFailed when customData is not allowed by the category',
     () =>
@@ -232,6 +269,19 @@ describe('TestsService', () => {
           if (error instanceof ValidationFailed) expect(error.context).toBe('customData')
         }),
       ),
+  )
+
+  it.effect('update fails with TestNotFound when the repo update returns none', () =>
+    runWithMocks(
+      { repo: { update: vi.fn(() => Effect.succeed(Option.none())) } },
+      Effect.gen(function* () {
+        const service = yield* TestsService
+        const error = yield* Effect.flip(
+          service.update('test-1', new UpdateTest({ name: 'Renamed' }), 'user-1'),
+        )
+        expect(error).toBeInstanceOf(TestNotFound)
+      }),
+    ),
   )
 
   it.effect('remove fails with TestNotFound and never calls repo.remove', () => {

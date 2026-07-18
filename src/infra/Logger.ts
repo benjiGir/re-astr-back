@@ -13,7 +13,7 @@ const SENSITIVE_KEYS = new Set([
   'newpassword',
 ])
 
-const redact = (annotations: Record<string, unknown>): Record<string, unknown> => {
+export const redact = (annotations: Record<string, unknown>): Record<string, unknown> => {
   const result: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(annotations)) {
     result[key] = SENSITIVE_KEYS.has(key.toLowerCase()) ? '[REDACTED]' : value
@@ -34,7 +34,7 @@ const LEVEL_COLOR: Record<string, string> = {
 }
 const RESET = '\x1b[0m'
 
-const formatMessage = (message: unknown): string => {
+export const formatMessage = (message: unknown): string => {
   const value = Array.isArray(message) && message.length === 1 ? message[0] : message
   if (typeof value === 'string') return value
   return inspect(value, { colors: false, depth: 4 })

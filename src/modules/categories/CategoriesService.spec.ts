@@ -109,6 +109,28 @@ describe('CategoriesService', () => {
     ),
   )
 
+  it.effect('update returns the updated category', () =>
+    runWithRepo(
+      makeMockRepo({ update: vi.fn(() => Effect.succeed(Option.some(mockRow))) }),
+      Effect.gen(function* () {
+        const service = yield* CategoriesService
+        const category = yield* service.update('category-1', { name: 'Renamed' })
+        expect(category.id).toBe('category-1')
+      }),
+    ),
+  )
+
+  it.effect('update fails with CategoryNotFound when the repo update returns none', () =>
+    runWithRepo(
+      makeMockRepo({ update: vi.fn(() => Effect.succeed(Option.none())) }),
+      Effect.gen(function* () {
+        const service = yield* CategoriesService
+        const error = yield* Effect.flip(service.update('category-1', { name: 'Renamed' }))
+        expect(error).toBeInstanceOf(CategoryNotFound)
+      }),
+    ),
+  )
+
   it.effect('remove fails with CategoryNotFound and never calls repo.remove', () => {
     const removeFn = vi.fn(() => Effect.void)
 

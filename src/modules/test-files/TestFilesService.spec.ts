@@ -197,6 +197,19 @@ describe('TestFilesService', () => {
     ),
   )
 
+  it.effect('update fails with TestFileNotFound when the repo update returns none', () =>
+    runWithMocks(
+      { repo: { update: vi.fn(() => Effect.succeed(Option.none())) } },
+      Effect.gen(function* () {
+        const service = yield* TestFilesService
+        const error = yield* Effect.flip(
+          service.update('file-1', new UpdateTestFile({ fileType: 'documentation' })),
+        )
+        expect(error).toBeInstanceOf(TestFileNotFound)
+      }),
+    ),
+  )
+
   it.effect('download returns the stream alongside the test file metadata', () =>
     runWithMocks(
       {},

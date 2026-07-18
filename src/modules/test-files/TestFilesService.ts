@@ -13,7 +13,7 @@ import { TestFilesRepo } from '@/modules/test-files/TestFilesRepo.js'
 import type { TestNotFound } from '@/modules/tests/Test.js'
 import { TestsService } from '@/modules/tests/TestsService.js'
 
-const BUCKET = 'test-archives'
+export const BUCKET = 'test-archives'
 
 export interface UploadTestFileInput {
   readonly testId: string
