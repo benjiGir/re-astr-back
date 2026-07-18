@@ -111,9 +111,19 @@ export const StorageLive = Layer.effect(
     ) {
       return yield* Effect.tryPromise({
         try: () =>
-          getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: objectKey }), {
-            expiresIn: expirySeconds,
-          }),
+          getSignedUrl(
+            client,
+            new GetObjectCommand({
+              Bucket: bucket,
+              Key: objectKey,
+              // Forces the browser to download rather than render the object inline —
+              // download() does this via an explicit response header (TestFilesHttp.ts),
+              // but a presigned URL serves straight from the storage origin with no
+              // handler in between, so it has to be baked into the signed request itself.
+              ResponseContentDisposition: 'attachment',
+            }),
+            { expiresIn: expirySeconds },
+          ),
         catch: (cause) => new StorageError({ operation: 'presignedUrl', cause }),
       })
     })
