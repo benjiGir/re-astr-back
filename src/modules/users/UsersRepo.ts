@@ -8,7 +8,7 @@ import { Database } from '@/infra/Database.js'
 export class UsersRepo extends Context.Service<
   UsersRepo,
   {
-    readonly findAll: () => Effect.Effect<UserRow[], EffectDrizzleQueryError>
+    readonly findAll: Effect.Effect<UserRow[], EffectDrizzleQueryError>
     readonly findById: (
       id: string,
     ) => Effect.Effect<Option.Option<UserRow>, EffectDrizzleQueryError>
@@ -29,9 +29,7 @@ export const UsersRepoLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database
 
-    const findAll = Effect.fn('UsersRepo.findAll')(function* () {
-      return yield* db.select().from(users)
-    })
+    const findAll = db.select().from(users).pipe(Effect.withSpan('UsersRepo.findAll'))
 
     const findById = Effect.fn('UsersRepo.findById')(function* (id: string) {
       return yield* Effect.map(db.select().from(users).where(eq(users.id, id)).limit(1), ([row]) =>

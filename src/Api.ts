@@ -17,13 +17,13 @@ import { UsersGroup } from '@/modules/users/UsersHttp.js'
 
 export class ServiceCheck extends Schema.Class<ServiceCheck>('ServiceCheck')({
   status: Schema.Literals(['up', 'down']),
-  responseTimeMs: Schema.Number,
+  responseTimeMs: Schema.Finite,
 }) {}
 
 export class HealthResponse extends Schema.Class<HealthResponse>('HealthResponse')({
   status: Schema.Literal('healthy'),
   timestamp: Schema.String,
-  uptime: Schema.Number,
+  uptime: Schema.Finite,
 }) {}
 
 export class ReadinessResponse extends Schema.Class<ReadinessResponse>('ReadinessResponse')({

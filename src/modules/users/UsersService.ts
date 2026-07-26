@@ -13,7 +13,7 @@ import { UsersRepo } from '@/modules/users/UsersRepo.js'
 export class UsersService extends Context.Service<
   UsersService,
   {
-    readonly findAll: () => Effect.Effect<User[]>
+    readonly findAll: Effect.Effect<User[]>
     readonly findOne: (id: string) => Effect.Effect<User, UserNotFound>
     readonly update: (
       id: string,
@@ -42,11 +42,11 @@ export const UsersServiceLive = Layer.effect(
       )
     })
 
-    const findAll = Effect.fn('UsersService.findAll')(function* () {
-      return yield* Effect.orDie(
-        Effect.map(repo.findAll(), (rows) => rows.map((row) => new User(row))),
-      )
-    })
+    const findAll = repo.findAll.pipe(
+      Effect.map((rows) => rows.map((row) => new User(row))),
+      Effect.orDie,
+      Effect.withSpan('UsersService.findAll'),
+    )
 
     const update = Effect.fn('UsersService.update')(function* (id: string, input: UpdateUser) {
       return yield* findOne(id).pipe(

@@ -62,7 +62,7 @@ export const CategoriesGroupLive = HttpApiBuilder.group(CategoriesApi, 'categori
       .handle('create', ({ payload }) =>
         requireRole('contributor').pipe(Effect.andThen(() => service.create(payload))),
       )
-      .handle('findAll', () => service.findAll())
+      .handle('findAll', () => service.findAll)
       .handle('findById', ({ params }) => service.findOne(params.id))
       .handle('update', ({ params, payload }) =>
         requireRole('archivist').pipe(Effect.andThen(() => service.update(params.id, payload))),

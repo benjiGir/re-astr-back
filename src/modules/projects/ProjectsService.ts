@@ -14,7 +14,7 @@ export class ProjectsService extends Context.Service<
   ProjectsService,
   {
     readonly create: (input: CreateProject) => Effect.Effect<Project, ProjectNameConflict>
-    readonly findAll: () => Effect.Effect<Project[]>
+    readonly findAll: Effect.Effect<Project[]>
     readonly findOne: (id: string) => Effect.Effect<Project, ProjectNotFound>
     readonly update: (
       id: string,
@@ -58,11 +58,11 @@ export const ProjectsServiceLive = Layer.effect(
       )
     })
 
-    const findAll = Effect.fn('ProjectsService.findAll')(function* () {
-      return yield* Effect.orDie(
-        Effect.map(repo.findAll(), (rows) => rows.map((row) => new Project(row))),
-      )
-    })
+    const findAll = repo.findAll.pipe(
+      Effect.map((rows) => rows.map((row) => new Project(row))),
+      Effect.orDie,
+      Effect.withSpan('ProjectsService.findAll'),
+    )
 
     const update = Effect.fn('ProjectsService.update')(function* (
       id: string,

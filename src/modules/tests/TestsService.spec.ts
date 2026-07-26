@@ -58,7 +58,7 @@ const makeMockRepo = (overrides: Partial<typeof TestsRepo.Service> = {}) => ({
 
 const makeMockProjectsService = (overrides: Partial<typeof ProjectsService.Service> = {}) => ({
   create: vi.fn(() => Effect.succeed(mockProject)),
-  findAll: vi.fn(() => Effect.succeed([mockProject])),
+  findAll: Effect.succeed([mockProject]),
   findOne: vi.fn(() => Effect.succeed(mockProject)),
   update: vi.fn(() => Effect.succeed(mockProject)),
   remove: vi.fn(() => Effect.void),
@@ -67,7 +67,7 @@ const makeMockProjectsService = (overrides: Partial<typeof ProjectsService.Servi
 
 const makeMockCategoriesService = (overrides: Partial<typeof CategoriesService.Service> = {}) => ({
   create: vi.fn(() => Effect.succeed(mockCategory)),
-  findAll: vi.fn(() => Effect.succeed([mockCategory])),
+  findAll: Effect.succeed([mockCategory]),
   findOne: vi.fn(() => Effect.succeed(mockCategory)),
   update: vi.fn(() => Effect.succeed(mockCategory)),
   remove: vi.fn(() => Effect.void),

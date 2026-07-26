@@ -84,7 +84,7 @@ export const TestFilesGroup = HttpApiGroup.make('test-files')
   .add(
     HttpApiEndpoint.get('presignedUrl', '/test-files/:id/presigned-url', {
       params: { id: Schema.String },
-      query: { expirySeconds: Schema.optional(Schema.NumberFromString) },
+      query: { expirySeconds: Schema.optional(Schema.FiniteFromString) },
       success: PresignedUrlResponse,
       error: [TestFileNotFound, StorageError],
     }),

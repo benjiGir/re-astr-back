@@ -10,7 +10,7 @@ export class ProjectsRepo extends Context.Service<
   ProjectsRepo,
   {
     readonly create: (input: CreateProject) => Effect.Effect<ProjectRow, EffectDrizzleQueryError>
-    readonly findAll: () => Effect.Effect<ProjectRow[], EffectDrizzleQueryError>
+    readonly findAll: Effect.Effect<ProjectRow[], EffectDrizzleQueryError>
     readonly findById: (
       id: string,
     ) => Effect.Effect<Option.Option<ProjectRow>, EffectDrizzleQueryError>
@@ -37,9 +37,7 @@ export const ProjectsRepoLive = Layer.effect(
       )
     })
 
-    const findAll = Effect.fn('ProjectsRepo.findAll')(function* () {
-      return yield* db.select().from(projects)
-    })
+    const findAll = db.select().from(projects).pipe(Effect.withSpan('ProjectsRepo.findAll'))
 
     const findById = Effect.fn('ProjectsRepo.findById')(function* (id: string) {
       return yield* Effect.map(

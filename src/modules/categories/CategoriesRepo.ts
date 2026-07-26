@@ -9,7 +9,7 @@ export class CategoriesRepo extends Context.Service<
   CategoriesRepo,
   {
     readonly create: (input: CreateCategory) => Effect.Effect<CategoryRow, EffectDrizzleQueryError>
-    readonly findAll: () => Effect.Effect<CategoryRow[], EffectDrizzleQueryError>
+    readonly findAll: Effect.Effect<CategoryRow[], EffectDrizzleQueryError>
     readonly findById: (
       id: string,
     ) => Effect.Effect<Option.Option<CategoryRow>, EffectDrizzleQueryError>
@@ -43,9 +43,7 @@ export const CategoriesRepoLive = Layer.effect(
       )
     })
 
-    const findAll = Effect.fn('CategoriesRepo.findAll')(function* () {
-      return yield* db.select().from(categories)
-    })
+    const findAll = db.select().from(categories).pipe(Effect.withSpan('CategoriesRepo.findAll'))
 
     const findById = Effect.fn('CategoriesRepo.findById')(function* (id: string) {
       return yield* Effect.map(

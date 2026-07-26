@@ -47,7 +47,7 @@ describe('CategoriesRepo', () => {
             customFieldsSchema: validCustomFieldsSchema,
           }),
         )
-        const all = yield* repo.findAll()
+        const all = yield* repo.findAll
         expect(all.map((c) => c.name).sort()).toEqual(['A', 'B'])
       }),
     )

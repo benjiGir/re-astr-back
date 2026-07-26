@@ -116,7 +116,7 @@ describe('Categories', () => {
           contributor.cookieHeader,
         )
         const { id: categoryId } = (yield* created.json) as { id: string }
-        const { projectId } = yield* createProjectAndCategory()
+        const { projectId } = yield* createProjectAndCategory
 
         yield* postJson(
           '/tests',

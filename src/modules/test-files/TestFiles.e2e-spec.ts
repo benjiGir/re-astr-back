@@ -22,7 +22,7 @@ describe('TestFiles', () => {
   layer(AppTestLayer)((it) => {
     it.effect('a contributor can upload a file; a plain user cannot', () =>
       Effect.gen(function* () {
-        const { testId } = yield* createTest()
+        const { testId } = yield* createTest
         const contributor = yield* createAuthenticatedUser('contributor')
 
         const created = yield* upload(testId, contributor.cookieHeader)
@@ -39,7 +39,7 @@ describe('TestFiles', () => {
 
     it.effect('findAll filters by testId and findById 404s for a missing file', () =>
       Effect.gen(function* () {
-        const { testId } = yield* createTest()
+        const { testId } = yield* createTest
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* upload(testId, contributor.cookieHeader)
         const { id } = (yield* created.json) as { id: string }
@@ -59,7 +59,7 @@ describe('TestFiles', () => {
 
     it.effect('download streams the uploaded bytes back', () =>
       Effect.gen(function* () {
-        const { testId } = yield* createTest()
+        const { testId } = yield* createTest
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* upload(testId, contributor.cookieHeader)
         const { id } = (yield* created.json) as { id: string }
@@ -73,7 +73,7 @@ describe('TestFiles', () => {
 
     it.effect('presignedUrl returns a URL for the stored object', () =>
       Effect.gen(function* () {
-        const { testId } = yield* createTest()
+        const { testId } = yield* createTest
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* upload(testId, contributor.cookieHeader)
         const { id } = (yield* created.json) as { id: string }
@@ -87,7 +87,7 @@ describe('TestFiles', () => {
 
     it.effect('a contributor can update a file; a plain user cannot', () =>
       Effect.gen(function* () {
-        const { testId } = yield* createTest()
+        const { testId } = yield* createTest
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* upload(testId, contributor.cookieHeader)
         const { id } = (yield* created.json) as { id: string }
@@ -111,7 +111,7 @@ describe('TestFiles', () => {
 
     it.effect('an archivist can delete a file; a contributor cannot', () =>
       Effect.gen(function* () {
-        const { testId } = yield* createTest()
+        const { testId } = yield* createTest
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* upload(testId, contributor.cookieHeader)
         const { id } = (yield* created.json) as { id: string }

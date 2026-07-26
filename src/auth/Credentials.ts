@@ -97,15 +97,15 @@ export const CredentialsLive = Layer.effect(
 
     const signIn = Effect.fn('Credentials.signIn')(function* (email: string, password: string) {
       const user = yield* repo.findUserByEmail(email).pipe(Effect.orDie)
-      if (Option.isNone(user)) return yield* Effect.fail(new InvalidCredentials())
+      if (Option.isNone(user)) return yield* new InvalidCredentials()
 
       const account = yield* repo.findAccountByUserId(user.value.id).pipe(Effect.orDie)
       if (Option.isNone(account) || !account.value.password)
-        return yield* Effect.fail(new InvalidCredentials())
+        return yield* new InvalidCredentials()
       const passwordHash: string = account.value.password
 
       const valid = yield* Effect.promise(() => argon2.verify(passwordHash, password))
-      if (!valid) return yield* Effect.fail(new InvalidCredentials())
+      if (!valid) return yield* new InvalidCredentials()
 
       const session = yield* createSession(user.value.id)
       yield* Effect.logInfo('User signed in').pipe(Effect.annotateLogs({ userId: user.value.id }))
@@ -119,18 +119,16 @@ export const CredentialsLive = Layer.effect(
     const requestPasswordReset = Effect.fn('Credentials.requestPasswordReset')(function* (
       email: string,
     ) {
-      const user = yield* repo.findUserByEmail(email).pipe(Effect.orDie)
+      const user = yield* repo.findUserByEmail(email)
       if (Option.isNone(user)) return // never reveal whether the email exists
 
       const token = randomBytes(32).toString('hex')
-      yield* repo
-        .createVerification({
-          identifier: email,
-          value: token,
-          expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
-        })
-        .pipe(Effect.orDie)
-    })
+      yield* repo.createVerification({
+        identifier: email,
+        value: token,
+        expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+      })
+    }, Effect.orDie)
 
     const resetPassword = Effect.fn('Credentials.resetPassword')(function* (
       token: string,
@@ -139,11 +137,11 @@ export const CredentialsLive = Layer.effect(
       const verification = yield* repo.findVerificationByToken(token).pipe(Effect.orDie)
 
       if (Option.isNone(verification) || verification.value.expiresAt < new Date()) {
-        return yield* Effect.fail(new InvalidResetToken())
+        return yield* new InvalidResetToken()
       }
 
       const user = yield* repo.findUserByEmail(verification.value.identifier).pipe(Effect.orDie)
-      if (Option.isNone(user)) return yield* Effect.fail(new InvalidResetToken())
+      if (Option.isNone(user)) return yield* new InvalidResetToken()
 
       const passwordHash = yield* Effect.promise(() => argon2.hash(newPassword))
 
@@ -155,5 +153,5 @@ export const CredentialsLive = Layer.effect(
     })
 
     return { signUp, signIn, signOut, requestPasswordReset, resetPassword }
-  }),
+  }).pipe(Effect.orDie),
 )

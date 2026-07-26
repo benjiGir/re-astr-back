@@ -11,7 +11,7 @@ export class TestFile extends Schema.Class<TestFile>('TestFile')({
   storedFilename: Schema.String,
   bucketName: Schema.String,
   objectKey: Schema.String,
-  fileSize: Schema.Number,
+  fileSize: Schema.Finite,
   mimeType: Schema.String,
   checksum: Schema.NullOr(Schema.String),
   metadata: Schema.Record(Schema.String, Schema.Unknown),

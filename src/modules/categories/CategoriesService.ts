@@ -21,7 +21,7 @@ export class CategoriesService extends Context.Service<
   CategoriesService,
   {
     readonly create: (input: CreateCategory) => Effect.Effect<Category>
-    readonly findAll: () => Effect.Effect<Category[]>
+    readonly findAll: Effect.Effect<Category[]>
     readonly findOne: (id: string) => Effect.Effect<Category, CategoryNotFound>
     readonly update: (
       id: string,
@@ -66,11 +66,11 @@ export const CategoriesServiceLive = Layer.effect(
         )
     })
 
-    const findAll = Effect.fn('CategoriesService.findAll')(function* () {
-      return yield* Effect.orDie(
-        Effect.map(repo.findAll(), (rows) => rows.map((row) => new Category(row))),
-      )
-    })
+    const findAll = repo.findAll.pipe(
+      Effect.map((rows) => rows.map((row) => new Category(row))),
+      Effect.orDie,
+      Effect.withSpan('CategoriesService.findAll'),
+    )
 
     const update = Effect.fn('CategoriesService.update')(function* (
       id: string,

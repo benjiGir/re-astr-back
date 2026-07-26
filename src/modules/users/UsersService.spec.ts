@@ -19,7 +19,7 @@ const mockRow: UserRow = {
 }
 
 const makeMockRepo = (overrides: Partial<typeof UsersRepo.Service> = {}) => ({
-  findAll: vi.fn(() => Effect.succeed([mockRow])),
+  findAll: Effect.succeed([mockRow]),
   findById: vi.fn(() => Effect.succeed(Option.some(mockRow))),
   update: vi.fn(() => Effect.succeed(Option.some(mockRow))),
   assignRole: vi.fn(() => Effect.succeed(Option.some({ ...mockRow, role: 'master' as const }))),
@@ -38,7 +38,7 @@ describe('UsersService', () => {
       makeMockRepo(),
       Effect.gen(function* () {
         const service = yield* UsersService
-        const users = yield* service.findAll()
+        const users = yield* service.findAll
         expect(users).toHaveLength(1)
         expect(users[0]?.id).toBe('user-1')
       }),

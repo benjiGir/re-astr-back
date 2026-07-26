@@ -23,7 +23,7 @@ describe('UsersRepo', () => {
           yield* createUserFixture()
           yield* createUserFixture()
           const repo = yield* UsersRepo
-          const all = yield* repo.findAll()
+          const all = yield* repo.findAll
           expect(all.length).toBe(2)
         }),
       )

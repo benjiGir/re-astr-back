@@ -95,7 +95,7 @@ const textFieldSchema = (validation: FieldValidation | undefined): Schema.Top =>
 }
 
 const numberFieldSchema = (validation: FieldValidation | undefined): Schema.Top => {
-  let schema: Schema.Schema<number> = Schema.Number
+  let schema: Schema.Schema<number> = Schema.Finite
   if (validation?.min !== undefined)
     schema = schema.check(Schema.isGreaterThanOrEqualTo(validation.min))
   if (validation?.max !== undefined)

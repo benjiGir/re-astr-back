@@ -18,7 +18,7 @@ export const hasRequiredRole = (userRole: UserRole, requiredRole: UserRole): boo
 export const requireRole = Effect.fn('Role.requireRole')(function* (requiredRole: UserRole) {
   const user = yield* CurrentUser
   if (!hasRequiredRole(user.role, requiredRole))
-    return yield* Effect.fail(new HttpApiError.Forbidden())
+    return yield* new HttpApiError.Forbidden()
 })
 
 /**
@@ -32,6 +32,6 @@ export const requireSelfOrRole = Effect.fn('Role.requireSelfOrRole')(function* (
 ) {
   const user = yield* CurrentUser
   if (user.id !== targetId && !hasRequiredRole(user.role, requiredRole)) {
-    return yield* Effect.fail(new HttpApiError.Forbidden())
+    return yield* new HttpApiError.Forbidden()
   }
 })

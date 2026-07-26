@@ -29,7 +29,7 @@ const mockRow: CategoryRow = {
 
 const makeMockRepo = (overrides: Partial<typeof CategoriesRepo.Service> = {}) => ({
   create: vi.fn(() => Effect.succeed(mockRow)),
-  findAll: vi.fn(() => Effect.succeed([mockRow])),
+  findAll: Effect.succeed([mockRow]),
   findById: vi.fn(() => Effect.succeed(Option.some(mockRow))),
   update: vi.fn(() => Effect.succeed(Option.some(mockRow))),
   remove: vi.fn(() => Effect.void),

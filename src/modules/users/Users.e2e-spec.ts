@@ -119,7 +119,7 @@ describe('Users', () => {
     it.effect('remove is blocked while the user has authored a test', () =>
       Effect.gen(function* () {
         const author = yield* createAuthenticatedUser('contributor')
-        const { projectId, categoryId } = yield* createProjectAndCategory()
+        const { projectId, categoryId } = yield* createProjectAndCategory
         yield* postJson(
           '/tests',
           { projectId, categoryId, name: unique('Test'), commonData: {} },

@@ -28,14 +28,14 @@ export type FieldType = typeof FieldType.Type
 // `interface` breaks the cycle the same way a class's own name would.
 export interface FieldValidation extends Schema.Struct.Type<typeof FieldValidationFields> {}
 const FieldValidationFields = {
-  min: Schema.optional(Schema.Number),
-  max: Schema.optional(Schema.Number),
-  minLength: Schema.optional(Schema.Number),
-  maxLength: Schema.optional(Schema.Number),
+  min: Schema.optional(Schema.Finite),
+  max: Schema.optional(Schema.Finite),
+  minLength: Schema.optional(Schema.Finite),
+  maxLength: Schema.optional(Schema.Finite),
   pattern: Schema.optional(Schema.String),
   enum: Schema.optional(Schema.Array(Schema.String)),
-  minItems: Schema.optional(Schema.Number),
-  maxItems: Schema.optional(Schema.Number),
+  minItems: Schema.optional(Schema.Finite),
+  maxItems: Schema.optional(Schema.Finite),
   itemType: Schema.optional(FieldType),
   properties: Schema.optional(
     Schema.Record(
@@ -74,7 +74,7 @@ export type BaseSchema = typeof BaseSchema.Type
 
 export const CustomFieldsSchema = Schema.Struct({
   allowCustomFields: Schema.Boolean,
-  maxCustomFields: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))),
+  maxCustomFields: Schema.optional(Schema.Finite.check(Schema.isGreaterThan(0))),
   allowedTypes: Schema.optional(Schema.Array(FieldType)),
   fields: Schema.Array(FieldDefinition),
 })

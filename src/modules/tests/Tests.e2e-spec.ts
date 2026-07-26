@@ -12,7 +12,7 @@ describe('Tests', () => {
   layer(AppTestLayer)((it) => {
     it.effect('a contributor can create a test; a plain user cannot', () =>
       Effect.gen(function* () {
-        const { projectId, categoryId } = yield* createProjectAndCategory()
+        const { projectId, categoryId } = yield* createProjectAndCategory
         const contributor = yield* createAuthenticatedUser('contributor')
 
         const created = yield* postJson(
@@ -36,7 +36,7 @@ describe('Tests', () => {
 
     it.effect('findAll filters by categoryId and findById 404s for a missing test', () =>
       Effect.gen(function* () {
-        const { projectId, categoryId } = yield* createProjectAndCategory()
+        const { projectId, categoryId } = yield* createProjectAndCategory
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* postJson(
           '/tests',
@@ -60,7 +60,7 @@ describe('Tests', () => {
 
     it.effect('a contributor can update a test; a plain user cannot', () =>
       Effect.gen(function* () {
-        const { projectId, categoryId } = yield* createProjectAndCategory()
+        const { projectId, categoryId } = yield* createProjectAndCategory
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* postJson(
           '/tests',
@@ -88,7 +88,7 @@ describe('Tests', () => {
 
     it.effect('an archivist can delete a test; a contributor cannot', () =>
       Effect.gen(function* () {
-        const { projectId, categoryId } = yield* createProjectAndCategory()
+        const { projectId, categoryId } = yield* createProjectAndCategory
         const contributor = yield* createAuthenticatedUser('contributor')
         const created = yield* postJson(
           '/tests',

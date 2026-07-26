@@ -17,7 +17,7 @@ const mockRow: ProjectRow = {
 
 const makeMockRepo = (overrides: Partial<typeof ProjectsRepo.Service> = {}) => ({
   create: vi.fn(() => Effect.succeed(mockRow)),
-  findAll: vi.fn(() => Effect.succeed([mockRow])),
+  findAll: Effect.succeed([mockRow]),
   findById: vi.fn(() => Effect.succeed(Option.some(mockRow))),
   update: vi.fn(() => Effect.succeed(Option.some(mockRow))),
   delete: vi.fn(() => Effect.void),

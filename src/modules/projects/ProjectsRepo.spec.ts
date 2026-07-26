@@ -24,7 +24,7 @@ describe('ProjectsRepo', () => {
         const repo = yield* ProjectsRepo
         yield* repo.create(new CreateProject({ name: 'A' }))
         yield* repo.create(new CreateProject({ name: 'B' }))
-        const all = yield* repo.findAll()
+        const all = yield* repo.findAll
         expect(all.map((p) => p.name).sort()).toEqual(['A', 'B'])
       }),
     )

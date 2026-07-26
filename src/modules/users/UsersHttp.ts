@@ -60,7 +60,7 @@ export const UsersGroupLive = HttpApiBuilder.group(UsersApi, 'users', (handlers)
     const service = yield* UsersService
 
     return handlers
-      .handle('findAll', () => service.findAll())
+      .handle('findAll', () => service.findAll)
       .handle('findById', ({ params }) => service.findOne(params.id))
       .handle('update', ({ params, payload }) =>
         requireSelfOrRole(params.id, 'master').pipe(

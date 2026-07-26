@@ -45,9 +45,7 @@ describe('hasRequiredRole', () => {
 describe('requireRole', () => {
   it.layer(Layer.succeed(CurrentUser, mockUser('archivist')))((it) => {
     it.effect('succeeds when the user meets the required role', () =>
-      Effect.gen(function* () {
-        yield* requireRole('contributor')
-      }),
+      requireRole('contributor')
     )
   })
 
@@ -64,9 +62,7 @@ describe('requireRole', () => {
 describe('requireSelfOrRole', () => {
   it.layer(Layer.succeed(CurrentUser, mockUser('user', 'user-1')))((it) => {
     it.effect('succeeds when acting on self regardless of role', () =>
-      Effect.gen(function* () {
-        yield* requireSelfOrRole('user-1', 'master')
-      }),
+      requireSelfOrRole('user-1', 'master')
     )
 
     it.effect('fails with Forbidden when acting on someone else without the required role', () =>
@@ -79,9 +75,7 @@ describe('requireSelfOrRole', () => {
 
   it.layer(Layer.succeed(CurrentUser, mockUser('master', 'user-1')))((it) => {
     it.effect('succeeds when acting on someone else with a sufficient role', () =>
-      Effect.gen(function* () {
-        yield* requireSelfOrRole('user-2', 'master')
-      }),
+      requireSelfOrRole('user-2', 'master')
     )
   })
 })
