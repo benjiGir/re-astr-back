@@ -1,5 +1,6 @@
 import { User } from '@common/decorators/user.decorator'
 import { CreateTestDto } from '@modules/tests/dto/create-test.dto'
+import { SearchTestsDto } from '@modules/tests/dto/search-tests.dto'
 import { UpdateTestDto } from '@modules/tests/dto/update-test.dto'
 import { TestsService } from '@modules/tests/tests.service'
 import {
@@ -12,11 +13,10 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   Request,
   UseGuards,
 } from '@nestjs/common'
-import { ApiCookieAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { Roles } from '@/auth/decorators/roles.decorator'
 import { UserDto } from '@/auth/dto/auth-response.dto'
 import { AuthGuard } from '@/auth/guards/auth.guard'
@@ -42,13 +42,17 @@ export class TestsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all tests' })
-  @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category ID' })
   @ApiResponse({ status: 200, description: 'Return all tests' })
-  findAll(@Query('categoryId') categoryId?: string) {
-    if (categoryId) {
-      return this.testsService.findByCategory(categoryId)
-    }
+  findAll() {
     return this.testsService.findAll()
+  }
+
+  @Post('search')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Search tests with filters and free-text search' })
+  @ApiResponse({ status: 200, description: 'Return matching tests' })
+  search(@Body() searchTestsDto: SearchTestsDto) {
+    return this.testsService.search(searchTestsDto)
   }
 
   @Get(':id')
