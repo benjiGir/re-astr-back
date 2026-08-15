@@ -10,7 +10,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Config, Context, Effect, Layer, Redacted, Schema, Stream } from 'effect'
 import { StorageConfig } from '@/infra/Config.js'
 
-export class StorageError extends Schema.TaggedErrorClass<StorageError>('re-astr/StorageError')(
+export class StorageError extends Schema.TaggedError<StorageError>('re-astr/StorageError')(
   'StorageError',
   { operation: Schema.String, cause: Schema.Unknown },
   { httpApiStatus: 500 },

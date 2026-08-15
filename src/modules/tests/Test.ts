@@ -47,7 +47,7 @@ export class UpdateTest extends Schema.Class<UpdateTest>('UpdateTest')({
   metadata: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 }) {}
 
-export class TestNotFound extends Schema.TaggedErrorClass<TestNotFound>('re-astr/TestNotFound')(
+export class TestNotFound extends Schema.TaggedError<TestNotFound>('re-astr/TestNotFound')(
   'TestNotFound',
   { id: Schema.String },
   { httpApiStatus: 404 },

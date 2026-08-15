@@ -18,15 +18,15 @@ export class UpdateProject extends Schema.Class<UpdateProject>('UpdateProject')(
   description: Schema.optional(Schema.String),
 }) {}
 
-export class ProjectNotFound extends Schema.TaggedErrorClass<ProjectNotFound>(
+export class ProjectNotFound extends Schema.TaggedError<ProjectNotFound>(
   're-astr/ProjectNotFound',
 )('ProjectNotFound', { id: Schema.String }, { httpApiStatus: 404 }) {}
 
-export class ProjectNameConflict extends Schema.TaggedErrorClass<ProjectNameConflict>(
+export class ProjectNameConflict extends Schema.TaggedError<ProjectNameConflict>(
   're-astr/ProjectNameConflict',
 )('ProjectNameConflict', { name: Schema.String }, { httpApiStatus: 409 }) {}
 
 /** Fixes Faille #5: delete used to surface the raw FK-restrict violation as a 500. */
-export class ProjectHasTests extends Schema.TaggedErrorClass<ProjectHasTests>(
+export class ProjectHasTests extends Schema.TaggedError<ProjectHasTests>(
   're-astr/ProjectHasTests',
 )('ProjectHasTests', { id: Schema.String }, { httpApiStatus: 409 }) {}

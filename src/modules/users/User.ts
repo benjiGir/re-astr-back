@@ -23,18 +23,18 @@ export class AssignRole extends Schema.Class<AssignRole>('AssignRole')({
   role: UserRole,
 }) {}
 
-export class UserNotFound extends Schema.TaggedErrorClass<UserNotFound>('re-astr/UserNotFound')(
+export class UserNotFound extends Schema.TaggedError<UserNotFound>('re-astr/UserNotFound')(
   'UserNotFound',
   { id: Schema.String },
   { httpApiStatus: 404 },
 ) {}
 
 /** Shared with auth/Credentials.ts (sign-up hits the same users.email unique constraint). */
-export class EmailAlreadyExists extends Schema.TaggedErrorClass<EmailAlreadyExists>(
+export class EmailAlreadyExists extends Schema.TaggedError<EmailAlreadyExists>(
   're-astr/EmailAlreadyExists',
 )('EmailAlreadyExists', { email: Schema.String }, { httpApiStatus: 409 }) {}
 
 /** Mirrors ProjectHasTests/CategoryHasTests: tests.createdBy and test_files.uploadedBy are both onDelete: 'restrict'. */
-export class UserHasRecords extends Schema.TaggedErrorClass<UserHasRecords>(
+export class UserHasRecords extends Schema.TaggedError<UserHasRecords>(
   're-astr/UserHasRecords',
 )('UserHasRecords', { id: Schema.String }, { httpApiStatus: 409 }) {}

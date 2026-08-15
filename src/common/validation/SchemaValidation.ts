@@ -18,7 +18,7 @@ export interface ValidationResult {
   readonly errors: readonly ValidationError[]
 }
 
-export class ValidationFailed extends Schema.TaggedErrorClass<ValidationFailed>(
+export class ValidationFailed extends Schema.TaggedError<ValidationFailed>(
   're-astr/ValidationFailed',
 )(
   'ValidationFailed',

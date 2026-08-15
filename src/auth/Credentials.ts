@@ -9,11 +9,11 @@ import { sqlReasonTag } from '@/infra/Database.js'
 import { EmailAlreadyExists } from '@/modules/users/User.js'
 
 /** Deliberately generic — never reveals whether the email exists or the password was wrong. */
-export class InvalidCredentials extends Schema.TaggedErrorClass<InvalidCredentials>(
+export class InvalidCredentials extends Schema.TaggedError<InvalidCredentials>(
   're-astr/InvalidCredentials',
 )('InvalidCredentials', {}, { httpApiStatus: 401 }) {}
 
-export class InvalidResetToken extends Schema.TaggedErrorClass<InvalidResetToken>(
+export class InvalidResetToken extends Schema.TaggedError<InvalidResetToken>(
   're-astr/InvalidResetToken',
 )('InvalidResetToken', {}, { httpApiStatus: 400 }) {}
 
