@@ -31,33 +31,33 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1089.0",
     "@aws-sdk/s3-request-presigner": "^3.1089.0",
-    "@effect/opentelemetry": "4.0.0-beta.97",
-    "@effect/platform-node": "4.0.0-beta.97",
-    "@effect/sql-pg": "4.0.0-beta.97",
+    "@effect/opentelemetry": "4.0.0-rc.109",
+    "@effect/platform-node": "4.0.0-rc.109",
+    "@effect/sql-pg": "4.0.0-rc.109",
     "@opentelemetry/exporter-trace-otlp-http": "0.220.0",
     "@opentelemetry/sdk-node": "^0.220.0",
     "@opentelemetry/sdk-trace-base": "^2.9.0",
     "argon2": "0.44.0",
     "dotenv": "^17.4.2",
-    "drizzle-orm": "1.0.0-rc.4",
-    "effect": "4.0.0-beta.97",
+    "drizzle-orm": "1.0.0-rc.5-169397b",
+    "effect": "4.0.0-rc.109",
     "pg": "^8.22.0"
   },
   "devDependencies": {
-    "@effect/vitest": "4.0.0-beta.97",
+    "@effect/vitest": "4.0.0-rc.109",
     "@testcontainers/minio": "^12.0.4",
     "@testcontainers/postgresql": "^12.0.4",
     "@types/node": "^24.5.2",
     "@types/pg": "^8.15.5",
-    "@vitest/coverage-v8": "^3.2.7",
-    "drizzle-kit": "1.0.0-rc.4",
+    "@vitest/coverage-v8": "4.1.10",
+    "drizzle-kit": "1.0.0-rc.5-ab785fc",
     "oxfmt": "^0.59.0",
     "oxlint": "^1.74.0",
     "testcontainers": "^12.0.4",
     "tsx": "^4.19.2",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.7",
-"@effect/tsgo": "0.24.3"
+    "vitest": "4.1.10",
+    "@effect/tsgo": "0.24.3"
   },
   "engines": {
     "node": ">=24.0.0"
