@@ -1,5 +1,5 @@
 # Stage 1: Dependencies
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 
 RUN apk add --no-cache libc6-compat
 
@@ -12,7 +12,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Stage 2: Builder
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN pnpm run build
 RUN pnpm prune --prod
 
 # Stage 3: Runner
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 
 RUN apk add --no-cache dumb-init
 
