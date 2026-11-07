@@ -1,0 +1,342 @@
+{
+  "generatedAt": "2026-07-23T19:58:07.088Z",
+  "nodes": [
+    {
+      "id": "AppConfig",
+      "file": "infra/Config.ts",
+      "layer": "infra"
+    },
+    {
+      "id": "AuthGroupLive",
+      "file": "auth/AuthHttp.ts",
+      "layer": "http"
+    },
+    {
+      "id": "Authorization",
+      "file": "auth/Authorization.ts",
+      "layer": "middleware"
+    },
+    {
+      "id": "AuthSessionGroupLive",
+      "file": "auth/AuthHttp.ts",
+      "layer": "http"
+    },
+    {
+      "id": "CategoriesGroupLive",
+      "file": "modules/categories/CategoriesHttp.ts",
+      "layer": "http"
+    },
+    {
+      "id": "CategoriesRepo",
+      "file": "modules/categories/CategoriesRepo.ts",
+      "layer": "repo"
+    },
+    {
+      "id": "CategoriesService",
+      "file": "modules/categories/CategoriesService.ts",
+      "layer": "service"
+    },
+    {
+      "id": "Credentials",
+      "file": "auth/Credentials.ts",
+      "layer": "auth"
+    },
+    {
+      "id": "CredentialsRepo",
+      "file": "auth/CredentialsRepo.ts",
+      "layer": "repo"
+    },
+    {
+      "id": "CurrentUser",
+      "file": "auth/CurrentUser.ts",
+      "layer": "auth"
+    },
+    {
+      "id": "Database",
+      "file": "infra/Database.ts",
+      "layer": "infra"
+    },
+    {
+      "id": "HealthGroupLive",
+      "file": "Api.ts",
+      "layer": "http"
+    },
+    {
+      "id": "LoggerLive",
+      "file": "infra/Logger.ts",
+      "layer": "infra"
+    },
+    {
+      "id": "ProjectsGroupLive",
+      "file": "modules/projects/ProjectsHttp.ts",
+      "layer": "http"
+    },
+    {
+      "id": "ProjectsRepo",
+      "file": "modules/projects/ProjectsRepo.ts",
+      "layer": "repo"
+    },
+    {
+      "id": "ProjectsService",
+      "file": "modules/projects/ProjectsService.ts",
+      "layer": "service"
+    },
+    {
+      "id": "SessionConfig",
+      "file": "infra/Config.ts",
+      "layer": "infra"
+    },
+    {
+      "id": "Storage",
+      "file": "infra/Storage.ts",
+      "layer": "infra"
+    },
+    {
+      "id": "TelemetryLive",
+      "file": "infra/Telemetry.ts",
+      "layer": "infra"
+    },
+    {
+      "id": "TestFilesGroupLive",
+      "file": "modules/test-files/TestFilesHttp.ts",
+      "layer": "http"
+    },
+    {
+      "id": "TestFilesRepo",
+      "file": "modules/test-files/TestFilesRepo.ts",
+      "layer": "repo"
+    },
+    {
+      "id": "TestFilesService",
+      "file": "modules/test-files/TestFilesService.ts",
+      "layer": "service"
+    },
+    {
+      "id": "TestsGroupLive",
+      "file": "modules/tests/TestsHttp.ts",
+      "layer": "http"
+    },
+    {
+      "id": "TestsRepo",
+      "file": "modules/tests/TestsRepo.ts",
+      "layer": "repo"
+    },
+    {
+      "id": "TestsService",
+      "file": "modules/tests/TestsService.ts",
+      "layer": "service"
+    },
+    {
+      "id": "UsersGroupLive",
+      "file": "modules/users/UsersHttp.ts",
+      "layer": "http"
+    },
+    {
+      "id": "UsersRepo",
+      "file": "modules/users/UsersRepo.ts",
+      "layer": "repo"
+    },
+    {
+      "id": "UsersService",
+      "file": "modules/users/UsersService.ts",
+      "layer": "service"
+    }
+  ],
+  "edges": [
+    {
+      "from": "AuthGroupLive",
+      "to": "Authorization",
+      "kind": "middleware"
+    },
+    {
+      "from": "AuthGroupLive",
+      "to": "Credentials",
+      "kind": "uses"
+    },
+    {
+      "from": "AuthGroupLive",
+      "to": "CurrentUser",
+      "kind": "uses"
+    },
+    {
+      "from": "Authorization",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "Authorization",
+      "to": "SessionConfig",
+      "kind": "uses"
+    },
+    {
+      "from": "AuthSessionGroupLive",
+      "to": "Authorization",
+      "kind": "middleware"
+    },
+    {
+      "from": "AuthSessionGroupLive",
+      "to": "Credentials",
+      "kind": "uses"
+    },
+    {
+      "from": "AuthSessionGroupLive",
+      "to": "CurrentUser",
+      "kind": "uses"
+    },
+    {
+      "from": "CategoriesGroupLive",
+      "to": "Authorization",
+      "kind": "middleware"
+    },
+    {
+      "from": "CategoriesGroupLive",
+      "to": "CategoriesService",
+      "kind": "uses"
+    },
+    {
+      "from": "CategoriesRepo",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "CategoriesService",
+      "to": "CategoriesRepo",
+      "kind": "uses"
+    },
+    {
+      "from": "Credentials",
+      "to": "CredentialsRepo",
+      "kind": "uses"
+    },
+    {
+      "from": "Credentials",
+      "to": "SessionConfig",
+      "kind": "uses"
+    },
+    {
+      "from": "CredentialsRepo",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "HealthGroupLive",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "LoggerLive",
+      "to": "AppConfig",
+      "kind": "uses"
+    },
+    {
+      "from": "ProjectsGroupLive",
+      "to": "Authorization",
+      "kind": "middleware"
+    },
+    {
+      "from": "ProjectsGroupLive",
+      "to": "ProjectsService",
+      "kind": "uses"
+    },
+    {
+      "from": "ProjectsRepo",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "ProjectsService",
+      "to": "ProjectsRepo",
+      "kind": "uses"
+    },
+    {
+      "from": "TestFilesGroupLive",
+      "to": "Authorization",
+      "kind": "middleware"
+    },
+    {
+      "from": "TestFilesGroupLive",
+      "to": "CurrentUser",
+      "kind": "uses"
+    },
+    {
+      "from": "TestFilesGroupLive",
+      "to": "TestFilesService",
+      "kind": "uses"
+    },
+    {
+      "from": "TestFilesRepo",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "TestFilesService",
+      "to": "Storage",
+      "kind": "uses"
+    },
+    {
+      "from": "TestFilesService",
+      "to": "TestFilesRepo",
+      "kind": "uses"
+    },
+    {
+      "from": "TestFilesService",
+      "to": "TestsService",
+      "kind": "uses"
+    },
+    {
+      "from": "TestsGroupLive",
+      "to": "Authorization",
+      "kind": "middleware"
+    },
+    {
+      "from": "TestsGroupLive",
+      "to": "CurrentUser",
+      "kind": "uses"
+    },
+    {
+      "from": "TestsGroupLive",
+      "to": "TestsService",
+      "kind": "uses"
+    },
+    {
+      "from": "TestsRepo",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "TestsService",
+      "to": "CategoriesService",
+      "kind": "uses"
+    },
+    {
+      "from": "TestsService",
+      "to": "ProjectsService",
+      "kind": "uses"
+    },
+    {
+      "from": "TestsService",
+      "to": "TestsRepo",
+      "kind": "uses"
+    },
+    {
+      "from": "UsersGroupLive",
+      "to": "Authorization",
+      "kind": "middleware"
+    },
+    {
+      "from": "UsersGroupLive",
+      "to": "UsersService",
+      "kind": "uses"
+    },
+    {
+      "from": "UsersRepo",
+      "to": "Database",
+      "kind": "uses"
+    },
+    {
+      "from": "UsersService",
+      "to": "UsersRepo",
+      "kind": "uses"
+    }
+  ]
+}

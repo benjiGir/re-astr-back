@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>re-astr — architecture graph</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://unpkg.com/cytoscape@3/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/dagre@0/dist/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2/cytoscape-dagre.js"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f1115;
+        --fg: #e6e8ec;
+        --muted: #8b93a3;
+        --panel: #1a1d24;
+        --border: #2a2e37;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f7f8fa;
+          --fg: #1a1d24;
+          --muted: #5b6270;
+          --panel: #ffffff;
+          --border: #dfe3e8;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      #graph {
+        position: absolute;
+        inset: 0;
+      }
+      #panel {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 10;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 13px;
+        max-width: 260px;
+      }
+      #panel h1 {
+        font-size: 14px;
+        margin: 0 0 8px;
+      }
+      #legend {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+      }
+      .legend-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        flex: none;
+      }
+      #meta {
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      #detail {
+        margin-top: 10px;
+        border-top: 1px solid var(--border);
+        padding-top: 8px;
+        display: none;
+      }
+      #detail.visible {
+        display: block;
+      }
+      #detail .file {
+        color: var(--muted);
+        font-size: 12px;
+        word-break: break-all;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--fg);
+        border-radius: 6px;
+        padding: 3px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graph"></div>
+    <div id="panel">
+      <h1>re-astr — Effect service graph</h1>
+      <div id="legend"></div>
+      <div id="meta"></div>
+      <button id="reset">Reset view</button>
+      <div id="detail">
+        <strong id="detail-name"></strong>
+        <div class="file" id="detail-file"></div>
+      </div>
+    </div>
+    <script id="graph-data" type="application/json">
+      "__GRAPH_DATA__"
+    </script>
+    <script>
+      ;(function () {
+        var graph = JSON.parse(document.getElementById('graph-data').textContent)
+
+        var COLORS = {
+          http: '#6aa9ff',
+          middleware: '#f2a65a',
+          service: '#5ad1a3',
+          repo: '#c792ea',
+          infra: '#8b93a3',
+          auth: '#f26d6d',
+          other: '#e6e8ec',
+        }
+
+        var elements = graph.nodes
+          .map(function (n) {
+            return { data: { id: n.id, label: n.id, file: n.file, layer: n.layer } }
+          })
+          .concat(
+            graph.edges.map(function (e, i) {
+              return { data: { id: 'e' + i, source: e.from, target: e.to, kind: e.kind } }
+            }),
+          )
+
+        var cy = cytoscape({
+          container: document.getElementById('graph'),
+          elements: elements,
+          style: [
+            {
+              selector: 'node',
+              style: {
+                'background-color': function (ele) {
+                  return COLORS[ele.data('layer')] || COLORS.other
+                },
+                label: 'data(label)',
+                color: '#0f1115',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'font-size': 9,
+                width: 'label',
+                height: 18,
+                padding: '6px',
+                shape: 'round-rectangle',
+              },
+            },
+            {
+              selector: 'edge',
+              style: {
+                width: 1.4,
+                'line-color': '#8b93a3',
+                'target-arrow-color': '#8b93a3',
+                'target-arrow-shape': 'triangle',
+                'curve-style': 'bezier',
+                opacity: 0.55,
+              },
+            },
+            { selector: 'edge[kind = "middleware"]', style: { 'line-style': 'dashed' } },
+            { selector: '.dimmed', style: { opacity: 0.08 } },
+            { selector: '.highlighted', style: { opacity: 1, 'z-index': 10 } },
+          ],
+          layout: { name: 'dagre', rankDir: 'LR', nodeSep: 18, rankSep: 90 },
+        })
+
+        document.getElementById('meta').textContent =
+          graph.nodes.length +
+          ' nodes, ' +
+          graph.edges.length +
+          ' edges — generated ' +
+          graph.generatedAt
+
+        var legend = document.getElementById('legend')
+        Object.keys(COLORS).forEach(function (layer) {
+          var row = document.createElement('div')
+          row.className = 'legend-row'
+          row.innerHTML =
+            '<span class="swatch" style="background:' + COLORS[layer] + '"></span>' + layer
+          legend.appendChild(row)
+        })
+
+        function clearHighlight() {
+          cy.elements().removeClass('dimmed highlighted')
+        }
+
+        cy.on('tap', 'node', function (evt) {
+          var node = evt.target
+          var neighborhood = node.closedNeighborhood()
+          cy.elements().addClass('dimmed')
+          neighborhood.removeClass('dimmed').addClass('highlighted')
+
+          document.getElementById('detail').classList.add('visible')
+          document.getElementById('detail-name').textContent = node.id()
+          document.getElementById('detail-file').textContent = node.data('file')
+        })
+
+        cy.on('tap', function (evt) {
+          if (evt.target === cy) {
+            clearHighlight()
+            document.getElementById('detail').classList.remove('visible')
+          }
+        })
+
+        document.getElementById('reset').addEventListener('click', function () {
+          clearHighlight()
+          cy.fit()
+        })
+      })()
+    </script>
+  </body>
+</html>
