@@ -92,8 +92,7 @@ export const StorageLive = Layer.effect(
       })
 
       if (response.Body === undefined) {
-        return yield*
-          new StorageError({ operation: 'download', cause: 'response has no body' })
+        return yield* new StorageError({ operation: 'download', cause: 'response has no body' })
       }
       const body = response.Body
 

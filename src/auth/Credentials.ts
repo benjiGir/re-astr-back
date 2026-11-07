@@ -100,8 +100,7 @@ export const CredentialsLive = Layer.effect(
       if (Option.isNone(user)) return yield* new InvalidCredentials()
 
       const account = yield* repo.findAccountByUserId(user.value.id).pipe(Effect.orDie)
-      if (Option.isNone(account) || !account.value.password)
-        return yield* new InvalidCredentials()
+      if (Option.isNone(account) || !account.value.password) return yield* new InvalidCredentials()
       const passwordHash: string = account.value.password
 
       const valid = yield* Effect.promise(() => argon2.verify(passwordHash, password))

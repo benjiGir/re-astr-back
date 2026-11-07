@@ -28,12 +28,12 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-"plugins": [
-	{
-		"name": "@effect/language-service"
-	}
-]
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ]
   },
   "include": ["src"],
-"$schema": "./node_modules/@effect/tsgo/schema.json"
+  "$schema": "./node_modules/@effect/tsgo/schema.json"
 }

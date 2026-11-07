@@ -35,6 +35,8 @@ export class EmailAlreadyExists extends Schema.TaggedError<EmailAlreadyExists>(
 )('EmailAlreadyExists', { email: Schema.String }, { httpApiStatus: 409 }) {}
 
 /** Mirrors ProjectHasTests/CategoryHasTests: tests.createdBy and test_files.uploadedBy are both onDelete: 'restrict'. */
-export class UserHasRecords extends Schema.TaggedError<UserHasRecords>(
-  're-astr/UserHasRecords',
-)('UserHasRecords', { id: Schema.String }, { httpApiStatus: 409 }) {}
+export class UserHasRecords extends Schema.TaggedError<UserHasRecords>('re-astr/UserHasRecords')(
+  'UserHasRecords',
+  { id: Schema.String },
+  { httpApiStatus: 409 },
+) {}
