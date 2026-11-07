@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { Context, Effect, Layer, Option, Stream } from 'effect'
-import type { Multipart } from 'effect/unstable/http'
+import type { Multipart } from 'effect/http'
 import { Storage, StorageError } from '@/infra/Storage.js'
 import {
   TestFile,

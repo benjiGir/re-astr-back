@@ -1,6 +1,6 @@
 import { NodeHttpServer } from '@effect/platform-node'
 import { ConfigProvider, Layer } from 'effect'
-import { HttpRouter } from 'effect/unstable/http'
+import { HttpRouter } from 'effect/http'
 import { AppRoutes, Infra } from '@/App.js'
 import { readTestEnv } from '@/test/testEnv.js'
 
@@ -14,6 +14,7 @@ const TestConfigLive = ConfigProvider.layer(
     COOKIE_SECRET: TEST_COOKIE_SECRET,
     NODE_ENV: 'test',
     LOG_LEVEL: 'Error',
+    TELEMETRY_ENABLED: 'false',
   }),
 )
 

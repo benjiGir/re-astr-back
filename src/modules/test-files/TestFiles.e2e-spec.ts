@@ -1,6 +1,6 @@
 import { describe, expect, layer } from '@effect/vitest'
 import { Effect } from 'effect'
-import { HttpClient, HttpClientRequest } from 'effect/unstable/http'
+import { HttpClient, HttpClientRequest } from 'effect/http'
 import { AppTestLayer } from '@/test/AppTestLayer.js'
 import { createAuthenticatedUser } from '@/test/AuthFixture.js'
 import { createTest } from '@/test/DataFixture.js'

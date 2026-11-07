@@ -1,12 +1,12 @@
 import { Effect, Schema } from 'effect'
-import { HttpServerResponse } from 'effect/unstable/http'
+import { HttpServerResponse } from 'effect/http'
 import {
   HttpApi,
   HttpApiBuilder,
   HttpApiEndpoint,
   HttpApiGroup,
   HttpApiSchema,
-} from 'effect/unstable/httpapi'
+} from 'effect/http-api'
 import type { Session } from '@/domain/schema/sessions.schema.js'
 import type { User } from '@/domain/schema/users.schema.js'
 import { Authorization } from '@/auth/Authorization.js'

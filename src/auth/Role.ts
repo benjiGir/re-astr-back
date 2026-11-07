@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import { HttpApiError } from 'effect/unstable/httpapi'
+import { HttpApiError } from 'effect/http-api'
 import type { UserRole } from '@/domain/schema/users.schema.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
 
@@ -17,8 +17,7 @@ export const hasRequiredRole = (userRole: UserRole, requiredRole: UserRole): boo
 /** Guard clause: `yield* requireRole('archivist')` at the top of a handler. */
 export const requireRole = Effect.fn('Role.requireRole')(function* (requiredRole: UserRole) {
   const user = yield* CurrentUser
-  if (!hasRequiredRole(user.role, requiredRole))
-    return yield* new HttpApiError.Forbidden()
+  if (!hasRequiredRole(user.role, requiredRole)) return yield* new HttpApiError.Forbidden()
 })
 
 /**

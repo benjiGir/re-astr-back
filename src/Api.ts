@@ -5,7 +5,7 @@ import {
   HttpApiEndpoint,
   HttpApiError,
   HttpApiGroup,
-} from 'effect/unstable/httpapi'
+} from 'effect/http-api'
 import { users } from '@/domain/schema/users.schema.js'
 import { AuthGroup, AuthSessionGroup } from '@/auth/AuthHttp.js'
 import { Database } from '@/infra/Database.js'

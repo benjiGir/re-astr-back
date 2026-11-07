@@ -253,7 +253,12 @@ describe('TestsService', () => {
             findOne: vi.fn(() =>
               Effect.succeed(
                 new Category({
-                  ...mockCategory,
+                  id: mockCategory.id,
+                  createdAt: mockCategory.createdAt,
+                  updatedAt: mockCategory.updatedAt,
+                  name: mockCategory.name,
+                  description: mockCategory.description,
+                  baseSchema: mockCategory.baseSchema,
                   customFieldsSchema: { allowCustomFields: false, fields: [] },
                 }),
               ),

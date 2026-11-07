@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@effect/vitest'
 import { Effect, Layer } from 'effect'
-import { HttpApiError } from 'effect/unstable/httpapi'
+import { HttpApiError } from 'effect/http-api'
 import type { UserRole } from '@/domain/schema/users.schema.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
 import { hasRequiredRole, requireRole, requireSelfOrRole } from '@/auth/Role.js'
@@ -44,9 +44,7 @@ describe('hasRequiredRole', () => {
 
 describe('requireRole', () => {
   it.layer(Layer.succeed(CurrentUser, mockUser('archivist')))((it) => {
-    it.effect('succeeds when the user meets the required role', () =>
-      requireRole('contributor')
-    )
+    it.effect('succeeds when the user meets the required role', () => requireRole('contributor'))
   })
 
   it.layer(Layer.succeed(CurrentUser, mockUser('user')))((it) => {
@@ -62,7 +60,7 @@ describe('requireRole', () => {
 describe('requireSelfOrRole', () => {
   it.layer(Layer.succeed(CurrentUser, mockUser('user', 'user-1')))((it) => {
     it.effect('succeeds when acting on self regardless of role', () =>
-      requireSelfOrRole('user-1', 'master')
+      requireSelfOrRole('user-1', 'master'),
     )
 
     it.effect('fails with Forbidden when acting on someone else without the required role', () =>
@@ -75,7 +73,7 @@ describe('requireSelfOrRole', () => {
 
   it.layer(Layer.succeed(CurrentUser, mockUser('master', 'user-1')))((it) => {
     it.effect('succeeds when acting on someone else with a sufficient role', () =>
-      requireSelfOrRole('user-2', 'master')
+      requireSelfOrRole('user-2', 'master'),
     )
   })
 })

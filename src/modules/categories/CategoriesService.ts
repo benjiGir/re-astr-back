@@ -52,7 +52,9 @@ export const CategoriesServiceLive = Layer.effect(
     const create = Effect.fn('CategoriesService.create')(function* (input: CreateCategory) {
       return yield* repo
         .create({
-          ...input,
+          name: input.name,
+          baseSchema: input.baseSchema,
+          description: input.description,
           customFieldsSchema: input.customFieldsSchema ?? DEFAULT_CUSTOM_FIELDS_SCHEMA,
         })
         .pipe(

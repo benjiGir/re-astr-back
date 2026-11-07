@@ -10,11 +10,11 @@ export class AppConfig extends Context.Service<
   static readonly Live = Layer.effect(
     AppConfig,
     Effect.gen(function* () {
-      const nodeEnv = yield* Config.literals(
+      const nodeEnv = yield* Config.Literals(
         ['development', 'production', 'test'],
         'NODE_ENV',
       ).pipe(Config.withDefault('development' as const))
-      const logLevel = yield* Config.logLevel('LOG_LEVEL').pipe(
+      const logLevel = yield* Config.LogLevel('LOG_LEVEL').pipe(
         Config.withDefault(nodeEnv === 'production' ? 'Info' : 'Debug'),
       )
 
@@ -24,31 +24,32 @@ export class AppConfig extends Context.Service<
 }
 
 export const DatabaseConfig = {
-  url: Config.redacted('DATABASE_URL'),
+  url: Config.Redacted('DATABASE_URL'),
 }
 
 export const ServerConfig = {
-  port: Config.int('PORT').pipe(Config.withDefault(3000)),
+  port: Config.Int('PORT').pipe(Config.withDefault(3000)),
 }
 
 /** Vite dev server default — the only trusted origin in the pre-rewrite Better Auth config too. */
 export const CorsConfig = {
-  allowedOrigin: Config.string('CORS_ORIGIN').pipe(Config.withDefault('http://localhost:5173')),
+  allowedOrigin: Config.String('CORS_ORIGIN').pipe(Config.withDefault('http://localhost:5173')),
 }
 
 /** Full OTLP traces path, not just a host — the exporter sends the url as-is, it doesn't append `/v1/traces` itself. */
 export const TelemetryConfig = {
-  otlpEndpoint: Config.string('TELEMETRY_OTLP_ENDPOINT').pipe(
+  enabled: Config.Boolean('TELEMETRY_ENABLED').pipe(Config.withDefault(true)),
+  otlpEndpoint: Config.String('TELEMETRY_OTLP_ENDPOINT').pipe(
     Config.withDefault('http://localhost:4318/v1/traces'),
   ),
 }
 
 /** Garage (or any S3-compatible backend) has no real region — value is required by the SDK but unused. */
 export const StorageConfig = {
-  endpoint: Config.string('STORAGE_ENDPOINT').pipe(Config.withDefault('http://localhost:3900')),
-  region: Config.string('STORAGE_REGION').pipe(Config.withDefault('garage')),
-  accessKeyId: Config.redacted('STORAGE_ACCESS_KEY_ID'),
-  secretAccessKey: Config.redacted('STORAGE_SECRET_ACCESS_KEY'),
+  endpoint: Config.String('STORAGE_ENDPOINT').pipe(Config.withDefault('http://localhost:3900')),
+  region: Config.String('STORAGE_REGION').pipe(Config.withDefault('garage')),
+  accessKeyId: Config.Redacted('STORAGE_ACCESS_KEY_ID'),
+  secretAccessKey: Config.Redacted('STORAGE_SECRET_ACCESS_KEY'),
 }
 
 /**
@@ -66,9 +67,9 @@ export class SessionConfig extends Context.Service<
   static readonly Live = Layer.effect(
     SessionConfig,
     Effect.gen(function* () {
-      const cookieSecret = yield* Config.redacted('COOKIE_SECRET')
-      const expiresIn = yield* Config.int('AUTH_SESSION_EXPIRES').pipe(Config.withDefault(604800))
-      const updateAge = yield* Config.int('AUTH_SESSION_UPDATE_AGE').pipe(Config.withDefault(86400))
+      const cookieSecret = yield* Config.Redacted('COOKIE_SECRET')
+      const expiresIn = yield* Config.Int('AUTH_SESSION_EXPIRES').pipe(Config.withDefault(604800))
+      const updateAge = yield* Config.Int('AUTH_SESSION_UPDATE_AGE').pipe(Config.withDefault(86400))
 
       return { cookieSecret, expiresIn, updateAge }
     }),

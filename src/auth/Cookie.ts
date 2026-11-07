@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { Data, Effect, Redacted } from 'effect'
-import { HttpApiSecurity } from 'effect/unstable/httpapi'
+import { HttpApiSecurity } from 'effect/http-api'
 import { SessionConfig } from '@/infra/Config.js'
 
 export class InvalidCookie extends Data.TaggedError('InvalidCookie') {}

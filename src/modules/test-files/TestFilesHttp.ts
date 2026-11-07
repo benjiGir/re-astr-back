@@ -1,5 +1,5 @@
 import { Effect, Schema } from 'effect'
-import { HttpServerResponse, Multipart } from 'effect/unstable/http'
+import { HttpServerResponse, Multipart } from 'effect/http'
 import {
   HttpApi,
   HttpApiBuilder,
@@ -7,7 +7,7 @@ import {
   HttpApiError,
   HttpApiGroup,
   HttpApiSchema,
-} from 'effect/unstable/httpapi'
+} from 'effect/http-api'
 import { Authorization } from '@/auth/Authorization.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
 import { requireRole } from '@/auth/Role.js'

@@ -1,6 +1,6 @@
 import { describe, expect, layer } from '@effect/vitest'
 import { Effect } from 'effect'
-import { HttpClient } from 'effect/unstable/http'
+import { HttpClient } from 'effect/http'
 import { AppTestLayer } from '@/test/AppTestLayer.js'
 
 describe('Health', () => {

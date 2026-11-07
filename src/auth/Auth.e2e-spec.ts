@@ -1,6 +1,6 @@
 import { describe, expect, layer } from '@effect/vitest'
 import { Effect } from 'effect'
-import { Cookies } from 'effect/unstable/http'
+import { Cookies } from 'effect/http'
 import { AppTestLayer } from '@/test/AppTestLayer.js'
 import { getJson, postJson } from '@/test/HttpTestClient.js'
 

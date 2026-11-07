@@ -56,7 +56,12 @@ const runValidation = (schema: Schema.Top, data: unknown): ValidationResult => {
     valid: false,
     errors: result.issues.map(
       (issue) =>
-        new ValidationError({ field: (issue.path ?? []).join('.'), message: issue.message }),
+        new ValidationError({
+          field: (issue.path ?? [])
+            .map((segment) => String(typeof segment === 'object' ? segment.key : segment))
+            .join('.'),
+          message: issue.message,
+        }),
     ),
   }
 }

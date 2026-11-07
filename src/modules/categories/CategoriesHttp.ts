@@ -6,7 +6,7 @@ import {
   HttpApiError,
   HttpApiGroup,
   HttpApiSchema,
-} from 'effect/unstable/httpapi'
+} from 'effect/http-api'
 import { Authorization } from '@/auth/Authorization.js'
 import { requireRole } from '@/auth/Role.js'
 import {

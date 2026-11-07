@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { Effect, Layer, Redacted } from 'effect'
-import { HttpApiError, HttpApiMiddleware } from 'effect/unstable/httpapi'
+import { HttpApiError, HttpApiMiddleware } from 'effect/http-api'
 import { sessions } from '@/domain/schema/sessions.schema.js'
 import { users } from '@/domain/schema/users.schema.js'
 import { CurrentUser } from '@/auth/CurrentUser.js'
